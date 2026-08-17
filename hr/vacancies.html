@@ -349,7 +349,7 @@ function Page() {
       <VacanciesModeTabs active="manage" />
 
       <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-        <Input icon={<IconSearch size={20} />} placeholder="Поиск по названию или подразделению" value={q} onChange={(e) => setQ(e.target.value || "")} style={{ maxWidth: 420, flex: 1 }} />
+        <Input size="s" icon={<IconSearch size={20} />} placeholder="Поиск по названию или подразделению" value={q} onChange={(e) => setQ(e.target.value || "")} style={{ maxWidth: 420, flex: 1 }} />
         <Button mode="secondary" icon={<Icons.IconFilter size={16} />} onClick={() => setFiltersOpen((o) => !o)}
           style={{ background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)" }}>
           Фильтры{hasActiveFilters ? " · " + activeFilterCount : ""}
