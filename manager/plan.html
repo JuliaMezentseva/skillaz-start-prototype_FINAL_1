@@ -1012,16 +1012,16 @@ function goalDraftFromCatalog(goal, plan) {
 
 // Компактная иконка-переключатель дополнительного способа ввода (голос/файл/изображение) —
 // не отдельный большой сценарий, просто демонстрационное состояние по клику (см. ТЗ п.6, 24).
-// Просто чёрная иконка без подложки — без кружка-фона легче, а состояние "включено" и так
-// видно по чипу с вложением ниже.
-function InputSourceIcon({ icon: Icon, active, label, onClick, size = 32 }) {
+// Иконка тёмно-серая (graphite-25), не чистый чёрный — без подложки, без кружка-фона
+// легче, а состояние "включено" и так видно по чипу с вложением ниже.
+function InputSourceIcon({ icon: Icon, active, label, onClick, size = 36 }) {
   return (
     <Tooltip content={label}>
       <button type="button" onClick={onClick} className="sk-clickable" style={{
         width: size, height: size, border: "none", background: "transparent",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
       }}>
-        <Icon size={Math.round(size * 0.47)} color="var(--sk-icon-primary)" />
+        <Icon size={Math.round(size * 0.5)} color="var(--graphite-graphite-25)" />
       </button>
     </Tooltip>
   );
@@ -1067,7 +1067,6 @@ function AIExpectationsStep({ member, plan, text, setText, demo, toggleDemo, pic
             а обобщённое существительное после предлога снимает вопрос падежа для любого имени. */}
         <div className="sk-label-3-regular" style={{ color: "var(--sk-text-primary)" }}>
           Сформулирую цель для сотрудника: <span style={{ fontWeight: 500 }}>{member.name}</span>, {member.position}.
-          Просто расскажите о своих ожиданиях, остальное сделаю сам.
         </div>
       </AIBanner>
 
@@ -1094,12 +1093,12 @@ function AIExpectationsStep({ member, plan, text, setText, demo, toggleDemo, pic
         <div className="ai-expect-textarea" onClick={fillOnFirstClick} style={{ position: "relative" }}>
           <Textarea rows={3} value={text}
             onChange={(e) => setText(e.target.value || "")}
-            textareaStyle={{ paddingRight: 8, paddingBottom: 44 }}
+            textareaStyle={{ paddingRight: 8, paddingBottom: 48 }}
             placeholder="Например: хочу, чтобы к концу адаптации сотрудник сам вёл клиентов…" />
           <div className="sk-row sk-gap-1" style={{ position: "absolute", right: 10, bottom: 10 }} onClick={(e) => e.stopPropagation()}>
-            <InputSourceIcon size={32} icon={IconMic} label="Голосовой ввод" active={demo.voice} onClick={() => toggleDemo("voice")} />
-            <InputSourceIcon size={32} icon={IconPaperclip} label="Прикрепить файл" active={demo.file} onClick={() => toggleDemo("file")} />
-            <InputSourceIcon size={32} icon={IconImage} label="Добавить изображение" active={demo.image} onClick={() => toggleDemo("image")} />
+            <InputSourceIcon size={36} icon={IconMic} label="Голосовой ввод" active={demo.voice} onClick={() => toggleDemo("voice")} />
+            <InputSourceIcon size={36} icon={IconPaperclip} label="Прикрепить файл" active={demo.file} onClick={() => toggleDemo("file")} />
+            <InputSourceIcon size={36} icon={IconImage} label="Добавить изображение" active={demo.image} onClick={() => toggleDemo("image")} />
           </div>
         </div>
 
