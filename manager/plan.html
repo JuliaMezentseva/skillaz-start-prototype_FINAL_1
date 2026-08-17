@@ -53,19 +53,17 @@ function fmtDate(date) { return date.getDate() + " " + MONTHS[date.getMonth()] +
 
 const ELEMENT_ICON = { article: IconFileText, task: IconCheck, course: IconFileText, survey: IconHelpCircle, file: IconFileText, link: IconLink2, checkpoint: IconTarget };
 const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", survey: "Опрос", file: "Файл", link: "Ссылка", checkpoint: "Контрольная точка" };
-// Готовое решение по шагу — done/not_done/pending_review — показываем иконкой (галочка,
-// крестик, часы "ждёт проверки"). Пока решения ещё нет (not_started/in_progress/returned) —
-// в том же кружке показываем номер шага по порядку (см. NUMBER_BADGE), чтобы был виден
-// порядок шагов внутри цели без отдельного элемента интерфейса.
-const SUBGOAL_ICON = {
-  done: { icon: IconCheck, bg: "var(--sk-positive)", fg: "var(--sk-text-contrast)" },
-  not_done: { icon: IconX, bg: "var(--sk-negative)", fg: "var(--sk-text-contrast)" },
-  pending_review: { icon: IconClock, bg: "var(--sk-warning)", fg: "var(--sk-text-contrast)" },
-};
+// Номер шага виден в кружке всегда, независимо от статуса — сквозная нумерация шагов
+// внутри цели. Решённые статусы (done/not_done/pending_review) дополнительно получают
+// маленькую иконку-оверлей поверх кружка (галочка, крестик, часы "ждёт проверки").
+const SUBGOAL_ICON = { done: IconCheck, not_done: IconX, pending_review: IconClock };
 const NUMBER_BADGE = {
   not_started: { bg: "transparent", fg: "var(--sk-text-tertiary)", border: "1.5px solid var(--sk-stroke)" },
   in_progress: { bg: "var(--sk-accent)", fg: "var(--sk-text-contrast)", border: "none" },
   returned: { bg: "var(--sk-warning)", fg: "var(--sk-text-contrast)", border: "none" },
+  done: { bg: "var(--sk-positive)", fg: "var(--sk-text-contrast)", border: "none" },
+  not_done: { bg: "var(--sk-negative)", fg: "var(--sk-text-contrast)", border: "none" },
+  pending_review: { bg: "var(--sk-warning)", fg: "var(--sk-text-contrast)", border: "none" },
 };
 const SUBGOAL_STATUS_LABEL = {
   done: "Выполнено", not_done: "Не выполнено", pending_review: "На проверке",
@@ -506,19 +504,22 @@ function ManagerGoalRow({ goal, plan, onOpenGoal, onOpenSubgoal, onOpenMaterials
   const [stepsOpen, setStepsOpen] = React.useState(false);
   return (
     <div className="sk-col sk-gap-3" onClick={onOpenGoal} style={{ cursor: "pointer", padding: "14px 16px", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", background: "var(--sk-surface-page)" }}>
-      <div className="sk-row sk-gap-3" style={{ justifyContent: "space-between", alignItems: "center" }}>
-        <div className="sk-col sk-gap-1" style={{ flex: 1, minWidth: 0 }}>
+      <div className="sk-row sk-gap-3" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div className="sk-col sk-gap-2" style={{ flex: 1, minWidth: 0 }}>
           <div className="sk-label-2" style={{ color: isDone ? "var(--sk-text-secondary)" : "var(--sk-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{goal.title || "Без названия"}</div>
           {!isDone && (
-            <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
-              <ProgressBar value={pct} style={{ width: 120 }} hue="positive" />
-              <span className="sk-label-4">{pct}%</span>
-              <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{done} из {total} · {stripDuePrefix(goal.dueLabel) || "срок не задан"}</span>
-            </div>
+            <React.Fragment>
+              <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+                <ProgressBar value={pct} style={{ width: 120 }} hue="positive" />
+                <span className="sk-label-4">{pct}%</span>
+                <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{done} из {total}</span>
+              </div>
+              <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>до {stripDuePrefix(goal.dueLabel) || "срок не задан"}</span>
+            </React.Fragment>
           )}
         </div>
         <div className="sk-row sk-gap-2" style={{ flexShrink: 0, alignItems: "center" }} onClick={(e) => e.stopPropagation()}>
-          {plan.employeeStarted && <StatusTag status={statusVal} />}
+          {plan.employeeStarted && <StatusTag status={statusVal} size="m" />}
           {!plan.employeeStarted && (
             <button className="sk-link-btn" onClick={onDeleteGoal} style={{ color: "var(--sk-icon-secondary)" }} title="Удалить цель"><IconTrash size={16} /></button>
           )}
@@ -559,21 +560,26 @@ function MaterialsBadge({ count, published, onClick }) {
 
 function ManagerSubgoalRow({ subgoal, index, goalDueLabel, plan, onOpen, onOpenMaterials }) {
   const isDone = subgoal.status === "done";
-  const cfg = SUBGOAL_ICON[subgoal.status];
-  const numberBadge = NUMBER_BADGE[subgoal.status];
+  const OverlayIcon = SUBGOAL_ICON[subgoal.status];
+  const badge = NUMBER_BADGE[subgoal.status] || NUMBER_BADGE.not_started;
   const matCount = (subgoal.checklistRefs || []).length;
   const ownDue = stripDuePrefix(subgoal.dueLabel);
   const showOwnDue = !isDone && ownDue && ownDue !== stripDuePrefix(goalDueLabel);
   return (
     <div className="sk-row sk-gap-3" onClick={onOpen} style={{ cursor: "pointer", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", background: "var(--sk-surface-page)" }}>
       <div className="sk-row sk-gap-2" style={{ flex: 1, minWidth: 0, alignItems: "center" }}>
-        {cfg && <span title={SUBGOAL_STATUS_LABEL[subgoal.status]} style={{ width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: cfg.bg, color: cfg.fg, display: "flex", alignItems: "center", justifyContent: "center" }}><cfg.icon size={12} /></span>}
-        {numberBadge && (
-          <span title={SUBGOAL_STATUS_LABEL[subgoal.status]} style={{
-            width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: numberBadge.bg, color: numberBadge.fg,
-            border: numberBadge.border, display: "flex", alignItems: "center", justifyContent: "center", font: "var(--sk-label-4)",
-          }}>{index + 1}</span>
-        )}
+        <span title={SUBGOAL_STATUS_LABEL[subgoal.status]} style={{
+          position: "relative", width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: badge.bg, color: badge.fg,
+          border: badge.border, display: "flex", alignItems: "center", justifyContent: "center", font: "var(--sk-label-4)",
+        }}>
+          {index + 1}
+          {OverlayIcon && (
+            <span style={{
+              position: "absolute", bottom: -3, right: -3, width: 13, height: 13, borderRadius: "50%",
+              background: "var(--sk-surface-page)", display: "flex", alignItems: "center", justifyContent: "center",
+            }}><OverlayIcon size={9} color={badge.bg} /></span>
+          )}
+        </span>
         <div className="sk-col sk-gap-1" style={{ minWidth: 0 }}>
           <div className="sk-label-3-regular" style={{ color: isDone ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{subgoal.title || "Без названия"}</div>
           {showOwnDue && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ownDue}</div>}
@@ -726,18 +732,23 @@ function GoalDrawer({ goal, plan, editable, onClose, onChange, onAddSubgoal, onO
         <div className="sk-col sk-gap-2">
           <div className="sk-label-3">Шаги для выполнения {done}/{total}</div>
           {goal.subgoals.map((sg, i) => {
-            const cfg = SUBGOAL_ICON[sg.status];
-            const numberBadge = NUMBER_BADGE[sg.status];
+            const OverlayIcon = SUBGOAL_ICON[sg.status];
+            const badge = NUMBER_BADGE[sg.status] || NUMBER_BADGE.not_started;
             return (
               <div key={sg.id} className="sk-row sk-gap-3" style={{ justifyContent: "space-between", padding: 10, border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-2)" }}>
                 <div className="sk-row sk-gap-3" style={{ flex: 1, alignItems: "center", cursor: "pointer" }} onClick={() => onOpenSubgoal(sg.id)}>
-                  {cfg && <span style={{ width: 20, height: 20, borderRadius: "50%", background: cfg.bg, color: cfg.fg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><cfg.icon size={12} /></span>}
-                  {numberBadge && (
-                    <span style={{
-                      width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: numberBadge.bg, color: numberBadge.fg,
-                      border: numberBadge.border, display: "flex", alignItems: "center", justifyContent: "center", font: "var(--sk-label-4)",
-                    }}>{i + 1}</span>
-                  )}
+                  <span style={{
+                    position: "relative", width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: badge.bg, color: badge.fg,
+                    border: badge.border, display: "flex", alignItems: "center", justifyContent: "center", font: "var(--sk-label-4)",
+                  }}>
+                    {i + 1}
+                    {OverlayIcon && (
+                      <span style={{
+                        position: "absolute", bottom: -3, right: -3, width: 13, height: 13, borderRadius: "50%",
+                        background: "var(--sk-surface-page)", display: "flex", alignItems: "center", justifyContent: "center",
+                      }}><OverlayIcon size={9} color={badge.bg} /></span>
+                    )}
+                  </span>
                   <div className="sk-col sk-gap-1">
                     <div className="sk-label-4">{sg.title || "Без названия"}</div>
                     <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{sg.dueLabel || "срок не задан"}</div>
@@ -913,25 +924,30 @@ function AssessmentChecklistCard({ checklist, onChange, readOnly }) {
   }
 
   return (
-    <div className="sk-col sk-gap-2">
-      {criteria.map(c => (
+    <div className="sk-col sk-gap-1">
+      {criteria.map(c => readOnly ? (
+        // Просмотр раунда — иконка вместо цветной "таблетки" на каждый критерий, иначе
+        // в карточке несколько разноцветных тегов спорят за внимание со статусом решения сверху.
+        <div key={c.id} className="sk-row sk-gap-2" style={{ alignItems: "center", padding: "3px 0" }}>
+          <span style={{ width: 16, flexShrink: 0, display: "flex", justifyContent: "center" }}>
+            {c.checked === null || c.checked === undefined
+              ? <span className="sk-muted">—</span>
+              : c.checked ? <IconCheck size={14} color="var(--sk-icon-positive)" /> : <IconX size={14} color="var(--sk-icon-negative)" />}
+          </span>
+          <span className="sk-label-4-regular">{c.label}</span>
+        </div>
+      ) : (
         <div key={c.id} className="sk-row sk-gap-3" style={{
           alignItems: "center", justifyContent: "space-between", padding: 10,
           border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", background: "var(--sk-surface-page)",
         }}>
           <span className="sk-label-4" style={{ flex: 1 }}>{c.label}</span>
-          {readOnly ? (
-            c.checked === null || c.checked === undefined
-              ? <Tag size="s" hue="neutral">—</Tag>
-              : <Tag size="s" hue={c.checked ? "positive" : "negative"}>{c.checked ? "Да" : "Нет"}</Tag>
-          ) : (
-            <div className="sk-row sk-gap-2">
-              <Button size="s" mode={c.checked === true ? "primary" : "secondary"} variant={c.checked === true ? "positive" : "neutral"}
-                onClick={() => setCriterion(c.id, true)}>Да</Button>
-              <Button size="s" mode={c.checked === false ? "primary" : "secondary"} variant={c.checked === false ? "negative" : "neutral"}
-                onClick={() => setCriterion(c.id, false)}>Нет</Button>
-            </div>
-          )}
+          <div className="sk-row sk-gap-2">
+            <Button size="s" mode={c.checked === true ? "primary" : "secondary"} variant={c.checked === true ? "positive" : "neutral"}
+              onClick={() => setCriterion(c.id, true)}>Да</Button>
+            <Button size="s" mode={c.checked === false ? "primary" : "secondary"} variant={c.checked === false ? "negative" : "neutral"}
+              onClick={() => setCriterion(c.id, false)}>Нет</Button>
+          </div>
         </div>
       ))}
       {readOnly && checklist.note && (
@@ -974,7 +990,7 @@ function DrawerTabs({ items, active, onChange }) {
   );
 }
 
-const ASSESSMENT_DECISION_LABEL = { done: "Выполнено", returned: "На доработку", not_done: "Не выполнено" };
+const ASSESSMENT_DECISION_LABEL = { done: "Шаг выполнен", returned: "На доработке", not_done: "Шаг не выполнен" };
 const ASSESSMENT_DECISION_HUE = { done: "positive", returned: "warning", not_done: "negative" };
 
 // ---------------- Содержимое вкладки "История оценок" — только прошлые раунды решений,
@@ -1161,7 +1177,7 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
   // Подписаны словами (не только иконкой) — статусные названия решения понятны без наведения.
   // Тон везде приглушённый (mode="secondary"), как у статусов — без сплошной заливки.
   const headerAction = editable ? null
-    : (needsAssessment && isReview) ? <Button size="s" variant="accent" mode="secondary" onClick={() => setAssessmentOpen(true)}>Оценить</Button>
+    : (needsAssessment && isReview) ? <Button size="s" variant="accent" mode="secondary" onClick={() => setAssessmentOpen(true)}>Оценить выполнение</Button>
     : (isReview && !needsAssessment) ? (
       <div className="sk-row sk-gap-1">
         <Button size="xs" mode="secondary" variant="positive" onClick={() => setPendingAction("done")}>Выполнен</Button>
