@@ -336,9 +336,8 @@ function Page() {
 
   return (
     <AppShell role="hr" active="vacancies" base="..">
-      <div className="sk-title-4">Вакансии</div>
-      <VacanciesModeTabs active="manage" />
-      <div className="sk-row" style={{ justifyContent: "flex-end", alignItems: "flex-start" }}>
+      <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <div className="sk-title-4">Вакансии</div>
         <div className="sk-row sk-gap-2">
           <Button mode="secondary" icon={<IconFolderHeart size={16} />} onClick={exportResponsesCsv}>Выгрузить отклики</Button>
           <Tooltip content={<div style={{ maxWidth: 200, whiteSpace: "normal" }}>Импорт из Excel — вне текущей итерации прототипа.</div>}>
@@ -347,6 +346,7 @@ function Page() {
           <Button variant="accent" icon={<IconPlusSm size={16} />} onClick={() => setFormModal({ mode: "create" })}>Создать вакансию</Button>
         </div>
       </div>
+      <VacanciesModeTabs active="manage" />
 
       <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
         <Input icon={<IconSearch size={20} />} placeholder="Поиск по названию или подразделению" value={q} onChange={(e) => setQ(e.target.value || "")} style={{ maxWidth: 420, flex: 1 }} />
