@@ -494,11 +494,11 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onSubmit, onAddComment, o
   ];
   // Быстрое действие — маленькая цветная кнопка в шапке дровера, а не крупная в теле:
   // цвет подсказывает суть действия (взять в работу — акцентный, отправить — положительный).
-  // Тон приглушённый (mode="secondary"), как у всех статусов — сплошная заливка не используется.
+  // Сплошная заливка (mode по умолчанию "primary") — больше акцента на том, что предстоит сделать.
   const headerAction = subgoal.status === "not_started"
-    ? <Button size="s" variant="accent" mode="secondary" onClick={onTakeSubgoal}>Взять в работу</Button>
+    ? <Button size="s" variant="accent" onClick={onTakeSubgoal}>Взять в работу</Button>
     : (subgoal.status === "in_progress" || subgoal.status === "returned")
-      ? <Button size="s" variant="positive" mode="secondary" onClick={onSubmit}>Отправить на подтверждение</Button>
+      ? <Button size="s" variant="positive" onClick={onSubmit}>Отправить на подтверждение</Button>
       : null;
 
   return (
@@ -545,10 +545,12 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onSubmit, onAddComment, o
                     <div style={{ paddingTop: 2 }} onClick={(e) => e.stopPropagation()}>
                       <Checkbox checked={!!item.done} onChange={() => onToggleMaterial(item.id)} />
                     </div>
-                    <Icon size={16} color="var(--sk-icon-secondary)" style={{ flexShrink: 0, marginTop: 2 }} />
                     <div className="sk-col sk-gap-1" style={{ flex: 1, minWidth: 0 }}>
                       <div className="sk-label-4" style={{ color: item.done ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{item.title}</div>
-                      <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]} · Этап «{stage.title}»</div>
+                      <div className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
+                        <Icon size={13} color="var(--sk-icon-secondary)" style={{ flexShrink: 0 }} />
+                        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]}</span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -935,7 +937,6 @@ function Page() {
           {tab === "min" && (
             <React.Fragment>
               <Alert hue="neutral" style={{ background: "var(--sk-surface-secondary)" }}>{MIN_TAB_NOTE}</Alert>
-              <div className="sk-title-5">Чек-лист <span style={{ color: "var(--sk-text-secondary)" }}>{doneChecklist} из {totalChecklist.length}</span></div>
               <div className="sk-col sk-gap-4">
                 {plan.stages.map((s, i) => (
                   <StageBlock key={s.id} stage={s} index={i + 1}

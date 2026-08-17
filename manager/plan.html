@@ -316,7 +316,6 @@ function Page() {
           {tab === "min" && (
             <React.Fragment>
               <Alert hue="neutral" style={{ background: "var(--sk-surface-secondary)" }}>{MIN_TAB_NOTE}</Alert>
-              <div className="sk-title-5">Чек-лист <span style={{ color: "var(--sk-text-secondary)" }}>{doneChecklist} из {totalChecklist.length}</span></div>
               <div className="sk-col sk-gap-4">
                 {plan.stages.map((s, i) => (
                   <ManagerStageBlock key={s.id} stage={s} index={i + 1}
@@ -1190,15 +1189,15 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
   // Подписаны словами (не только иконкой) — статусные названия решения понятны без наведения.
   // Тон везде приглушённый (mode="secondary"), как у статусов — без сплошной заливки.
   const headerAction = editable ? null
-    : (needsAssessment && isReview) ? <Button size="s" variant="accent" mode="secondary" onClick={() => setAssessmentOpen(true)}>Оценить выполнение</Button>
+    : (needsAssessment && isReview) ? <Button size="s" onClick={() => setAssessmentOpen(true)} style={{ background: "var(--sk-warning)", color: "var(--sk-text-contrast)" }}>Оценить выполнение</Button>
     : (isReview && !needsAssessment) ? (
       <div className="sk-row sk-gap-1">
-        <Button size="xs" mode="secondary" variant="positive" onClick={() => setPendingAction("done")}>Выполнен</Button>
-        <Button size="xs" mode="secondary" variant="gray" onClick={onReturn}>На доработку</Button>
-        <Button size="xs" mode="secondary" variant="negative" onClick={() => setPendingAction("not_done")}>Не выполнен</Button>
+        <Button size="xs" variant="positive" onClick={() => setPendingAction("done")}>Выполнен</Button>
+        <Button size="xs" variant="gray" onClick={onReturn}>На доработку</Button>
+        <Button size="xs" variant="negative" onClick={() => setPendingAction("not_done")}>Не выполнен</Button>
       </div>
     )
-    : (!isReview && canMarkNotDone) ? <Button size="s" mode="secondary" variant="negative" onClick={() => setPendingAction("not_done")}>Не выполнен</Button>
+    : (!isReview && canMarkNotDone) ? <Button size="s" variant="negative" onClick={() => setPendingAction("not_done")}>Не выполнен</Button>
     : null;
 
   return (
@@ -1261,10 +1260,12 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
               return (
                 <div key={item.id} className="sk-row sk-gap-3" style={{ alignItems: "flex-start", padding: 10, background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-2)" }}>
                   <div style={{ paddingTop: 2 }}><Checkbox checked={!!item.done} disabled /></div>
-                  <Icon size={16} color="var(--sk-icon-secondary)" style={{ flexShrink: 0, marginTop: 2 }} />
                   <div className="sk-col sk-gap-1" style={{ flex: 1, minWidth: 0 }}>
                     <div className="sk-label-4" style={{ color: item.done ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{item.title}</div>
-                    <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]} · Этап «{stage.title}»</div>
+                    <div className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
+                      <Icon size={13} color="var(--sk-icon-secondary)" style={{ flexShrink: 0 }} />
+                      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]}</span>
+                    </div>
                   </div>
                   {editable && <button className="sk-link-btn" onClick={() => onUnlinkChecklist(item.id)}><IconX size={15} color="var(--sk-icon-secondary)" /></button>}
                 </div>
