@@ -926,19 +926,16 @@ function goalDraftFromCatalog(goal, plan) {
 
 // Компактная иконка-переключатель дополнительного способа ввода (голос/файл/изображение) —
 // не отдельный большой сценарий, просто демонстрационное состояние по клику (см. ТЗ п.6, 24).
-// Нейтральная серая иконка — голубой здесь смотрелся третьим случайным цветом рядом
-// с фиолетовым баннером и чёрными кнопками (см. отзыв "выглядит не впопад"). Тёмная
-// заливка при включении вместо смены оттенка — состояние "включено" видно и без цвета,
-// плюс чип с вложением ниже.
+// Просто чёрная иконка без подложки — без кружка-фона легче, а состояние "включено" и так
+// видно по чипу с вложением ниже.
 function InputSourceIcon({ icon: Icon, active, label, onClick, size = 32 }) {
   return (
     <Tooltip content={label}>
       <button type="button" onClick={onClick} className="sk-clickable" style={{
-        width: size, height: size, borderRadius: "50%", border: "none",
-        background: active ? "var(--sk-surface-dark)" : "var(--sk-surface-secondary)",
+        width: size, height: size, border: "none", background: "transparent",
         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
       }}>
-        <Icon size={Math.round(size * 0.47)} color={active ? "var(--sk-text-contrast)" : "var(--sk-icon-secondary)"} />
+        <Icon size={Math.round(size * 0.47)} color="var(--sk-icon-primary)" />
       </button>
     </Tooltip>
   );
@@ -980,12 +977,11 @@ function AIExpectationsStep({ member, plan, text, setText, demo, toggleDemo, pic
       {/* Факты о сотруднике — прямо в реплике AI, а не отдельной карточкой ниже: один блок
           вместо двух (вариант "слитный" из сравнения макетов). */}
       <AIBanner icon={<IconSparklesSolid size={18} color="var(--sk-icon-special)" />}>
-        {/* Имя — в именительном падеже и в начале фразы, а не после предлога: member.name
-            хранится без склонения, а "для {member.name}" даёт грамматически неверное
-            "для Никита Гаврилов" вместо "для Никиты Гаврилова". */}
+        {/* "для сотрудника:" вместо "для {member.name}" — member.name хранится без склонения,
+            а обобщённое существительное после предлога снимает вопрос падежа для любого имени. */}
         <div className="sk-label-3-regular" style={{ color: "var(--sk-text-primary)" }}>
-          <span style={{ fontWeight: 500 }}>{member.name}</span>, {member.position} · до {plan.dateEnd}.
-          Сформулирую цель — просто расскажите о своих ожиданиях, остальное сделаю сам.
+          Сформулирую цель для сотрудника: <span style={{ fontWeight: 500 }}>{member.name}</span>, {member.position}.
+          Просто расскажите о своих ожиданиях, остальное сделаю сам.
         </div>
       </AIBanner>
 
