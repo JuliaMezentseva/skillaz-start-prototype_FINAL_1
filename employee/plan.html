@@ -140,13 +140,13 @@ function StageBlock({ stage, index, onOpenItem, onOpenCheckpoint }) {
       <div className={locked ? "sk-row" : "sk-row sk-clickable"} onClick={() => !locked && setOpen((o) => !o)}
         style={{
           justifyContent: "space-between", padding: "10px 12px",
-          background: "var(--sk-surface-secondary)",
+          background: current ? "var(--sk-accent-secondary)" : "var(--sk-surface-secondary)",
         }}>
         <div className="sk-row sk-gap-3">
           <span style={{
             width: 22, height: 22, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-            background: "transparent", color: "var(--sk-text-tertiary)",
-            border: "1.5px solid var(--sk-stroke)", font: "var(--sk-label-4)",
+            background: current ? "var(--sk-accent)" : "transparent", color: current ? "var(--sk-text-contrast)" : "var(--sk-text-tertiary)",
+            border: current ? "none" : "1.5px solid var(--sk-stroke)", font: "var(--sk-label-4)",
           }}>{locked ? <IconLock size={11} /> : index}</span>
           <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{stage.title}</span>
         </div>
@@ -280,8 +280,11 @@ function SubgoalRow({ subgoal, index, goalDueLabel, onOpen, onTakeSubgoal }) {
       </div>
       <div className="sk-row sk-gap-2" style={{ flexShrink: 0, alignItems: "center" }} onClick={(e) => e.stopPropagation()}>
         {statusIcon && (
-          <span title={SUBGOAL_STATUS_LABEL[subgoal.status]} className="sk-row" style={{ alignItems: "center" }}>
-            <statusIcon.icon size={17} color={statusIcon.color} />
+          <span title={SUBGOAL_STATUS_LABEL[subgoal.status]} style={{
+            width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: statusIcon.color,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <statusIcon.icon size={11} color="var(--sk-text-contrast)" />
           </span>
         )}
         {isNotStarted ? (
@@ -519,13 +522,12 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onSubmit, onAddComment, o
         </CollapsibleSection>
 
         {needsAssessment && (
-          <CollapsibleSection title="Оценочный лист" defaultOpen={false}>
+          <CollapsibleSection
+            title={<span className="sk-row sk-gap-1" style={{ alignItems: "center" }}>Оценочный лист<AssessmentHintTooltip hint={subgoal.assessmentChecklist.hint} /></span>}
+            defaultOpen={false}>
             <div className="sk-col sk-gap-2">
-              <div className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
-                <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{assessmentTemplateName(subgoal.assessmentChecklist.title)}</span>
-                <AssessmentHintTooltip hint={subgoal.assessmentChecklist.hint} />
-              </div>
-              <div className="sk-col sk-gap-1" style={{ padding: "10px 14px", background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)", borderLeft: "3px solid var(--sk-accent)", borderRadius: "var(--sk-radius-3)" }}>
+              <span className="sk-label-4" style={{ color: "var(--sk-text-secondary)" }}>{assessmentTemplateName(subgoal.assessmentChecklist.title)}</span>
+              <div className="sk-col sk-gap-1" style={{ padding: "10px 14px", borderLeft: "3px solid var(--sk-accent)" }}>
                 <AssessmentCriteriaPreview criteria={subgoal.assessmentChecklist.criteria} />
               </div>
             </div>
