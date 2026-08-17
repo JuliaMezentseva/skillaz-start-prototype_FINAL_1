@@ -37,6 +37,13 @@ function pluralSteps(n) {
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "шага";
   return "шагов";
 }
+// Склонение "цель/цели/целей" — для счётчика в свёрнутом списке каталога.
+function pluralGoals(n) {
+  const mod10 = n % 10, mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return "цель";
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "цели";
+  return "целей";
+}
 // Название шаблона оценочного листа часто начинается с "Оценочный лист: ..." — этот
 // префикс дублирует заголовок секции "Оценочный лист" в дровере, поэтому в подзаголовке
 // показываем только суть названия (например, "Первая консультация покупателя").
@@ -68,11 +75,8 @@ function fmtDate(date) { return date.getDate() + " " + MONTHS[date.getMonth()] +
 const ELEMENT_ICON = { article: IconFileText, task: IconCheck, course: IconFileText, survey: IconHelpCircle, file: IconFileText, link: IconLink2, checkpoint: IconTarget };
 const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", survey: "Опрос", file: "Файл", link: "Ссылка", checkpoint: "Контрольная точка" };
 // Кружок с номером шага теперь всегда нейтральный, независимо от статуса — см. STATUS_ICON.
-// Заливка светло-серая, а не прозрачная — на прозрачной заливке тонкое кольцо кружка
-// того же веса и цвета, что и обводка карточки-шага, визуально сливалось с её краем
-// вместо того, чтобы читаться как отдельный элемент внутри неё.
 const NUMBER_BADGE = {
-  not_started: { bg: "var(--sk-surface-secondary)", fg: "var(--sk-text-tertiary)", border: "1.5px solid var(--sk-stroke)" },
+  not_started: { bg: "transparent", fg: "var(--sk-text-tertiary)", border: "1.5px solid var(--sk-stroke)" },
 };
 const SUBGOAL_STATUS_LABEL = {
   done: "Выполнено", not_done: "Не выполнено", pending_review: "На проверке",
@@ -728,15 +732,24 @@ function GoalMethodModal({ onClose, onManual, onCatalog, onAI }) {
 // способа "Вручную" (GoalCreateDrawer), но уже заполненный данными из каталога: руководитель
 // может поправить срок, описание и шаги под конкретного сотрудника, прежде чем реально
 // создать цель, а не соглашаться с шаблоном вслепую.
+// При обычном просмотре (без поиска и фильтров) список не вываливается плоской простынёй:
+// сверху — цели под должность сотрудника, чей план сейчас открыт (то, что раньше молча
+// поднималось наверх сортировкой, теперь читается явным заголовком), остальное — свёрнуто
+// под "Показать ещё". Как только руководитель начинает искать или фильтровать — это уже
+// осознанное сужение, а не браузинг, поэтому группировка уступает место плоскому списку
+// результатов (см. отзыв о навигации по каталогу).
 function GoalCatalogPickerModal({ member, onClose, onPick }) {
   const [q, setQ] = React.useState("");
   const [category, setCategory] = React.useState("");
   const [filters, setFilters] = React.useState({ position: "", level: "" });
   const [filtersOpen, setFiltersOpen] = React.useState(false);
+  const [showAllRest, setShowAllRest] = React.useState(false);
   const catalogActive = (D.goalCatalog || []).filter(g => !g.archived);
   const positions = [...new Set(catalogActive.flatMap(g => g.positions || []))];
   const toolbarFilterCount = (filters.position ? 1 : 0) + (filters.level ? 1 : 0);
   const needle = q.trim().toLowerCase();
+  const isBrowsing = !needle && !category && !filters.position && !filters.level;
+
   const list = catalogActive
     .filter(g => {
       if (needle && !(g.title.toLowerCase().includes(needle)
@@ -747,9 +760,12 @@ function GoalCatalogPickerModal({ member, onClose, onPick }) {
       if (filters.level && g.level !== filters.level) return false;
       return true;
     })
-    // Цели под должность сотрудника, чей план сейчас открыт, — выше остальных: их
-    // руководителю нужно найти быстрее всего, а порядок внутри каждой группы не важен.
+    // Цели под должность сотрудника — выше остальных даже внутри осознанного поиска/фильтра,
+    // это не мешает намеренному сужению, а просто выигрышный порядок внутри результата.
     .sort((a, b) => ((a.positions || []).includes(member.position) ? 0 : 1) - ((b.positions || []).includes(member.position) ? 0 : 1));
+
+  const matched = isBrowsing ? catalogActive.filter(g => (g.positions || []).includes(member.position)) : [];
+  const rest = isBrowsing ? catalogActive.filter(g => !(g.positions || []).includes(member.position)) : [];
 
   return (
     <Modal open title="Выберите цель из каталога" onClose={onClose} size="l" maxHeight="calc(100vh - 64px)"
@@ -771,12 +787,7 @@ function GoalCatalogPickerModal({ member, onClose, onPick }) {
             </span>
           </Button>
         </div>
-        <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
-          <CatalogCategoryPill label="Все категории" active={!category} onClick={() => setCategory("")} />
-          {(D.goalCategories || []).map(c => (
-            <CatalogCategoryPill key={c} label={c} active={category === c} onClick={() => setCategory(category === c ? "" : c)} />
-          ))}
-        </div>
+        <CatalogCategoryPillsBar catalog={catalogActive} active={category} onSelect={setCategory} />
         {filtersOpen && (
           <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
             <FilterChip label="Должность" options={positions.map(v => ({ value: v, label: v }))}
@@ -785,13 +796,46 @@ function GoalCatalogPickerModal({ member, onClose, onPick }) {
               value={filters.level} onChange={(v) => setFilters(f => ({ ...f, level: v }))} />
           </div>
         )}
-        <div className="sk-col sk-gap-2">
-          {list.length ? list.map(g => (
-            <CatalogGoalRow key={g.id} goal={g} onClick={() => onPick(g)} />
-          )) : (
-            <div className="sk-muted" style={{ textAlign: "center", padding: "24px 0" }}>Ничего не нашлось — попробуйте изменить запрос или фильтры.</div>
-          )}
-        </div>
+
+        {isBrowsing ? (
+          <React.Fragment>
+            {matched.length > 0 && (
+              <div className="sk-col sk-gap-2">
+                <div className="sk-label-3">Подходит для «{member.position}»</div>
+                {matched.map(g => <CatalogGoalRow key={g.id} goal={g} onClick={() => onPick(g)} />)}
+              </div>
+            )}
+            {matched.length > 0 && rest.length > 0 && <Divider />}
+            {matched.length === 0 && (
+              <div className="sk-col sk-gap-2">
+                {rest.map(g => <CatalogGoalRow key={g.id} goal={g} onClick={() => onPick(g)} />)}
+              </div>
+            )}
+            {matched.length > 0 && rest.length > 0 && (
+              showAllRest ? (
+                <div className="sk-col sk-gap-2">
+                  <div className="sk-label-3">Остальные цели каталога</div>
+                  {rest.map(g => <CatalogGoalRow key={g.id} goal={g} onClick={() => onPick(g)} />)}
+                  <button className="sk-link-btn sk-label-3-regular" onClick={() => setShowAllRest(false)} style={{ alignSelf: "flex-start" }}>
+                    Свернуть
+                  </button>
+                </div>
+              ) : (
+                <button className="sk-link-btn sk-label-3-regular" onClick={() => setShowAllRest(true)} style={{ alignSelf: "flex-start" }}>
+                  Показать ещё {rest.length} {pluralGoals(rest.length)}
+                </button>
+              )
+            )}
+          </React.Fragment>
+        ) : (
+          <div className="sk-col sk-gap-2">
+            {list.length ? list.map(g => (
+              <CatalogGoalRow key={g.id} goal={g} onClick={() => onPick(g)} />
+            )) : (
+              <div className="sk-muted" style={{ textAlign: "center", padding: "24px 0" }}>Ничего не нашлось — попробуйте изменить запрос или фильтры.</div>
+            )}
+          </div>
+        )}
       </div>
     </Modal>
   );
@@ -843,14 +887,69 @@ function FilterChip({ label, options, value, onChange }) {
     </div>
   );
 }
-function CatalogCategoryPill({ label, active, onClick }) {
+// Пилюли категорий — только те, где реально есть цели (у справочника направлений
+// D.goalCategories их 17, потому что список общий с вакансиями, но целей в каталоге хватает
+// не на каждое направление — пилюля-в-никуда только путает, см. отзыв о навигации по каталогу).
+// "Все категории" + топ-5 по числу целей + "+" на остальные — тот же паттерн, что и в
+// hr/goals-catalog.html (CategoryPillsBar), с той разницей, что пустые категории сюда вообще
+// не попадают ни в пилюли, ни в выпадающий список остальных.
+function CatalogCategoryPillsBar({ catalog, active, onSelect }) {
+  const [pinned, setPinned] = React.useState([]);
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const dropdownRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!dropdownOpen) return;
+    const close = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [dropdownOpen]);
+
+  const counts = {};
+  catalog.forEach((g) => { counts[g.category] = (counts[g.category] || 0) + 1; });
+  const categoriesWithGoals = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+  const TOP_N = 5;
+  const topCategories = categoriesWithGoals.slice(0, TOP_N);
+  const shown = [...topCategories, ...pinned.filter((c) => !topCategories.includes(c))];
+  const remaining = categoriesWithGoals.filter((c) => !shown.includes(c));
+
+  function pillStyle(isActive) {
+    return {
+      height: 30, padding: "0 12px", borderRadius: "var(--sk-radius-full)", cursor: "pointer", flexShrink: 0,
+      border: isActive ? "none" : "1px solid var(--sk-stroke)",
+      background: isActive ? "var(--sk-surface-secondary)" : "var(--sk-surface-page)",
+      color: "var(--sk-text-primary)", font: isActive ? "var(--sk-label-4)" : "var(--sk-label-4-regular)", whiteSpace: "nowrap",
+    };
+  }
+
   return (
-    <button onClick={onClick} className="sk-clickable" style={{
-      height: 30, padding: "0 12px", borderRadius: "var(--sk-radius-full)", flexShrink: 0,
-      border: active ? "none" : "1px solid var(--sk-stroke)",
-      background: active ? "var(--sk-surface-secondary)" : "var(--sk-surface-page)",
-      color: "var(--sk-text-primary)", font: active ? "var(--sk-label-4)" : "var(--sk-label-4-regular)", whiteSpace: "nowrap",
-    }}>{label}</button>
+    <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap", alignItems: "center" }}>
+      <button style={pillStyle(!active)} onClick={() => onSelect("")}>Все категории</button>
+      {shown.map((c) => (
+        <button key={c} style={pillStyle(active === c)} onClick={() => onSelect(active === c ? "" : c)}>{c}</button>
+      ))}
+      {remaining.length > 0 && (
+        <div ref={dropdownRef} style={{ position: "relative" }}>
+          <button onClick={() => setDropdownOpen((o) => !o)} aria-label="Ещё категории" style={{
+            width: 20, height: 20, borderRadius: "50%", border: "none", cursor: "pointer", flexShrink: 0,
+            background: "var(--sk-surface-secondary)", color: "var(--sk-text-secondary)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}><IconPlusSm size={12} /></button>
+          {dropdownOpen && (
+            <div style={{
+              position: "absolute", top: "calc(100% + 4px)", left: 0, minWidth: 200, maxHeight: 280, overflowY: "auto",
+              background: "var(--sk-surface-page)", borderRadius: "var(--sk-radius-2)", boxShadow: "var(--sk-shadow-m)", padding: 6, zIndex: 20,
+            }}>
+              {remaining.map((c) => (
+                <button key={c} onClick={() => { setPinned((p) => [...p, c]); onSelect(c); setDropdownOpen(false); }} style={{
+                  display: "block", width: "100%", textAlign: "left", padding: "8px 10px", borderRadius: "var(--sk-radius-2)",
+                  border: "none", background: "transparent", cursor: "pointer", font: "var(--sk-label-3-regular)", color: "var(--sk-text-primary)",
+                }}>{c}</button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 function CatalogGoalRow({ goal, onClick }) {
@@ -1189,11 +1288,15 @@ function AIDraftStep({ member, plan, draft, setDraft }) {
         <div className="sk-label-3">Шаги для достижения цели</div>
         <div className="sk-col sk-gap-2">
           {draft.steps.map((s, i) => {
-            // Тот же нейтральный кружок-номер, что и в дровере цели (см. NUMBER_BADGE) —
-            // единый паттерн нумерации шагов по всему прототипу, а не отдельный AI-стиль.
+            // Тот же нейтральный кружок-номер, что и в дровере цели (см. NUMBER_BADGE), внутри
+            // общей плашки-карточки — там кружок и текст живут в одной обводке, поэтому кружок
+            // читается как элемент внутри неё, а не отдельно висящий рядом с полем ввода.
             const badge = NUMBER_BADGE.not_started;
             return (
-              <div key={i} className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+              <div key={i} className="sk-row sk-gap-2" style={{
+                alignItems: "center", padding: "10px 12px", border: "1px solid var(--sk-stroke)",
+                borderRadius: "var(--sk-radius-3)", background: "var(--sk-surface-page)",
+              }}>
                 <span style={{
                   width: 20, height: 20, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
                   background: badge.bg, color: badge.fg, border: badge.border, font: "var(--sk-label-4)",
