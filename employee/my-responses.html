@@ -17,13 +17,13 @@
 <script type="text/babel">
 const { Card, Tag } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconArrowLeft, IconMapPin, IconBriefcase, IconCheck } = Icons;
+const { IconArrowLeft, IconMapPin, IconBriefcase } = Icons;
 const D = window.SITE_DATA;
 
 // Статус самого отклика в ATS не синхронизируется — единственное, что система знает
-// достоверно, это факт и дата отправки. Вместо выдуманного статуса показываем это
-// прямо, плюс актуальное состояние вакансии (открыта/закрыта) — оно есть локально
-// и реально полезно: стоит ли ещё ждать ответа.
+// достоверно, это факт и дата отправки. Вместо выдуманного статуса — тег "Отправлен",
+// а для закрытых вакансий вместо него тег о закрытии (это уже есть локально и реально
+// полезно: стоит ли ещё ждать ответа).
 function ResponseRow({ r }) {
   const v = D.vacancies.find(x => x.id === r.vacancyId);
   if (!v) return null;
@@ -34,17 +34,15 @@ function ResponseRow({ r }) {
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       <Card bordered style={{ cursor: "pointer", boxShadow: hovered ? "inset 0 0 0 1.5px var(--sk-stroke-accent)" : "inset 0 0 0 1px var(--sk-stroke)" }}>
         <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div className="sk-col sk-gap-1">
-            <div className="sk-label-2" style={{ opacity: closed ? 0.6 : 1 }}>{v.title}</div>
+          <div className="sk-col sk-gap-1" style={{ opacity: closed ? 0.6 : 1 }}>
+            <div className="sk-label-2">{v.title}</div>
             <div className="sk-row sk-gap-2 sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
               <IconBriefcase size={14} />{v.department}
               <IconMapPin size={14} style={{ marginLeft: 8 }} />{v.city}
             </div>
-            <div className="sk-row sk-gap-1 sk-muted" style={{ font: "var(--sk-label-4-regular)", alignItems: "center" }}>
-              <IconCheck size={13} color="var(--sk-icon-positive)" />Отклик отправлен {r.date}
-            </div>
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Отклик отправлен {r.date}</div>
           </div>
-          {closed && <Tag size="s" hue="neutral">Вакансия закрыта</Tag>}
+          <Tag size="s" hue={closed ? "neutral" : "positive"}>{closed ? "Вакансия закрыта" : "Отправлен"}</Tag>
         </div>
       </Card>
     </a>
