@@ -30,6 +30,13 @@ const D = window.SITE_DATA;
 function stripDuePrefix(label) {
   return (label || "").replace(/^до\s+/i, "");
 }
+// Название шаблона оценочного листа часто начинается с "Оценочный лист: ..." — этот
+// префикс дублирует заголовок секции "Оценочный лист" в дровере, поэтому в подзаголовке
+// показываем только суть названия (например, "Первая консультация покупателя").
+function assessmentTemplateName(title) {
+  const t = (title || "").replace(/^оценочный лист:?\s*/i, "");
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+}
 
 function useDeepState(initial) {
   const [state, setState] = React.useState(() => JSON.parse(JSON.stringify(initial)));
@@ -53,21 +60,23 @@ function fmtDate(date) { return date.getDate() + " " + MONTHS[date.getMonth()] +
 
 const ELEMENT_ICON = { article: IconFileText, task: IconCheck, course: IconFileText, survey: IconHelpCircle, file: IconFileText, link: IconLink2, checkpoint: IconTarget };
 const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", survey: "Опрос", file: "Файл", link: "Ссылка", checkpoint: "Контрольная точка" };
-// Номер шага виден в кружке всегда, независимо от статуса — сквозная нумерация шагов
-// внутри цели. Решённые статусы (done/not_done/pending_review) дополнительно получают
-// маленькую иконку-оверлей поверх кружка (галочка, крестик, часы "ждёт проверки").
-const SUBGOAL_ICON = { done: IconCheck, not_done: IconX, pending_review: IconClock };
+// Кружок с номером шага теперь всегда нейтральный, независимо от статуса — см. STATUS_ICON.
 const NUMBER_BADGE = {
   not_started: { bg: "transparent", fg: "var(--sk-text-tertiary)", border: "1.5px solid var(--sk-stroke)" },
-  in_progress: { bg: "var(--sk-accent)", fg: "var(--sk-text-contrast)", border: "none" },
-  returned: { bg: "var(--sk-warning)", fg: "var(--sk-text-contrast)", border: "none" },
-  done: { bg: "var(--sk-positive)", fg: "var(--sk-text-contrast)", border: "none" },
-  not_done: { bg: "var(--sk-negative)", fg: "var(--sk-text-contrast)", border: "none" },
-  pending_review: { bg: "var(--sk-warning)", fg: "var(--sk-text-contrast)", border: "none" },
 };
 const SUBGOAL_STATUS_LABEL = {
   done: "Выполнено", not_done: "Не выполнено", pending_review: "На проверке",
   in_progress: "В работе", returned: "Возвращена в работу", not_started: "Не начата",
+};
+// Кружок с номером шага всегда нейтральный (как у ещё не начатых) — разноцветные кружки
+// плохо считывались вперемешку с номерами. Статус вместо этого читается по цветной иконке
+// справа от строки шага, без цветной подложки.
+const STATUS_ICON = {
+  in_progress: { icon: IconEdit, color: "var(--sk-accent)" },
+  returned: { icon: IconAlertCircle, color: "var(--sk-warning)" },
+  done: { icon: IconCheck, color: "var(--sk-positive)" },
+  not_done: { icon: IconX, color: "var(--sk-negative)" },
+  pending_review: { icon: IconClock, color: "var(--sk-warning)" },
 };
 
 const MIN_TAB_NOTE = "Формальный порог входа в роль. Сотрудник отмечает пункты сам, вашего подтверждения не требуется.";
@@ -307,7 +316,7 @@ function Page() {
           {tab === "min" && (
             <React.Fragment>
               <Alert hue="neutral" style={{ background: "var(--sk-surface-secondary)" }}>{MIN_TAB_NOTE}</Alert>
-              <div className="sk-title-5">Чек-лист {doneChecklist} из {totalChecklist.length}</div>
+              <div className="sk-title-5">Чек-лист <span style={{ color: "var(--sk-text-secondary)" }}>{doneChecklist} из {totalChecklist.length}</span></div>
               <div className="sk-col sk-gap-4">
                 {plan.stages.map((s, i) => (
                   <ManagerStageBlock key={s.id} stage={s} index={i + 1}
@@ -506,10 +515,10 @@ function ManagerGoalRow({ goal, plan, onOpenGoal, onOpenSubgoal, onOpenMaterials
     <div className="sk-col sk-gap-3" onClick={onOpenGoal} style={{ cursor: "pointer", padding: "14px 16px", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", background: "var(--sk-surface-page)" }}>
       <div className="sk-row sk-gap-3" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1, minWidth: 0 }}>
-          <div className="sk-label-2" style={{ color: isDone ? "var(--sk-text-secondary)" : "var(--sk-text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{goal.title || "Без названия"}</div>
+          <div className="sk-label-2" style={{ color: isDone ? "var(--sk-text-secondary)" : "var(--sk-text-primary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{goal.title || "Без названия"}</div>
           {!isDone && (
             <React.Fragment>
-              <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+              <div className="sk-row sk-gap-2" style={{ alignItems: "center", marginTop: 4 }}>
                 <ProgressBar value={pct} style={{ width: 120 }} hue="positive" />
                 <span className="sk-label-4">{pct}%</span>
                 <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{done} из {total}</span>
@@ -560,25 +569,19 @@ function MaterialsBadge({ count, published, onClick }) {
 
 function ManagerSubgoalRow({ subgoal, index, goalDueLabel, plan, onOpen, onOpenMaterials }) {
   const isDone = subgoal.status === "done";
-  const OverlayIcon = SUBGOAL_ICON[subgoal.status];
-  const badge = NUMBER_BADGE[subgoal.status] || NUMBER_BADGE.not_started;
+  const badge = NUMBER_BADGE.not_started;
+  const statusIcon = STATUS_ICON[subgoal.status];
   const matCount = (subgoal.checklistRefs || []).length;
   const ownDue = stripDuePrefix(subgoal.dueLabel);
   const showOwnDue = !isDone && ownDue && ownDue !== stripDuePrefix(goalDueLabel);
   return (
     <div className="sk-row sk-gap-3" onClick={onOpen} style={{ cursor: "pointer", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", background: "var(--sk-surface-page)" }}>
       <div className="sk-row sk-gap-2" style={{ flex: 1, minWidth: 0, alignItems: "center" }}>
-        <span title={SUBGOAL_STATUS_LABEL[subgoal.status]} style={{
-          position: "relative", width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: badge.bg, color: badge.fg,
+        <span style={{
+          width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: badge.bg, color: badge.fg,
           border: badge.border, display: "flex", alignItems: "center", justifyContent: "center", font: "var(--sk-label-4)",
         }}>
           {index + 1}
-          {OverlayIcon && (
-            <span style={{
-              position: "absolute", bottom: -3, right: -3, width: 13, height: 13, borderRadius: "50%",
-              background: "var(--sk-surface-page)", display: "flex", alignItems: "center", justifyContent: "center",
-            }}><OverlayIcon size={9} color={badge.bg} /></span>
-          )}
         </span>
         <div className="sk-col sk-gap-1" style={{ minWidth: 0 }}>
           <div className="sk-label-3-regular" style={{ color: isDone ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{subgoal.title || "Без названия"}</div>
@@ -586,6 +589,11 @@ function ManagerSubgoalRow({ subgoal, index, goalDueLabel, plan, onOpen, onOpenM
         </div>
       </div>
       <div className="sk-row sk-gap-2" style={{ flexShrink: 0, alignItems: "center" }}>
+        {statusIcon && (
+          <span title={SUBGOAL_STATUS_LABEL[subgoal.status]} className="sk-row" style={{ alignItems: "center" }}>
+            <statusIcon.icon size={17} color={statusIcon.color} />
+          </span>
+        )}
         <MaterialsBadge count={matCount} published={plan.goalsPublished} onClick={onOpenMaterials} />
       </div>
     </div>
@@ -679,7 +687,7 @@ function GoalCreateDrawer({ draft, setDraft, onClose, onCreate, onAddSubgoal }) 
           onChange={(date) => setDraft(d => ({ ...d, dueDate: date }))} />
 
         <div className="sk-col sk-gap-2">
-          <div className="sk-label-3">Шаги для достижения{draft.subgoals.length ? " " + draft.subgoals.length : ""}</div>
+          <div className="sk-label-3">Шаги для достижения{draft.subgoals.length ? <span style={{ color: "var(--sk-text-secondary)" }}>{" " + draft.subgoals.length}</span> : ""}</div>
           <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
             Разбейте цель на подцели — конкретные шаги, которые помогут сотруднику её достичь. Можно добавить сейчас или позже, после создания цели.
           </div>
@@ -730,24 +738,18 @@ function GoalDrawer({ goal, plan, editable, onClose, onChange, onAddSubgoal, onO
         )}
 
         <div className="sk-col sk-gap-2">
-          <div className="sk-label-3">Шаги для выполнения {done}/{total}</div>
+          <div className="sk-label-3">Шаги для выполнения <span style={{ color: "var(--sk-text-secondary)" }}>{done}/{total}</span></div>
           {goal.subgoals.map((sg, i) => {
-            const OverlayIcon = SUBGOAL_ICON[sg.status];
-            const badge = NUMBER_BADGE[sg.status] || NUMBER_BADGE.not_started;
+            const badge = NUMBER_BADGE.not_started;
+            const statusIcon = STATUS_ICON[sg.status];
             return (
               <div key={sg.id} className="sk-row sk-gap-3" style={{ justifyContent: "space-between", padding: 10, border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-2)" }}>
                 <div className="sk-row sk-gap-3" style={{ flex: 1, alignItems: "center", cursor: "pointer" }} onClick={() => onOpenSubgoal(sg.id)}>
                   <span style={{
-                    position: "relative", width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: badge.bg, color: badge.fg,
+                    width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: badge.bg, color: badge.fg,
                     border: badge.border, display: "flex", alignItems: "center", justifyContent: "center", font: "var(--sk-label-4)",
                   }}>
                     {i + 1}
-                    {OverlayIcon && (
-                      <span style={{
-                        position: "absolute", bottom: -3, right: -3, width: 13, height: 13, borderRadius: "50%",
-                        background: "var(--sk-surface-page)", display: "flex", alignItems: "center", justifyContent: "center",
-                      }}><OverlayIcon size={9} color={badge.bg} /></span>
-                    )}
                   </span>
                   <div className="sk-col sk-gap-1">
                     <div className="sk-label-4">{sg.title || "Без названия"}</div>
@@ -755,6 +757,11 @@ function GoalDrawer({ goal, plan, editable, onClose, onChange, onAddSubgoal, onO
                   </div>
                 </div>
                 <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+                  {statusIcon && (
+                    <span title={SUBGOAL_STATUS_LABEL[sg.status]} className="sk-row" style={{ alignItems: "center" }}>
+                      <statusIcon.icon size={17} color={statusIcon.color} />
+                    </span>
+                  )}
                   <MaterialsBadge count={(sg.checklistRefs || []).length} published={plan.goalsPublished} onClick={() => onOpenMaterials(sg.id)} />
                   {editable && <button className="sk-link-btn" onClick={() => onDeleteSubgoal(sg.id)}><IconTrash size={15} color="var(--sk-icon-secondary)" /></button>}
                 </div>
@@ -979,7 +986,7 @@ function AssessmentHintTooltip({ hint }) {
 // визуальный паттерн подчёркнутого заголовка, что раньше был "зашит" прямо в CommentsPanel. ----------------
 function DrawerTabs({ items, active, onChange }) {
   return (
-    <div className="sk-row sk-gap-4" style={{ borderBottom: "1px solid var(--sk-stroke)" }}>
+    <div className="sk-row sk-gap-4" style={{ borderBottom: "1px solid var(--sk-stroke)", marginTop: 8 }}>
       {items.map(it => (
         <div key={it.id} className="sk-clickable" onClick={() => onChange(it.id)}
           style={{ paddingBottom: 10, borderBottom: "2px solid " + (active === it.id ? "var(--sk-text-primary)" : "transparent") }}>
@@ -1224,10 +1231,10 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
               <CollapsibleSection title="Оценочный лист" defaultOpen={false}>
                 <div className="sk-col sk-gap-2">
                   <div className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
-                    <span className="sk-label-4" style={{ color: "var(--sk-text-primary)" }}>{subgoal.assessmentChecklist.title}</span>
+                    <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{assessmentTemplateName(subgoal.assessmentChecklist.title)}</span>
                     <AssessmentHintTooltip hint={subgoal.assessmentChecklist.hint} />
                   </div>
-                  <div className="sk-col sk-gap-1" style={{ padding: 12, background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-3)" }}>
+                  <div className="sk-col sk-gap-1" style={{ padding: "10px 14px", background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)", borderLeft: "3px solid var(--sk-accent)", borderRadius: "var(--sk-radius-3)" }}>
                     {(subgoal.assessmentChecklist.criteria || []).map(c => (
                       <div key={c.id} className="sk-row sk-gap-2" style={{ alignItems: "flex-start", padding: "4px 0" }}>
                         <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--sk-icon-secondary)", marginTop: 8, flexShrink: 0 }} />
@@ -1241,7 +1248,7 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
           </React.Fragment>
         )}
 
-        <CollapsibleSection title={"Полезные материалы" + (links.length ? " " + links.length : "")} defaultOpen={false}>
+        <CollapsibleSection title={<span>Полезные материалы{links.length ? <span style={{ color: "var(--sk-text-secondary)" }}>{" " + links.length}</span> : ""}</span>} defaultOpen={false}>
           <div className="sk-col sk-gap-2" style={{ padding: 12, background: "var(--sk-accent-secondary)", borderRadius: "var(--sk-radius-3)" }}>
             {!links.length && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Добавьте вспомогательные материалы для выполнения этого шага</div>}
             {links.map(({ item, stage }) => (
@@ -1338,21 +1345,21 @@ function ManagerStageBlock({ stage, index, onOpenItem, onAdd }) {
       <div className={locked ? "sk-row" : "sk-row sk-clickable"} onClick={() => !locked && setOpen(o => !o)}
         style={{
           justifyContent: "space-between", padding: "10px 12px",
-          background: completed ? "var(--sk-positive-secondary)" : current ? "var(--sk-accent-secondary)" : "var(--sk-surface-secondary)",
+          background: "var(--sk-surface-secondary)",
         }}>
         <div className="sk-row sk-gap-3">
           <span style={{
             width: 22, height: 22, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-            background: completed ? "var(--sk-positive)" : current ? "var(--sk-accent)" : "var(--sk-surface-page)",
-            color: completed || current ? "var(--sk-text-contrast)" : "var(--sk-text-tertiary)",
-            border: locked ? "1.5px solid var(--sk-stroke)" : "none", font: "var(--sk-label-4)",
-          }}>{completed ? <IconCheck size={12} /> : locked ? <IconLock size={11} /> : index}</span>
-          <span className="sk-label-3" style={{ color: completed ? "var(--sk-text-positive)" : current ? "var(--sk-text-accent)" : "var(--sk-text-secondary)" }}>{stage.title}</span>
+            background: "transparent", color: "var(--sk-text-tertiary)",
+            border: "1.5px solid var(--sk-stroke)", font: "var(--sk-label-4)",
+          }}>{locked ? <IconLock size={11} /> : index}</span>
+          <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{stage.title}</span>
         </div>
         <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-          {completed && <span className="sk-label-4" style={{ color: "var(--sk-text-positive)" }}>Завершён</span>}
-          {current && stage.dueLabel && <span className="sk-label-4" style={{ color: "var(--sk-text-accent)" }}>{stage.dueLabel}</span>}
+          {current && stage.dueLabel && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{stage.dueLabel}</span>}
           {locked && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{stage.dueLabel}</span>}
+          {completed && <IconCheck size={16} color="var(--sk-positive)" />}
+          {current && <IconClock size={16} color="var(--sk-accent)" />}
           {!locked && (open ? <IconChevronUp size={16} color="var(--sk-icon-secondary)" /> : <IconChevronDown size={16} color="var(--sk-icon-secondary)" />)}
         </div>
       </div>
@@ -1696,7 +1703,7 @@ function RightPanel({ member, plan, overallPct, onOpenCheckpoint, showCheckpoint
       {showCheckpoints && checkpoints.length > 0 && (
         <Card bordered>
           <div className="sk-col sk-gap-3">
-            <div className="sk-label-3">Контрольные точки · {checkpoints.filter(c => c.status === "done").length} из {checkpoints.length}</div>
+            <div className="sk-label-3">Контрольные точки <span style={{ color: "var(--sk-text-secondary)" }}>· {checkpoints.filter(c => c.status === "done").length} из {checkpoints.length}</span></div>
             <div className="sk-col sk-gap-2">
               {checkpoints.map((cp, i) => {
                 const isDone = cp.status === "done";
