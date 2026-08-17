@@ -412,14 +412,16 @@ const ASSESSMENT_DECISION_HUE = { done: "positive", returned: "warning", not_don
 
 // Критерии шаблона — только просмотр, ничего не отмечено (сотрудник не проставляет ответы,
 // это делает проверяющий). Отдельно от AssessmentHistoryCriteria, которая показывает уже
-// проставленные Да/Нет конкретного раунда оценки.
+// проставленные Да/Нет конкретного раунда оценки. Невыбранный disabled-чекбокс вместо точки-
+// буллита читается понятнее ("это будут отмечать") и текст целиком серый — сразу видно, что
+// это шаблон для справки, а не то, что можно как-то отметить самому.
 function AssessmentCriteriaPreview({ criteria }) {
   return (
     <div className="sk-col sk-gap-1">
       {(criteria || []).map((c) => (
         <div key={c.id} className="sk-row sk-gap-2" style={{ alignItems: "flex-start", padding: "4px 0" }}>
-          <span style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--sk-icon-secondary)", marginTop: 8, flexShrink: 0 }} />
-          <span className="sk-label-4-regular">{c.label}</span>
+          <Checkbox checked={false} disabled />
+          <span className="sk-label-4-regular" style={{ color: "var(--sk-text-secondary)" }}>{c.label}</span>
         </div>
       ))}
     </div>
@@ -715,15 +717,21 @@ function CheckpointModal({ checkpoint, onClose, onSubmitSurvey }) {
           )}
         </div>
 
-        <div className="sk-row sk-gap-3" style={{ padding: 14, background: done ? "var(--sk-positive-secondary)" : "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-3)", alignItems: "flex-start" }}>
-          <span style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sk-surface-page)" }}>
-            {done ? <IconCheck size={16} color="var(--sk-icon-positive)" /> : <IconClock size={16} color="var(--sk-icon-secondary)" />}
-          </span>
-          <div className="sk-col sk-gap-1">
-            <div className="sk-label-3">Обратная связь по итогам</div>
-            <div className={done ? "sk-label-3-regular" : "sk-muted"} style={{ font: "var(--sk-label-4-regular)" }}>{done ? checkpoint.employeeSummary : "Ожидает заполнения проверяющим"}</div>
+        {/* Пока КТ не завершена, отдельная плашка "Ожидает заполнения проверяющим" не нужна —
+            и так понятно, что итоги появятся после встречи (см. аналогичное решение для
+            CheckpointStatusBanner в ManagerCheckpointDrawer). Блок показываем только когда
+            есть реальный текст обратной связи. */}
+        {done && (
+          <div className="sk-row sk-gap-3" style={{ padding: 14, background: "var(--sk-positive-secondary)", borderRadius: "var(--sk-radius-3)", alignItems: "flex-start" }}>
+            <span style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sk-surface-page)" }}>
+              <IconCheck size={16} color="var(--sk-icon-positive)" />
+            </span>
+            <div className="sk-col sk-gap-1">
+              <div className="sk-label-3">Обратная связь по итогам</div>
+              <div className="sk-label-3-regular" style={{ font: "var(--sk-label-4-regular)" }}>{checkpoint.employeeSummary}</div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </Modal>
   );
