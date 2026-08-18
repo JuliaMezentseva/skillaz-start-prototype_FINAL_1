@@ -965,8 +965,8 @@ function AiBubble({ from, text, results, confirm, thinking, onSend }) {
                     <AiResultCardBody r={r} />
                     <div className="sk-row sk-gap-2" style={{ marginTop: 10 }}>
                       {r.actions.map((a, i) => (
-                        <Button key={i} size="s" mode={a.kind === "apply" || a.kind === "query" ? "primary" : "secondary"}
-                          variant={a.kind === "apply" || a.kind === "query" ? "accent" : undefined}
+                        <Button key={i} size="s" mode={a.kind === "apply" ? "primary" : "secondary"}
+                          variant={a.kind === "apply" ? "accent" : undefined}
                           onClick={() => {
                             if (a.kind === "apply") onSend("__apply:" + a.vacancyId);
                             else if (a.kind === "query") onSend(a.query);
