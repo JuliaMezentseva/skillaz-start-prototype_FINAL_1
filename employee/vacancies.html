@@ -141,7 +141,7 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
             ) : (
               <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>По договорённости</div>
             )}
-            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{vacancy.postedDate}</span>
+            <Tag size="s" hue="gray">{vacancy.postedDate}</Tag>
           </div>
         </div>
       </Card>
