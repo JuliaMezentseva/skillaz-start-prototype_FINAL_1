@@ -2353,21 +2353,19 @@ function ReviewDecisionModal({ member, plan, goalsDoneCount, goalsTotal, goalsPc
   if (!verdict) {
     return (
       <Modal open title="Итоговое решение по плану" onClose={onClose} size="m"
+        primary={<Button variant="positive" onClick={() => setVerdict("done")}>Завершить успешно</Button>}
         secondary={
+          <React.Fragment>
+            <Button mode="secondary" variant="gray" onClick={() => setVerdict("returned")}>Вернуть в работу</Button>
+            <Button variant="negative" mode="secondary" onClick={() => setVerdict("failed")}>Завершить неуспешно</Button>
+          </React.Fragment>
+        }>
+        <div className="sk-col sk-gap-4">
+          <Alert hue="neutral" style={{ background: "var(--sk-surface-secondary)" }}>{REVIEW_INSTRUCTION}</Alert>
           <div className="sk-row sk-gap-3" style={{ flexWrap: "wrap" }}>
             <ReviewStat label="Цели" value={goalsDoneCount + " из " + goalsTotal + " (" + goalsPct + "%)"} />
             <ReviewStat label="Базовые действия" value={checklistPct + "%"} />
             {cpTotal > 0 && <ReviewStat label="Контрольные точки" value={cpDoneCount + " из " + cpTotal} />}
-          </div>
-        }>
-        <div className="sk-col sk-gap-4">
-          <Alert hue="neutral" style={{ background: "var(--sk-surface-secondary)" }}>{REVIEW_INSTRUCTION}</Alert>
-          <div className="sk-col sk-gap-2">
-            <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
-              <Button variant="positive" onClick={() => setVerdict("done")}>Завершить успешно</Button>
-              <Button variant="negative" mode="secondary" onClick={() => setVerdict("failed")}>Завершить неуспешно</Button>
-              <Button mode="secondary" variant="gray" onClick={() => setVerdict("returned")}>Вернуть в работу</Button>
-            </div>
           </div>
         </div>
       </Modal>
