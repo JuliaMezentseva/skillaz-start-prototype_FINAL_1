@@ -1888,7 +1888,7 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
     : (isReview && !needsAssessment) ? (
       <div className="sk-row sk-gap-1">
         <Button size="s" variant="positive" onClick={() => setPendingAction("done")}>Шаг выполнен</Button>
-        <Button size="s" variant="negative" onClick={() => setPendingAction("not_done")}>Шаг не выполнен</Button>
+        <Button size="s" variant="negative" mode="secondary" onClick={() => setPendingAction("not_done")}>Шаг не выполнен</Button>
         <Button size="s" variant="gray" onClick={onReturn}>На доработку</Button>
       </div>
     )
