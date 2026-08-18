@@ -111,7 +111,7 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
             <div className="sk-col sk-gap-3" style={{ flex: 1, minWidth: 0 }}>
               <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                 <span style={{ opacity: hasResponse ? 0.55 : 1 }}>
-                  <Tag size="s" hue="accent">{vacancy.direction}</Tag>
+                  <Tag size="s" hue="neutral">{vacancy.direction}</Tag>
                 </span>
                 {hasResponse
                   ? <Tag size="s" hue="positive" icon={<IconThumbUp size={13} />}>Уже откликнулись</Tag>
