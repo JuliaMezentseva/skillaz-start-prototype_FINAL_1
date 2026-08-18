@@ -93,8 +93,8 @@ const MAX_TAB_NOTE = "Цели сотрудника на адаптацию. О�
 // обычной подсказки про вкладку показывает, что план ждёт решения, и даёт кнопку сразу
 // здесь же, в начале страницы (см. отзыв: раньше кнопка была только в RightPanel, и до неё
 // нужно было доскроллить).
-const REVIEW_MIN_NOTE = "План на финальном ревью — срок истёк. Ниже базовые действия, которые сотрудник выполнил за время адаптации.";
-const REVIEW_MAX_NOTE = "План на финальном ревью — срок истёк, все цели закрыты. Проверьте результат в текущем состоянии и примите решение по плану.";
+const REVIEW_MIN_NOTE = "План на финальном ревью — срок истёк. Ниже базовые действия, которые выполнил сотрудник.";
+const REVIEW_MAX_NOTE = "План на финальном ревью — срок истёк. Раскройте цели и шаги ниже, чтобы посмотреть детали.";
 const CP_YELLOW = "var(--yellow-yellow-85)";
 const CP_YELLOW_BG = "var(--yellow-yellow-96)";
 const CP_YELLOW_BORDER = "var(--yellow-yellow-80)";
@@ -1841,8 +1841,11 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
   // назначен другой — например, помощник). "Отметить не выполненной" остаётся у руководителя
   // в любом случае, это его отдельное право по ТЗ, не завязанное на роль проверяющего.
   const isDefaultReviewer = !subgoal.reviewer || subgoal.reviewer === D.manager.name;
-  const isReview = plan.employeeStarted && subgoal.status === "pending_review" && isDefaultReviewer;
-  const canMarkNotDone = plan.employeeStarted && subgoal.status === "pending_review";
+  // На финальном ревью плана (plan.status === "on_review") шаги не редактируются —
+  // решения по отдельным шагам заморожены, руководитель принимает одно решение по плану
+  // целиком (см. ReviewDecisionModal), даже если какой-то шаг формально ещё "на проверке".
+  const isReview = plan.employeeStarted && plan.status !== "on_review" && subgoal.status === "pending_review" && isDefaultReviewer;
+  const canMarkNotDone = plan.employeeStarted && plan.status !== "on_review" && subgoal.status === "pending_review";
   const links = (subgoal.checklistRefs || []).map(id => findChecklistItem(plan, id)).filter(Boolean);
   // Оценочный лист — если он есть у подцели, решение (подтвердить/вернуть/не выполнена)
   // принимается только через него: сначала заполняем критерии, затем сразу решение —
@@ -2321,7 +2324,7 @@ function ManagerCheckpointDrawer({ checkpoint, viewerName, employee, canEdit, is
 // адаптации"/"Базовые действия", карточка контрольных точек в RightPanel) — они уже
 // доступны для просмотра в режиме "только чтение", т.к. план опубликован и запущен
 // (goalsPublished/employeeStarted = true). Здесь — только сводные цифры и вердикт.
-const REVIEW_INSTRUCTION = "На ревью цели и подцели не редактируются — примите решение по плану в его текущем состоянии. Если статусы целей или подцелей не отражают фактический результат, верните план в работу: сотрудник и проверяющие актуализируют подцели, после чего план снова уйдёт на ревью. Доступны три решения: завершить успешно, завершить неуспешно или вернуть в работу — с обязательным комментарием и новым сроком.";
+const REVIEW_INSTRUCTION = "Изучите в плане, как сотрудник выполнял цели. Если статусы не отражают фактический результат — верните план в работу сотруднику или завершите его неуспешно.";
 const REVIEW_VERDICT_COPY = {
   done: { title: "Завершить план успешно?", confirmLabel: "Завершить успешно", variant: "positive", mode: "primary" },
   failed: { title: "Завершить план неуспешно?", confirmLabel: "Завершить неуспешно", variant: "negative", mode: "primary" },
@@ -2350,16 +2353,13 @@ function ReviewDecisionModal({ member, plan, goalsDoneCount, goalsTotal, goalsPc
   if (!verdict) {
     return (
       <Modal open title="Итоговое ревью плана" onClose={onClose} size="m"
-        secondary={<Button mode="secondary" onClick={onClose}>Закрыть</Button>}>
+        secondary={<Button mode="secondary" onClick={onClose}>К плану</Button>}>
         <div className="sk-col sk-gap-4">
           <Alert hue="neutral" style={{ background: "var(--sk-surface-secondary)" }}>{REVIEW_INSTRUCTION}</Alert>
           <div className="sk-row sk-gap-3" style={{ flexWrap: "wrap" }}>
             <ReviewStat label="Цели" value={goalsDoneCount + " из " + goalsTotal + " (" + goalsPct + "%)"} />
             <ReviewStat label="Базовые действия" value={checklistPct + "%"} />
             {cpTotal > 0 && <ReviewStat label="Контрольные точки" value={cpDoneCount + " из " + cpTotal} />}
-          </div>
-          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-            Отдельные цели, подцели, контрольные точки и элементы базового плана можно посмотреть прямо на странице плана — закройте окно и раскройте нужный блок.
           </div>
           <Divider />
           <div className="sk-col sk-gap-2">

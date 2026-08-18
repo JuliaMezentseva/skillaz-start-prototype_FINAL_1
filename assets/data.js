@@ -1930,7 +1930,9 @@ window.SITE_DATA = {
   // "Сотрудник", мутировать его нельзя. Срок плана истёк, все цели и подцели, этапы
   // базового плана и контрольные точки выполнены — руководителю остаётся принять решение
   // (см. manager/plan.html, ReviewDecisionModal): завершить успешно/неуспешно или
-  // вернуть в работу.
+  // вернуть в работу. На всякий случай статус "pending_review" всё равно нормализуем —
+  // на финальном ревью шаги не редактируются (см. SubgoalDrawer: isReview/canMarkNotDone
+  // дополнительно закрыты условием plan.status !== "on_review").
   const finalReviewPlan = JSON.parse(JSON.stringify(window.SITE_DATA.plans.onboarding));
   finalReviewPlan.id = "finalReview";
   finalReviewPlan.status = "on_review";
