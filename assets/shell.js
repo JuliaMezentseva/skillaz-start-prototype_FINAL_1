@@ -6,7 +6,7 @@
 (function () {
 const {
   Header, SkillazLogo, Badge, Tag, Avatar, Divider, Menu, Snackbar, IconButton, SegmentedControl,
-  Input, SkOverlayHeader,
+  Input, SkOverlayHeader, Button,
 } = window.SkillazCoreDesignSystem_bf9566;
 
 // ---------------- Иконки (в наборе ДС нет экспортируемых svg-икон отдельным
@@ -436,25 +436,25 @@ function aiPluralRu(n, one, few, many) {
 function aiHrPlansIntent(queryRaw) {
   const D = window.SITE_DATA;
   const q = queryRaw.toLowerCase();
-  let test, reasonOf, label;
+  let test, extraOf, label;
   if (q.indexOf("риск") !== -1) {
     test = (p) => p.risks.length > 0;
-    reasonOf = (p) => p.risks;
+    extraOf = (p) => ({ risks: p.risks });
     label = "с риском";
   } else if (q.indexOf("цел") !== -1 && (q.indexOf("без") !== -1 || q.indexOf("не опубликова") !== -1)) {
     test = (p) => !p.goalsPublished;
-    reasonOf = () => ["Цели ещё не опубликованы"];
+    extraOf = () => ({ action: "Опубликовать цели" });
     label = "без опубликованных целей";
   } else if (q.indexOf("просроч") !== -1 || q.indexOf("контрольн") !== -1) {
     test = (p) => p.overdueCheckpoint;
-    reasonOf = () => ["Просрочена контрольная точка"];
+    extraOf = () => ({ action: "Провести просроченную контрольную точку" });
     label = "с просроченной контрольной точкой";
   } else {
     return null;
   }
   const results = D.hrAssignedPlans.filter(test).map((p) => ({
     id: p.id, title: p.name, subtitle: p.planTitle + " · " + p.department,
-    reasons: reasonOf(p), href: "plan-detail.html?id=" + p.id,
+    href: "plan-detail.html?id=" + p.id, openLabel: "Открыть план", ...extraOf(p),
   }));
   return {
     text: results.length
@@ -468,31 +468,32 @@ function aiHrPlansIntent(queryRaw) {
 function aiManagerTeamIntent(queryRaw) {
   const D = window.SITE_DATA;
   const q = queryRaw.toLowerCase();
-  let test, reasonOf, label;
+  let test, extraOf, label;
   if (q.indexOf("риск") !== -1) {
     test = (m) => m.risks.length > 0;
-    reasonOf = (m) => m.risks;
+    extraOf = (m) => ({ risks: m.risks });
     label = "с риском по адаптации";
   } else if (q.indexOf("не начал") !== -1) {
     test = (m) => m.status === "not_started";
-    reasonOf = () => ["План ещё не начат"];
+    extraOf = () => ({ action: "Ничего не требуется — просто ещё не начат" });
     label = "которые ещё не начали план";
   } else if (q.indexOf("вниман") !== -1 || q.indexOf("действ") !== -1 || q.indexOf("нужно") !== -1) {
     test = (m) => m.risks.length > 0 || !!m.action;
-    reasonOf = (m) => m.risks.length > 0
-      ? m.risks
-      : [m.action.label + (m.action.due ? " до " + m.action.due : "")];
+    extraOf = (m) => ({
+      action: m.action ? m.action.label + (m.action.due && m.action.due !== "—" ? " до " + m.action.due : "") : null,
+      risks: m.risks.length ? m.risks : null,
+    });
     label = "которым нужно внимание";
   } else {
     return null;
   }
   const results = D.team.filter(test).map((m) => ({
     id: m.id, title: m.name, subtitle: m.position + " · " + m.department,
-    reasons: reasonOf(m), href: "plan.html?employee=" + m.id,
+    href: "plan.html?employee=" + m.id, openLabel: "Открыть план сотрудника", ...extraOf(m),
   }));
   return {
     text: results.length
-      ? "Нашёл " + results.length + " " + aiPluralRu(results.length, "сотрудника", "сотрудников", "сотрудников") + " " + label + " — вот что именно происходит по каждому:"
+      ? "Нашёл " + results.length + " " + aiPluralRu(results.length, "сотрудника", "сотрудников", "сотрудников") + " " + label + " — вот что нужно сделать по каждому:"
       : "Сейчас таких сотрудников нет.",
     results,
   };
@@ -533,6 +534,24 @@ function aiVacancyMatchScore(v, person) {
   return Math.max(30, Math.min(96, score));
 }
 
+// Короткие человеко-читаемые причины совпадения — те же факторы, что и в
+// aiVacancyMatchScore, только словами, плюс ключевые навыки вакансии для
+// понимания "чем" она подходит (в профиле сотрудника нет своих навыков,
+// поэтому сравниваем с тем, что реально есть — подразделением/городом/опытом).
+function aiVacancyMatchReasons(v, person) {
+  const lines = [];
+  if (v.department === person.department) lines.push("Совпадает подразделение — это внутренний переход");
+  if (v.city === person.city) lines.push("Город совпадает с вашим");
+  else if (v.format === "Удалённо") lines.push("Формат удалённый — город не важен");
+  const tenureMonths = parseInt(person.tenure, 10) || 0;
+  if (tenureMonths < 12) {
+    if (v.experience === "Без опыта" || v.experience === "От 1 года") lines.push("Требования по опыту подходят новичку");
+    else if (v.experience === "От 5 лет") lines.push("Опыта в требованиях больше, чем ваш стаж (" + person.tenure + ")");
+  }
+  lines.push("Ключевые навыки: " + v.requiredSkills.slice(0, 3).join(", "));
+  return lines;
+}
+
 // ---------------- Разбор запросов: Сотрудник / витрина вакансий ----------------
 function aiEmployeeVacanciesMatchIntent() {
   const D = window.SITE_DATA;
@@ -540,13 +559,34 @@ function aiEmployeeVacanciesMatchIntent() {
   const scored = pool.map((v) => ({ v, pct: aiVacancyMatchScore(v, D.person) })).sort((a, b) => b.pct - a.pct).slice(0, 5);
   const results = scored.map(({ v, pct }) => ({
     id: v.id, title: v.title, subtitle: v.city + " · " + v.department,
-    reasons: [aiVacancySalaryLine(v)], matchPct: pct, href: "vacancy.html?id=" + v.id,
+    reasons: aiVacancyMatchReasons(v, D.person).concat([aiVacancySalaryLine(v)]), matchPct: pct,
+    actions: [
+      { kind: "link", label: "Открыть", href: "vacancy.html?id=" + v.id },
+      { kind: "apply", label: "Откликнуться", vacancyId: v.id },
+    ],
   }));
   return { text: "Оценил открытые вакансии по подразделению, городу и опыту — вот что подходит лучше всего:", results };
 }
 function aiEmployeeVacanciesIntent(queryRaw) {
   const D = window.SITE_DATA;
-  const q = queryRaw.toLowerCase().trim();
+  const raw = (queryRaw || "").trim();
+  if (raw.indexOf("__applyConfirm:") === 0) {
+    const vacancy = D.vacancies.find((v) => v.id === raw.slice("__applyConfirm:".length));
+    if (!vacancy) return { text: "Не нашёл эту вакансию.", results: [] };
+    return { text: "Открываю форму отклика на «" + vacancy.title + "» с черновиком письма…", results: [], action: "navigateApply", actionPayload: vacancy.id };
+  }
+  if (raw.indexOf("__apply:") === 0) {
+    const vacancy = D.vacancies.find((v) => v.id === raw.slice("__apply:".length));
+    if (!vacancy) return { text: "Не нашёл эту вакансию.", results: [] };
+    const blocked = aiVacancyApplyGuard(vacancy);
+    if (blocked) return { text: blocked, results: [] };
+    return {
+      text: "Помочь заполнить отклик на «" + vacancy.title + "»? Вам останется его проверить перед отправкой.",
+      results: [],
+      confirm: { yesLabel: "Да, заполни", yesQuery: "__applyConfirm:" + vacancy.id },
+    };
+  }
+  const q = raw.toLowerCase();
   if (!q) return null;
   if (q.indexOf("подходящ") !== -1 || q.indexOf("мне подойд") !== -1 || q.indexOf("меня подойд") !== -1) {
     return aiEmployeeVacanciesMatchIntent();
@@ -575,7 +615,7 @@ function aiEmployeeVacanciesIntent(queryRaw) {
   }
   const results = matched.map((v) => ({
     id: v.id, title: v.title, subtitle: v.city + " · " + v.department,
-    reasons: [aiVacancySalaryLine(v)], href: "vacancy.html?id=" + v.id,
+    reasons: [aiVacancySalaryLine(v)], href: "vacancy.html?id=" + v.id, openLabel: "Открыть вакансию",
   }));
   return {
     text: results.length
@@ -624,16 +664,19 @@ function aiVacancyLetterDraft(vacancy) {
     : "Хочу попробовать себя в новом направлении — уверен" + g + ", что быстро войду в контекст.";
   return "Здравствуйте! Меня заинтересовала позиция «" + vacancy.title + "». Сейчас работаю на позиции «" + p.position + "» в подразделении «" + p.department + "», стаж в компании — " + p.tenure + ". " + reasonLine + " Буду рад" + g + " обсудить детали.";
 }
-function aiEmployeeVacancyResponseIntent() {
+// Общая проверка для обоих входов в сценарий отклика (карточка вакансии и
+// кнопка "Откликнуться" прямо в карточке результата на витрине).
+function aiVacancyApplyGuard(vacancy) {
   const D = window.SITE_DATA;
-  const vacancy = aiCurrentVacancy();
-  if (vacancy.status === "closed") {
-    return { text: "Вакансия «" + vacancy.title + "» уже закрыта — отклик отправить нельзя.", results: [] };
-  }
+  if (vacancy.status === "closed") return "Вакансия «" + vacancy.title + "» уже закрыта — отклик отправить нельзя.";
   const already = D.myResponses.find((r) => r.vacancyId === vacancy.id);
-  if (already) {
-    return { text: "Вы уже откликались на «" + vacancy.title + "» — повторный отклик не нужен, статус можно посмотреть в разделе «Мои отклики».", results: [] };
-  }
+  if (already) return "Вы уже откликались на «" + vacancy.title + "» — повторный отклик не нужен, статус можно посмотреть в разделе «Мои отклики».";
+  return null;
+}
+function aiEmployeeVacancyResponseIntent() {
+  const vacancy = aiCurrentVacancy();
+  const blocked = aiVacancyApplyGuard(vacancy);
+  if (blocked) return { text: blocked, results: [] };
   const letter = aiVacancyLetterDraft(vacancy);
   return {
     text: "Подставляю ваши данные из профиля и черновик мотивационного письма:\n\n«" + letter + "»\n\nОткрываю форму отклика — проверьте, прикрепите резюме и отправьте сами.",
@@ -683,9 +726,64 @@ const AI_FALLBACK_LINKS = {
   manager: { label: "Моя команда", href: "manager/team.html" },
   employee: { label: "Витрина вакансий", href: "employee/vacancies.html" },
 };
-const AI_GREETING = "Вижу вашу роль и что происходит на странице — подскажу по вопросам или помогу выполнить действия за вас. Что сделать?";
+const AI_GREETING = "Вижу что происходит на странице — подскажу, помогу с навигацией или выполню действия за вас. С чем помочь?";
 
-function AiBubble({ from, text, results, thinking }) {
+function AiResultCardBody({ r }) {
+  return (
+    <React.Fragment>
+      <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{r.title}</div>
+        {typeof r.matchPct === "number" && (
+          <span style={{
+            flexShrink: 0, display: "inline-flex", alignItems: "center", height: 20, padding: "0 8px",
+            borderRadius: "var(--sk-radius-full)", background: "var(--sk-special-secondary)",
+            color: "var(--sk-icon-special)", font: "var(--sk-label-4)",
+          }}>Подходит на {r.matchPct}%</span>
+        )}
+      </div>
+      <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 2 }}>{r.subtitle}</div>
+      {r.action && (
+        <div className="sk-row sk-gap-1" style={{
+          marginTop: 6, alignItems: "flex-start", padding: "6px 8px",
+          borderRadius: "var(--sk-radius-2)", background: "var(--sk-accent-secondary)",
+        }}>
+          <IconTarget size={13} color="var(--sk-icon-accent)" style={{ flexShrink: 0, marginTop: 1 }} />
+          <span style={{ font: "var(--sk-label-4)", color: "var(--sk-text-primary)" }}>{r.action}</span>
+        </div>
+      )}
+      {r.risks && r.risks.length > 0 && (
+        <div style={{ marginTop: 6, padding: "8px 10px", borderRadius: "var(--sk-radius-2)", background: "var(--sk-negative-secondary)" }}>
+          <div className="sk-row sk-gap-1" style={{ alignItems: "center", marginBottom: 4 }}>
+            <IconAlertCircle size={13} color="var(--sk-icon-negative)" />
+            <span style={{ font: "var(--sk-label-4)", color: "var(--sk-text-negative)" }}>Риски</span>
+          </div>
+          <div className="sk-col sk-gap-1">
+            {r.risks.map((line, i) => (
+              <div key={i} style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-negative)" }}>• {line}</div>
+            ))}
+          </div>
+        </div>
+      )}
+      {r.reasons && r.reasons.length > 0 && (
+        <div className="sk-col sk-gap-1" style={{ marginTop: 4 }}>
+          {r.reasons.map((line, i) => (
+            <div key={i} className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
+              {r.reasons.length > 1 ? "• " + line : line}
+            </div>
+          ))}
+        </div>
+      )}
+      {r.openLabel && !r.actions && (
+        <div className="sk-row sk-gap-1" style={{ marginTop: 8, alignItems: "center" }}>
+          <span style={{ font: "var(--sk-label-4)", color: "var(--sk-text-accent)" }}>{r.openLabel}</span>
+          <IconChevronRight size={13} color="var(--sk-icon-accent)" />
+        </div>
+      )}
+    </React.Fragment>
+  );
+}
+
+function AiBubble({ from, text, results, confirm, thinking, onSend }) {
   const isUser = from === "user";
   const avatar = (
     <span style={{
@@ -714,35 +812,41 @@ function AiBubble({ from, text, results, thinking }) {
         }}>{text}</div>
         {results && results.length > 0 && (
           <div className="sk-col sk-gap-2">
-            {results.map((r) => (
-              <a key={r.id} href={r.href} style={{ textDecoration: "none" }}>
-                <div className="sk-clickable" style={{
-                  border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", padding: "10px 12px",
-                  background: "var(--sk-surface-page)",
-                }}>
-                  <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{r.title}</div>
-                    {typeof r.matchPct === "number" && (
-                      <span style={{
-                        flexShrink: 0, display: "inline-flex", alignItems: "center", height: 20, padding: "0 8px",
-                        borderRadius: "var(--sk-radius-full)", background: "var(--sk-special-secondary)",
-                        color: "var(--sk-icon-special)", font: "var(--sk-label-4)",
-                      }}>{r.matchPct}% совпадение</span>
-                    )}
-                  </div>
-                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 2 }}>{r.subtitle}</div>
-                  {r.reasons && r.reasons.length > 0 && (
-                    <div className="sk-col sk-gap-1" style={{ marginTop: 4 }}>
-                      {r.reasons.map((line, i) => (
-                        <div key={i} className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-                          {r.reasons.length > 1 ? "• " + line : line}
-                        </div>
+            {results.map((r) => {
+              const cardStyle = {
+                border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", padding: "10px 12px",
+                background: "var(--sk-surface-page)",
+                borderLeft: r.risks && r.risks.length > 0 ? "3px solid var(--sk-negative)" : undefined,
+              };
+              if (r.actions && r.actions.length > 0) {
+                return (
+                  <div key={r.id} style={cardStyle}>
+                    <AiResultCardBody r={r} />
+                    <div className="sk-row sk-gap-2" style={{ marginTop: 10 }}>
+                      {r.actions.map((a, i) => (
+                        <Button key={i} size="s" mode={a.kind === "apply" ? "primary" : "secondary"}
+                          variant={a.kind === "apply" ? "accent" : undefined}
+                          onClick={() => a.kind === "apply" ? onSend("__apply:" + a.vacancyId) : (window.location.href = a.href)}>
+                          {a.label}
+                        </Button>
                       ))}
                     </div>
-                  )}
-                </div>
-              </a>
-            ))}
+                  </div>
+                );
+              }
+              return (
+                <a key={r.id} href={r.href} style={{ textDecoration: "none" }}>
+                  <div className="sk-clickable" style={cardStyle}>
+                    <AiResultCardBody r={r} />
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        )}
+        {confirm && (
+          <div className="sk-row sk-gap-2">
+            <Button size="s" variant="accent" onClick={() => onSend(confirm.yesQuery)}>{confirm.yesLabel}</Button>
           </div>
         )}
       </div>
@@ -770,14 +874,18 @@ function AiAssistantWidget({ role }) {
   function send(text) {
     const trimmed = (text || "").trim();
     if (!trimmed || thinking) return;
-    setMessages((m) => [...m, { from: "user", text: trimmed }]);
+    // Синтетические команды ("__apply:vId" от кнопки "Откликнуться" в карточке,
+    // "__applyConfirm:vId" от подтверждения) не показываем как реплику пользователя —
+    // это клик по кнопке, а не текст, который он ввёл.
+    const isSynthetic = trimmed.indexOf("__") === 0;
+    if (!isSynthetic) setMessages((m) => [...m, { from: "user", text: trimmed }]);
     setInput("");
     setThinking(true);
     window.setTimeout(function () {
       const reply = (config && config.resolve && config.resolve(trimmed))
         || { text: "Не нашёл подходящего сценария для этого запроса в демо. Попробуйте один из вариантов выше.", results: [] };
       setThinking(false);
-      setMessages((m) => [...m, { from: "ai", text: reply.text, results: reply.results || [] }]);
+      setMessages((m) => [...m, { from: "ai", text: reply.text, results: reply.results || [], confirm: reply.confirm || null }]);
       if (reply.action === "openAiGoalModal") {
         window.setTimeout(function () {
           if (window.__skAiOpenGoalModal) { window.__skAiOpenGoalModal(); setOpen(false); }
@@ -786,6 +894,11 @@ function AiAssistantWidget({ role }) {
       if (reply.action === "openApplyModal") {
         window.setTimeout(function () {
           if (window.__skAiOpenApplyModal) { window.__skAiOpenApplyModal(reply.actionPayload); setOpen(false); }
+        }, 500);
+      }
+      if (reply.action === "navigateApply") {
+        window.setTimeout(function () {
+          window.location.href = "vacancy.html?id=" + reply.actionPayload + "&aiApply=1";
         }, 500);
       }
     }, 550);
@@ -830,7 +943,7 @@ function AiAssistantWidget({ role }) {
                 ))}
               </div>
             )}
-            {messages.map((m, i) => <AiBubble key={i} from={m.from} text={m.text} results={m.results} />)}
+            {messages.map((m, i) => <AiBubble key={i} from={m.from} text={m.text} results={m.results} confirm={m.confirm} onSend={send} />)}
             {thinking && <AiBubble from="ai" thinking />}
           </div>
           <div style={{ flexShrink: 0, borderTop: "1px solid var(--sk-stroke-divider)", padding: 14 }}>
@@ -855,5 +968,6 @@ window.Site = {
   ROLES, roleHref, AppShell, StatusTag, directionHue,
   Icons: window.SiteIcons,
   personPhoto,
+  AI: { vacancyApplyGuard: aiVacancyApplyGuard, vacancyLetterDraft: aiVacancyLetterDraft },
 };
 })();

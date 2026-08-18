@@ -57,6 +57,19 @@ function Page() {
     return () => { delete window.__skAiOpenApplyModal; };
   }, []);
 
+  // Переход из AI-виджета на витрине вакансий (кнопка "Откликнуться" в карточке
+  // с матчем, после подтверждения "Да, заполни") — сразу открываем форму с
+  // черновиком, без повторного вопроса: подтверждение уже было в чате.
+  React.useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("aiApply") !== "1") return;
+    if (closed || myResponse) {
+      showToast(closed ? "Вакансия уже закрыта — отклик отправить нельзя." : "Вы уже откликались на эту вакансию.");
+      return;
+    }
+    setAiDraftLetter(window.Site.AI.vacancyLetterDraft(vacancy));
+    setModalOpen(true);
+  }, []);
+
   function handleSubmitted() {
     setResponses(rs => [...rs, { vacancyId: vacancy.id, date: "12.03.26", status: "response_received" }]);
     setModalOpen(false);
