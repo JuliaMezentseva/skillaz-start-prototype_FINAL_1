@@ -386,7 +386,7 @@ function Page() {
           {tab === "max" && plan.hasGoals && (
             <React.Fragment>
               <Alert hue={plan.status === "on_review" ? "accent" : "neutral"}
-                actions={plan.status === "on_review" ? <Button size="s" variant="accent" onClick={() => setReviewModal(true)}>Провести итоговое ревью</Button> : undefined}>
+                actions={plan.status === "on_review" ? <Button size="s" variant="accent" onClick={() => setReviewModal(true)}>Провести итоговую проверку</Button> : undefined}>
                 {plan.status === "on_review" ? REVIEW_MAX_NOTE : MAX_TAB_NOTE}
               </Alert>
 
@@ -2503,7 +2503,7 @@ function RightPanel({ member, plan, overallPct, onOpenCheckpoint, showCheckpoint
           <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}><ProgressBar value={overallPct} style={{ flex: 1 }} hue="accent" /><span className="sk-title-5">{overallPct}%</span></div>
           <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{plan.dateStart} – {plan.dateEnd}</div>
           {plan.status === "on_review" && (
-            <Button size="s" variant="accent" onClick={onOpenReview} style={{ alignSelf: "flex-start" }}>Провести итоговое ревью</Button>
+            <Button size="s" variant="accent" onClick={onOpenReview} style={{ alignSelf: "flex-start" }}>Провести итоговую проверку</Button>
           )}
           {plan.reviewResult && (
             <div className="sk-col sk-gap-1" style={{ marginTop: 4 }}>

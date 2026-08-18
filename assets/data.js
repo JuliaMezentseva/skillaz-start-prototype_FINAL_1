@@ -617,7 +617,7 @@ window.SITE_DATA = {
       dateStart: "01.11.25", dateEnd: "10.03.26", daysLeftLabel: "",
       progressPct: 100, progressBasis: "по целям", status: "on_review",
       planId: "finalReview",
-      action: { type: "review", label: "Провести итоговое ревью", due: "10 мар" },
+      action: { type: "review", label: "Провести итоговую проверку", due: "10 мар" },
       helper: "Дмитрий Волков",
       risks: [],
     },
