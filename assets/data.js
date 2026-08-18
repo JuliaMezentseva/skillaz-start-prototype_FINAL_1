@@ -615,7 +615,7 @@ window.SITE_DATA = {
       department: "Департамент продаж",
       planKind: "Адаптация", planTitle: "Адаптация для новичка: менеджер по продажам",
       dateStart: "01.11.25", dateEnd: "10.03.26", daysLeftLabel: "",
-      progressPct: null, progressBasis: "по целям", status: "on_review", // считаем из plans.finalReview, не все цели выполнены
+      progressPct: 100, progressBasis: "по целям", status: "on_review",
       planId: "finalReview",
       action: { type: "review", label: "Провести итоговое ревью", due: "10 мар" },
       helper: "Дмитрий Волков",
@@ -1944,10 +1944,10 @@ window.SITE_DATA = {
     s.dueLabel = "Этап завершён";
     s.items.forEach((it) => { it.done = true; });
   });
-  // Цели намеренно НЕ форсируем в "done" — оставляем естественный микс статусов из
-  // onboarding (g1 выполнена, g2 в работе вперемешку с "не выполнено"/"на проверке"/
-  // "возвращена", g3 не начата). План ушёл на ревью по сроку, а не потому что все цели
-  // закрыты — так демонстрируется сценарий "вернуть в работу"/«неуспешно».
+  finalReviewPlan.goals.forEach((g) => {
+    g.status = "done";
+    g.subgoals.forEach((sg) => { sg.status = "done"; });
+  });
   // В onboarding ни одна контрольная точка ещё не "done" (у Юлии план в процессе) —
   // донаполняем реалистичными ответами/отчётом все три, а не только меняем статус,
   // иначе ReviewDecisionModal и ManagerCheckpointDrawer показывали бы пустые done-точки.
