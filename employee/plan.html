@@ -227,7 +227,7 @@ function GoalRow({ goal, plan, onOpenGoal, onOpenSubgoal, onTakeSubgoal }) {
         <div className="sk-col sk-gap-2" style={{ flex: 1, minWidth: 0 }}>
           <div className="sk-label-2" style={{ color: "var(--sk-text-primary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{goal.title}</div>
           <div className="sk-row sk-gap-2" style={{ alignItems: "center", marginTop: 4 }}>
-            <ProgressBar value={pct} height={7} style={{ width: 160 }} hue="positive" />
+            <ProgressBar value={pct} height={6} style={{ width: 160 }} hue="positive" />
             <span className="sk-label-3">{pct}%</span>
             <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginLeft: 16, whiteSpace: "nowrap" }}>до {stripDuePrefix(goal.dueLabel)}</span>
           </div>
