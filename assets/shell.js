@@ -797,7 +797,7 @@ function aiEmployeePlanIntent(queryRaw) {
   if (q.indexOf("сегодня") !== -1 || q.indexOf("сделать") !== -1) {
     const results = [];
     urgentChecklist.forEach((it) => results.push({
-      id: "item-" + it.id, title: it.title, subtitle: "Базовые действия" + (it.date ? " · " + it.date : ""), action: "Скоро дедлайн",
+      id: "item-" + it.id, title: it.title, subtitle: "Базовые действия" + (it.date ? " · " + it.date : ""), warning: "Скоро дедлайн",
       actions: [{ kind: "query", label: "Открыть", query: "__openItem:" + it.id }],
     }));
     activeSubgoals.forEach((sg) => results.push({
@@ -884,6 +884,15 @@ function AiResultCardBody({ r }) {
           <span style={{ font: "var(--sk-label-4)", color: "var(--sk-text-primary)" }}>{r.action}</span>
         </div>
       )}
+      {r.warning && (
+        <div className="sk-row sk-gap-1" style={{
+          marginTop: 6, alignItems: "flex-start", padding: "6px 8px",
+          borderRadius: "var(--sk-radius-2)", background: "var(--sk-warning-secondary)",
+        }}>
+          <IconClock size={13} color="var(--sk-warning)" style={{ flexShrink: 0, marginTop: 1 }} />
+          <span style={{ font: "var(--sk-label-4)", color: "var(--sk-text-warning-dark)" }}>{r.warning}</span>
+        </div>
+      )}
       {r.risks && r.risks.length > 0 && (
         <div style={{ marginTop: 6, padding: "8px 10px", borderRadius: "var(--sk-radius-2)", background: "var(--sk-negative-secondary)" }}>
           <div className="sk-row sk-gap-1" style={{ alignItems: "center", marginBottom: 4 }}>
@@ -956,8 +965,8 @@ function AiBubble({ from, text, results, confirm, thinking, onSend }) {
                     <AiResultCardBody r={r} />
                     <div className="sk-row sk-gap-2" style={{ marginTop: 10 }}>
                       {r.actions.map((a, i) => (
-                        <Button key={i} size="s" mode={a.kind === "apply" ? "primary" : "secondary"}
-                          variant={a.kind === "apply" ? "accent" : undefined}
+                        <Button key={i} size="s" mode={a.kind === "apply" || a.kind === "query" ? "primary" : "secondary"}
+                          variant={a.kind === "apply" || a.kind === "query" ? "accent" : undefined}
                           onClick={() => {
                             if (a.kind === "apply") onSend("__apply:" + a.vacancyId);
                             else if (a.kind === "query") onSend(a.query);
