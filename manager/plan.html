@@ -2324,7 +2324,7 @@ function ManagerCheckpointDrawer({ checkpoint, viewerName, employee, canEdit, is
 // адаптации"/"Базовые действия", карточка контрольных точек в RightPanel) — они уже
 // доступны для просмотра в режиме "только чтение", т.к. план опубликован и запущен
 // (goalsPublished/employeeStarted = true). Здесь — только сводные цифры и вердикт.
-const REVIEW_INSTRUCTION = "Изучите в плане, как сотрудник выполнял цели. Если статусы не отражают фактический результат — верните план в работу сотруднику или завершите его неуспешно.";
+const REVIEW_INSTRUCTION = "Изучите в плане, как сотрудник выполнял цели. Если статусы не отражают фактический результат — верните план в работу с комментарием или завершите его неуспешно.";
 const REVIEW_VERDICT_COPY = {
   done: { title: "Завершить план успешно?", confirmLabel: "Завершить успешно", variant: "positive", mode: "primary" },
   failed: { title: "Завершить план неуспешно?", confirmLabel: "Завершить неуспешно", variant: "negative", mode: "primary" },
