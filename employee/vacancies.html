@@ -106,7 +106,7 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
           cursor: "pointer", height: "100%",
           boxShadow: hovered ? "inset 0 0 0 1.5px var(--sk-stroke-accent)" : "inset 0 0 0 1px var(--sk-stroke)",
         }}>
-        <div className="sk-row sk-gap-3" style={{ height: "100%", alignItems: "flex-start" }}>
+        <div className="sk-row sk-gap-2" style={{ height: "100%", alignItems: "flex-start" }}>
           <div className="sk-col sk-gap-3" style={{ flex: 1, minWidth: 0, height: "100%" }}>
             <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
               <span style={{ opacity: hasResponse ? 0.55 : 1 }}>
@@ -125,20 +125,20 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
               </div>
             </div>
 
-            <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", opacity: hasResponse ? 0.55 : 1 }}>
+            <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", rowGap: 4, opacity: hasResponse ? 0.55 : 1 }}>
               {vacancy.salaryFrom && vacancy.salaryTo ? (
                 <div className="sk-label-3-regular">{fmtMoney(vacancy.salaryFrom)} – {fmtMoney(vacancy.salaryTo)} ₽</div>
               ) : (
                 <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>По договорённости</div>
               )}
-              <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{vacancy.postedDate}</span>
+              <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{vacancy.postedDate}</span>
             </div>
           </div>
 
           {matchPercent != null && (
-            <div className="sk-col" style={{ alignItems: "center", width: 60, flexShrink: 0, gap: 2 }}>
-              <ProgressCircle value={matchPercent} size={40} thickness={3} hue="positive" />
-              <span className="sk-muted" style={{ font: "500 10px/13px var(--sk-font-ui)", textAlign: "center" }}>Вам подходит</span>
+            <div className="sk-col" style={{ alignItems: "center", width: 78, flexShrink: 0, gap: 3 }}>
+              <ProgressCircle value={matchPercent} size={48} thickness={4} hue="positive" />
+              <span className="sk-muted" style={{ font: "500 9.5px/12px var(--sk-font-ui)", whiteSpace: "nowrap" }}>Вам подходит</span>
             </div>
           )}
         </div>
