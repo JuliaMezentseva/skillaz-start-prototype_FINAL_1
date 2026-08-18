@@ -475,7 +475,7 @@ function aiManagerTeamIntent(queryRaw) {
     label = "с риском по адаптации";
   } else if (q.indexOf("не начал") !== -1) {
     test = (m) => m.status === "not_started";
-    extraOf = () => ({ action: "Ничего не требуется — просто ещё не начат" });
+    extraOf = () => ({ action: "План не начат" });
     label = "которые ещё не начали план";
   } else if (q.indexOf("вниман") !== -1 || q.indexOf("действ") !== -1 || q.indexOf("нужно") !== -1) {
     test = (m) => m.risks.length > 0 || !!m.action;
@@ -731,8 +731,8 @@ const AI_GREETING = "Вижу что происходит на странице 
 function AiResultCardBody({ r }) {
   return (
     <React.Fragment>
-      <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{r.title}</div>
+      <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div className="sk-label-3" style={{ color: "var(--sk-text-primary)", minWidth: 0 }}>{r.title}</div>
         {typeof r.matchPct === "number" && (
           <span style={{
             flexShrink: 0, display: "inline-flex", alignItems: "center", height: 20, padding: "0 8px",
@@ -804,7 +804,7 @@ function AiBubble({ from, text, results, confirm, thinking, onSend }) {
   return (
     <div className="sk-row sk-gap-2" style={{ alignItems: "flex-start", flexDirection: isUser ? "row-reverse" : "row" }}>
       {!isUser && avatar}
-      <div style={{ maxWidth: "84%", display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ maxWidth: "84%", minWidth: 0, display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{
           background: isUser ? "var(--sk-accent)" : "var(--sk-surface-secondary)",
           color: isUser ? "var(--sk-text-contrast)" : "var(--sk-text-primary)",
@@ -815,8 +815,7 @@ function AiBubble({ from, text, results, confirm, thinking, onSend }) {
             {results.map((r) => {
               const cardStyle = {
                 border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", padding: "10px 12px",
-                background: "var(--sk-surface-page)",
-                borderLeft: r.risks && r.risks.length > 0 ? "3px solid var(--sk-negative)" : undefined,
+                background: "var(--sk-surface-page)", boxSizing: "border-box",
               };
               if (r.actions && r.actions.length > 0) {
                 return (
