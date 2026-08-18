@@ -136,7 +136,10 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
           </div>
 
           {matchPercent != null && (
-            <ProgressCircle value={matchPercent} size={40} thickness={3} hue="positive" label="ВАМ ПОДХОДИТ" />
+            <div className="sk-col" style={{ alignItems: "center", width: 60, flexShrink: 0, gap: 2 }}>
+              <ProgressCircle value={matchPercent} size={40} thickness={3} hue="positive" />
+              <span className="sk-muted" style={{ font: "500 10px/13px var(--sk-font-ui)", textAlign: "center" }}>Вам подходит</span>
+            </div>
           )}
         </div>
       </Card>
