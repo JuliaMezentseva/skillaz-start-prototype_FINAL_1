@@ -89,6 +89,12 @@ const STATUS_ICON = {
 
 const MIN_TAB_NOTE = "Формальный порог входа в роль. Сотрудник отмечает пункты сам, вашего подтверждения не требуется.";
 const MAX_TAB_NOTE = "Цели сотрудника на адаптацию. Открывайте цель, чтобы задать шаги и проверять прогресс.";
+// На финальном ревью тот же баннер меняет текст под текущую задачу руководителя — вместо
+// обычной подсказки про вкладку показывает, что план ждёт решения, и даёт кнопку сразу
+// здесь же, в начале страницы (см. отзыв: раньше кнопка была только в RightPanel, и до неё
+// нужно было доскроллить).
+const REVIEW_MIN_NOTE = "План на финальном ревью — срок истёк. Ниже базовые действия, которые сотрудник выполнил за время адаптации.";
+const REVIEW_MAX_NOTE = "План на финальном ревью — срок истёк, все цели закрыты. Проверьте результат в текущем состоянии и примите решение по плану.";
 const CP_YELLOW = "var(--yellow-yellow-85)";
 const CP_YELLOW_BG = "var(--yellow-yellow-96)";
 const CP_YELLOW_BORDER = "var(--yellow-yellow-80)";
@@ -364,7 +370,9 @@ function Page() {
         <div className="sk-col sk-gap-6" style={{ flex: 1, minWidth: 0 }}>
           {tab === "min" && (
             <React.Fragment>
-              <Alert hue="neutral" style={{ background: "var(--sk-surface-secondary)" }}>{MIN_TAB_NOTE}</Alert>
+              <Alert hue={plan.status === "on_review" ? "accent" : "neutral"}>
+                {plan.status === "on_review" ? REVIEW_MIN_NOTE : MIN_TAB_NOTE}
+              </Alert>
               <div className="sk-col sk-gap-4">
                 {plan.stages.map((s, i) => (
                   <ManagerStageBlock key={s.id} stage={s} index={i + 1}
@@ -377,7 +385,10 @@ function Page() {
 
           {tab === "max" && plan.hasGoals && (
             <React.Fragment>
-              <Alert hue="neutral" style={{ background: "var(--sk-surface-secondary)" }}>{MAX_TAB_NOTE}</Alert>
+              <Alert hue={plan.status === "on_review" ? "accent" : "neutral"}
+                actions={plan.status === "on_review" ? <Button size="s" variant="accent" onClick={() => setReviewModal(true)}>Провести итоговое ревью</Button> : undefined}>
+                {plan.status === "on_review" ? REVIEW_MAX_NOTE : MAX_TAB_NOTE}
+              </Alert>
 
               {plan.goals.length === 0 && (
                 <Card>
@@ -606,7 +617,7 @@ function ManagerGoalRow({ goal, plan, highlighted, onOpenGoal, onOpenSubgoal, on
     }}>
       <div className="sk-row sk-gap-3" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1, minWidth: 0 }}>
-          <div className="sk-label-2" style={{ color: isDone ? "var(--sk-text-secondary)" : "var(--sk-text-primary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{goal.title || "Без названия"}</div>
+          <div className="sk-label-2" style={{ color: "var(--sk-text-primary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{goal.title || "Без названия"}</div>
           {!isDone && (
             <React.Fragment>
               <div className="sk-row sk-gap-2" style={{ alignItems: "center", marginTop: 4 }}>
@@ -2488,7 +2499,7 @@ function RightPanel({ member, plan, overallPct, onOpenCheckpoint, showCheckpoint
         </Card>
       )}
 
-      <Card bordered style={plan.status === "on_review" ? { border: "1.5px solid " + CP_YELLOW_BORDER, background: CP_YELLOW_BG } : undefined}>
+      <Card bordered>
         <div className="sk-col sk-gap-3">
           <div className="sk-label-3">Статус адаптации</div>
           <StatusTag status={PLAN_STATUS_TAG[plan.status] || "in_progress_plan"} style={{ alignSelf: "flex-start" }} />
