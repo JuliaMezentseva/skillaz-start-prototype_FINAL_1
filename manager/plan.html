@@ -2352,7 +2352,7 @@ function ReviewDecisionModal({ member, plan, goalsDoneCount, goalsTotal, goalsPc
 
   if (!verdict) {
     return (
-      <Modal open title="Итоговое ревью плана" onClose={onClose} size="m"
+      <Modal open title="Итоговое решение по плану" onClose={onClose} size="m"
         secondary={<Button mode="secondary" onClick={onClose}>К плану</Button>}>
         <div className="sk-col sk-gap-4">
           <Alert hue="neutral" style={{ background: "var(--sk-surface-secondary)" }}>{REVIEW_INSTRUCTION}</Alert>
@@ -2363,7 +2363,6 @@ function ReviewDecisionModal({ member, plan, goalsDoneCount, goalsTotal, goalsPc
           </div>
           <Divider />
           <div className="sk-col sk-gap-2">
-            <div className="sk-label-3">Решение по плану</div>
             <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
               <Button variant="positive" onClick={() => setVerdict("done")}>Завершить успешно</Button>
               <Button variant="negative" mode="secondary" onClick={() => setVerdict("failed")}>Завершить неуспешно</Button>
