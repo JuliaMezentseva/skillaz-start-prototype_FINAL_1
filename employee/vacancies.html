@@ -106,41 +106,43 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
           cursor: "pointer", height: "100%",
           boxShadow: hovered ? "inset 0 0 0 1.5px var(--sk-stroke-accent)" : "inset 0 0 0 1px var(--sk-stroke)",
         }}>
-        <div className="sk-row sk-gap-2" style={{ height: "100%", alignItems: "flex-start" }}>
-          <div className="sk-col sk-gap-3" style={{ flex: 1, minWidth: 0, height: "100%" }}>
-            <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-              <span style={{ opacity: hasResponse ? 0.55 : 1 }}>
-                <Tag size="s" hue="accent">{vacancy.direction}</Tag>
-              </span>
-              {hasResponse
-                ? <Tag size="s" hue="positive" icon={<IconThumbUp size={13} />}>Уже откликнулись</Tag>
-                : (closed && <Tag size="s" hue="neutral">Закрыта</Tag>)}
-            </div>
+        <div className="sk-col sk-gap-3" style={{ height: "100%" }}>
+          <div className="sk-row sk-gap-2" style={{ flex: 1, alignItems: "flex-start" }}>
+            <div className="sk-col sk-gap-3" style={{ flex: 1, minWidth: 0 }}>
+              <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                <span style={{ opacity: hasResponse ? 0.55 : 1 }}>
+                  <Tag size="s" hue="accent">{vacancy.direction}</Tag>
+                </span>
+                {hasResponse
+                  ? <Tag size="s" hue="positive" icon={<IconThumbUp size={13} />}>Уже откликнулись</Tag>
+                  : (closed && <Tag size="s" hue="neutral">Закрыта</Tag>)}
+              </div>
 
-            <div className="sk-col sk-gap-1" style={{ flex: 1, opacity: hasResponse ? 0.55 : 1 }}>
-              <div className="sk-label-2">{vacancy.title}</div>
-              <div className="sk-row sk-gap-2 sk-muted" style={{ font: "var(--sk-label-4-regular)", flexWrap: "wrap" }}>
-                <span className="sk-row sk-gap-1"><IconMapPin size={13} />{vacancy.city}</span>
-                <span className="sk-row sk-gap-1"><IconBriefcase size={13} />{vacancy.department}</span>
+              <div className="sk-col sk-gap-1" style={{ opacity: hasResponse ? 0.55 : 1 }}>
+                <div className="sk-label-2">{vacancy.title}</div>
+                <div className="sk-row sk-gap-2 sk-muted" style={{ font: "var(--sk-label-4-regular)", flexWrap: "wrap" }}>
+                  <span className="sk-row sk-gap-1"><IconMapPin size={13} />{vacancy.city}</span>
+                  <span className="sk-row sk-gap-1"><IconBriefcase size={13} />{vacancy.department}</span>
+                </div>
               </div>
             </div>
 
-            <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", rowGap: 4, opacity: hasResponse ? 0.55 : 1 }}>
-              {vacancy.salaryFrom && vacancy.salaryTo ? (
-                <div className="sk-label-3-regular">{fmtMoney(vacancy.salaryFrom)} – {fmtMoney(vacancy.salaryTo)} ₽</div>
-              ) : (
-                <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>По договорённости</div>
-              )}
-              <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{vacancy.postedDate}</span>
-            </div>
+            {matchPercent != null && (
+              <div className="sk-col" style={{ alignItems: "center", width: 82, flexShrink: 0, gap: 4, marginRight: -6 }}>
+                <ProgressCircle value={matchPercent} size={48} thickness={4} hue="positive" />
+                <span className="sk-muted" style={{ font: "500 11px/14px var(--sk-font-ui)", whiteSpace: "nowrap" }}>Вам подходит</span>
+              </div>
+            )}
           </div>
 
-          {matchPercent != null && (
-            <div className="sk-col" style={{ alignItems: "center", width: 78, flexShrink: 0, gap: 3 }}>
-              <ProgressCircle value={matchPercent} size={48} thickness={4} hue="positive" />
-              <span className="sk-muted" style={{ font: "500 9.5px/12px var(--sk-font-ui)", whiteSpace: "nowrap" }}>Вам подходит</span>
-            </div>
-          )}
+          <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", opacity: hasResponse ? 0.55 : 1 }}>
+            {vacancy.salaryFrom && vacancy.salaryTo ? (
+              <div className="sk-label-3-regular">{fmtMoney(vacancy.salaryFrom)} – {fmtMoney(vacancy.salaryTo)} ₽</div>
+            ) : (
+              <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>По договорённости</div>
+            )}
+            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{vacancy.postedDate}</span>
+          </div>
         </div>
       </Card>
     </a>
