@@ -144,10 +144,13 @@ function findChecklistItem(plan, id) {
   }
   return null;
 }
+// Описание не требуем — ни у цели, ни у шага: в формах создания оно необязательное
+// поле (без required, в отличие от названия/срока/проверяющего), так что цель из
+// каталога или быстро добавленный шаг не должны блокировать публикацию из-за него.
 function planValidForPublish(goals) {
   if (!goals.length) return false;
-  return goals.every(g => g.title && g.description && g.dueLabel && g.subgoals.length > 0 &&
-    g.subgoals.every(sg => sg.title && sg.description && sg.dueLabel && sg.reviewer));
+  return goals.every(g => g.title && g.dueLabel && g.subgoals.length > 0 &&
+    g.subgoals.every(sg => sg.title && sg.dueLabel && sg.reviewer));
 }
 const REVIEWER_OPTIONS = [D.manager, ...D.assistants].map(p => ({ value: p.name, label: p.name === D.manager.name ? "Я (" + p.name + ")" : p.name }));
 
