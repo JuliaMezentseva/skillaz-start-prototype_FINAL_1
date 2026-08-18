@@ -439,26 +439,26 @@ function aiHrPlansIntent(queryRaw) {
   let test, reasonOf, label;
   if (q.indexOf("риск") !== -1) {
     test = (p) => p.risks.length > 0;
-    reasonOf = (p) => p.risks[0] + (p.risks.length > 1 ? " (и ещё " + (p.risks.length - 1) + ")" : "");
+    reasonOf = (p) => p.risks;
     label = "с риском";
   } else if (q.indexOf("цел") !== -1 && (q.indexOf("без") !== -1 || q.indexOf("не опубликова") !== -1)) {
     test = (p) => !p.goalsPublished;
-    reasonOf = () => "Цели ещё не опубликованы";
+    reasonOf = () => ["Цели ещё не опубликованы"];
     label = "без опубликованных целей";
   } else if (q.indexOf("просроч") !== -1 || q.indexOf("контрольн") !== -1) {
     test = (p) => p.overdueCheckpoint;
-    reasonOf = () => "Просрочена контрольная точка";
+    reasonOf = () => ["Просрочена контрольная точка"];
     label = "с просроченной контрольной точкой";
   } else {
     return null;
   }
   const results = D.hrAssignedPlans.filter(test).map((p) => ({
     id: p.id, title: p.name, subtitle: p.planTitle + " · " + p.department,
-    reason: reasonOf(p), href: "plan-detail.html?id=" + p.id,
+    reasons: reasonOf(p), href: "plan-detail.html?id=" + p.id,
   }));
   return {
     text: results.length
-      ? "Нашёл " + results.length + " " + aiPluralRu(results.length, "план", "плана", "планов") + " " + label + ":"
+      ? "Нашёл " + results.length + " " + aiPluralRu(results.length, "план", "плана", "планов") + " " + label + " — вот что именно происходит по каждому:"
       : "Планов " + label + " сейчас нет.",
     results,
   };
@@ -471,28 +471,28 @@ function aiManagerTeamIntent(queryRaw) {
   let test, reasonOf, label;
   if (q.indexOf("риск") !== -1) {
     test = (m) => m.risks.length > 0;
-    reasonOf = (m) => m.risks[0] + (m.risks.length > 1 ? " (и ещё " + (m.risks.length - 1) + ")" : "");
+    reasonOf = (m) => m.risks;
     label = "с риском по адаптации";
   } else if (q.indexOf("не начал") !== -1) {
     test = (m) => m.status === "not_started";
-    reasonOf = () => "План ещё не начат";
+    reasonOf = () => ["План ещё не начат"];
     label = "которые ещё не начали план";
   } else if (q.indexOf("вниман") !== -1 || q.indexOf("действ") !== -1 || q.indexOf("нужно") !== -1) {
     test = (m) => m.risks.length > 0 || !!m.action;
     reasonOf = (m) => m.risks.length > 0
-      ? m.risks[0] + (m.risks.length > 1 ? " (и ещё " + (m.risks.length - 1) + ")" : "")
-      : m.action.label + (m.action.due ? " до " + m.action.due : "");
+      ? m.risks
+      : [m.action.label + (m.action.due ? " до " + m.action.due : "")];
     label = "которым нужно внимание";
   } else {
     return null;
   }
   const results = D.team.filter(test).map((m) => ({
     id: m.id, title: m.name, subtitle: m.position + " · " + m.department,
-    reason: reasonOf(m), href: "plan.html?employee=" + m.id,
+    reasons: reasonOf(m), href: "plan.html?employee=" + m.id,
   }));
   return {
     text: results.length
-      ? "Нашёл " + results.length + " " + aiPluralRu(results.length, "сотрудника", "сотрудников", "сотрудников") + " " + label + ":"
+      ? "Нашёл " + results.length + " " + aiPluralRu(results.length, "сотрудника", "сотрудников", "сотрудников") + " " + label + " — вот что именно происходит по каждому:"
       : "Сейчас таких сотрудников нет.",
     results,
   };
@@ -510,11 +510,47 @@ function aiManagerPlanIntent() {
   return { text: "Открываю мастер создания целей адаптации для " + member.name + "…", results: [], action: "openAiGoalModal" };
 }
 
+function aiVacancySalaryLine(v) {
+  return (v.salaryFrom && v.salaryTo ? v.salaryFrom.toLocaleString("ru-RU") + "–" + v.salaryTo.toLocaleString("ru-RU") + " ₽" : "По договорённости") + " · " + v.format;
+}
+
+// Простая объяснимая оценка соответствия вакансии профилю сотрудника: подразделение
+// (внутренний переход), город/удалённый формат, требуемый опыт против стажа в
+// компании — единственные поля, которые реально есть в профиле сотрудника (нет
+// данных о навыках/резюме, поэтому не считаем это "настоящим" ML-скорингом).
+function aiVacancyMatchScore(v, person) {
+  let score = 40;
+  if (v.department === person.department) score += 25;
+  if (v.city === person.city || v.format === "Удалённо") score += 15;
+  const tenureMonths = parseInt(person.tenure, 10) || 0;
+  if (tenureMonths < 12) {
+    if (v.experience === "Без опыта" || v.experience === "От 1 года") score += 15;
+    else if (v.experience === "От 5 лет") score -= 15;
+    else score += 5;
+  } else {
+    score += 10;
+  }
+  return Math.max(30, Math.min(96, score));
+}
+
 // ---------------- Разбор запросов: Сотрудник / витрина вакансий ----------------
+function aiEmployeeVacanciesMatchIntent() {
+  const D = window.SITE_DATA;
+  const pool = D.vacancies.filter((v) => v.visibleToEmployees !== false && v.status === "open");
+  const scored = pool.map((v) => ({ v, pct: aiVacancyMatchScore(v, D.person) })).sort((a, b) => b.pct - a.pct).slice(0, 5);
+  const results = scored.map(({ v, pct }) => ({
+    id: v.id, title: v.title, subtitle: v.city + " · " + v.department,
+    reasons: [aiVacancySalaryLine(v)], matchPct: pct, href: "vacancy.html?id=" + v.id,
+  }));
+  return { text: "Оценил открытые вакансии по подразделению, городу и опыту — вот что подходит лучше всего:", results };
+}
 function aiEmployeeVacanciesIntent(queryRaw) {
   const D = window.SITE_DATA;
   const q = queryRaw.toLowerCase().trim();
   if (!q) return null;
+  if (q.indexOf("подходящ") !== -1 || q.indexOf("мне подойд") !== -1 || q.indexOf("меня подойд") !== -1) {
+    return aiEmployeeVacanciesMatchIntent();
+  }
   const pool = D.vacancies.filter((v) => v.visibleToEmployees !== false && v.status === "open");
   const constraints = [];
   const cityList = D.cities.filter((c) => c !== "Удалённо");
@@ -539,8 +575,7 @@ function aiEmployeeVacanciesIntent(queryRaw) {
   }
   const results = matched.map((v) => ({
     id: v.id, title: v.title, subtitle: v.city + " · " + v.department,
-    reason: (v.salaryFrom && v.salaryTo ? v.salaryFrom.toLocaleString("ru-RU") + "–" + v.salaryTo.toLocaleString("ru-RU") + " ₽" : "По договорённости") + " · " + v.format,
-    href: "vacancy.html?id=" + v.id,
+    reasons: [aiVacancySalaryLine(v)], href: "vacancy.html?id=" + v.id,
   }));
   return {
     text: results.length
@@ -551,10 +586,14 @@ function aiEmployeeVacanciesIntent(queryRaw) {
 }
 
 // ---------------- Разбор запросов: Сотрудник / карточка вакансии ----------------
-function aiEmployeeVacancyIntent() {
+function aiCurrentVacancy() {
   const D = window.SITE_DATA;
   const id = new URLSearchParams(window.location.search).get("id");
-  const vacancy = D.vacancies.find((v) => v.id === id) || D.vacancies[0];
+  return D.vacancies.find((v) => v.id === id) || D.vacancies[0];
+}
+function aiEmployeeVacancyMatchIntent() {
+  const D = window.SITE_DATA;
+  const vacancy = aiCurrentVacancy();
   const person = D.person;
   const sameDept = vacancy.department === person.department;
   const sameCity = vacancy.city === person.city;
@@ -569,6 +608,42 @@ function aiEmployeeVacancyIntent() {
   lines.push("Ключевые навыки в требованиях: " + vacancy.requiredSkills.join(", ") + ".");
   lines.push("Если появятся вопросы — можно написать рекрутёру, " + vacancy.recruiter.name + ".");
   return { text: lines.join("\n"), results: [] };
+}
+// Женский род определяем по окончанию отчества ("-вна") — единственный надёжный
+// признак пола в моковых данных профиля (нет отдельного поля gender).
+function aiIsFemale(person) {
+  return !!(person.patronymic && person.patronymic.slice(-2) === "на");
+}
+function aiVacancyLetterDraft(vacancy) {
+  const D = window.SITE_DATA;
+  const p = D.person;
+  const g = aiIsFemale(p) ? "а" : "";
+  const sameDept = vacancy.department === p.department;
+  const reasonLine = sameDept
+    ? "Хочу применить опыт, накопленный в текущей команде, уже на новом уровне ответственности."
+    : "Хочу попробовать себя в новом направлении — уверен" + g + ", что быстро войду в контекст.";
+  return "Здравствуйте! Меня заинтересовала позиция «" + vacancy.title + "». Сейчас работаю на позиции «" + p.position + "» в подразделении «" + p.department + "», стаж в компании — " + p.tenure + ". " + reasonLine + " Буду рад" + g + " обсудить детали.";
+}
+function aiEmployeeVacancyResponseIntent() {
+  const D = window.SITE_DATA;
+  const vacancy = aiCurrentVacancy();
+  if (vacancy.status === "closed") {
+    return { text: "Вакансия «" + vacancy.title + "» уже закрыта — отклик отправить нельзя.", results: [] };
+  }
+  const already = D.myResponses.find((r) => r.vacancyId === vacancy.id);
+  if (already) {
+    return { text: "Вы уже откликались на «" + vacancy.title + "» — повторный отклик не нужен, статус можно посмотреть в разделе «Мои отклики».", results: [] };
+  }
+  const letter = aiVacancyLetterDraft(vacancy);
+  return {
+    text: "Подставляю ваши данные из профиля и черновик мотивационного письма:\n\n«" + letter + "»\n\nОткрываю форму отклика — проверьте, прикрепите резюме и отправьте сами.",
+    results: [], action: "openApplyModal", actionPayload: letter,
+  };
+}
+function aiEmployeeVacancyIntent(queryRaw) {
+  const q = (queryRaw || "").toLowerCase();
+  if (q.indexOf("отклик") !== -1 || q.indexOf("заявк") !== -1) return aiEmployeeVacancyResponseIntent();
+  return aiEmployeeVacancyMatchIntent();
 }
 
 // ---------------- Конфигурация виджета по текущей странице ----------------
@@ -595,11 +670,11 @@ const AI_PAGE_CONFIG = {
     resolve: aiManagerPlanIntent,
   },
   "employee-vacancies": {
-    chips: ["Есть вакансии в Москве?", "Есть вакансии удалённо?", "Вакансии в моём подразделении"],
+    chips: ["Подходящие мне вакансии", "Есть вакансии в Москве?", "Есть вакансии удалённо?", "Вакансии в моём подразделении"],
     resolve: aiEmployeeVacanciesIntent,
   },
   "employee-vacancy": {
-    chips: ["Подойдёт ли мне эта вакансия?"],
+    chips: ["Подойдёт ли мне эта вакансия?", "Заполнить отклик за меня"],
     resolve: aiEmployeeVacancyIntent,
   },
 };
@@ -608,7 +683,7 @@ const AI_FALLBACK_LINKS = {
   manager: { label: "Моя команда", href: "manager/team.html" },
   employee: { label: "Витрина вакансий", href: "employee/vacancies.html" },
 };
-const AI_GREETING = "Вижу вашу роль и что происходит на странице — подскажу быстрее или сразу подготовлю черновик действия, вам останется подтвердить. Что сделать?";
+const AI_GREETING = "Вижу вашу роль и что происходит на странице — подскажу по вопросам или помогу выполнить действия за вас. Что сделать?";
 
 function AiBubble({ from, text, results, thinking }) {
   const isUser = from === "user";
@@ -645,9 +720,26 @@ function AiBubble({ from, text, results, thinking }) {
                   border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", padding: "10px 12px",
                   background: "var(--sk-surface-page)",
                 }}>
-                  <div className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{r.title}</div>
+                  <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{r.title}</div>
+                    {typeof r.matchPct === "number" && (
+                      <span style={{
+                        flexShrink: 0, display: "inline-flex", alignItems: "center", height: 20, padding: "0 8px",
+                        borderRadius: "var(--sk-radius-full)", background: "var(--sk-special-secondary)",
+                        color: "var(--sk-icon-special)", font: "var(--sk-label-4)",
+                      }}>{r.matchPct}% совпадение</span>
+                    )}
+                  </div>
                   <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 2 }}>{r.subtitle}</div>
-                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 4 }}>{r.reason}</div>
+                  {r.reasons && r.reasons.length > 0 && (
+                    <div className="sk-col sk-gap-1" style={{ marginTop: 4 }}>
+                      {r.reasons.map((line, i) => (
+                        <div key={i} className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
+                          {r.reasons.length > 1 ? "• " + line : line}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </a>
             ))}
@@ -689,6 +781,11 @@ function AiAssistantWidget({ role }) {
       if (reply.action === "openAiGoalModal") {
         window.setTimeout(function () {
           if (window.__skAiOpenGoalModal) { window.__skAiOpenGoalModal(); setOpen(false); }
+        }, 500);
+      }
+      if (reply.action === "openApplyModal") {
+        window.setTimeout(function () {
+          if (window.__skAiOpenApplyModal) { window.__skAiOpenApplyModal(reply.actionPayload); setOpen(false); }
         }, 500);
       }
     }, 550);

@@ -40,6 +40,7 @@ function Page() {
   const closed = vacancy.status === "closed";
   const [responses, setResponses] = React.useState(D.myResponses);
   const [modalOpen, setModalOpen] = React.useState(false);
+  const [aiDraftLetter, setAiDraftLetter] = React.useState("");
   const [toast, setToast] = React.useState(null);
   const myResponse = responses.find(r => r.vacancyId === vacancy.id);
 
@@ -47,6 +48,14 @@ function Page() {
     setToast(msg);
     window.setTimeout(() => setToast(null), 3200);
   }
+
+  // Мостик для общего AI-виджета (assets/shell.js): открывает форму отклика с
+  // уже подставленным черновиком мотивационного письма — резюме прикрепляет сам
+  // сотрудник, отправляет тоже сам.
+  React.useEffect(() => {
+    window.__skAiOpenApplyModal = (letterText) => { setAiDraftLetter(letterText || ""); setModalOpen(true); };
+    return () => { delete window.__skAiOpenApplyModal; };
+  }, []);
 
   function handleSubmitted() {
     setResponses(rs => [...rs, { vacancyId: vacancy.id, date: "12.03.26", status: "response_received" }]);
@@ -167,7 +176,7 @@ function Page() {
         </div>
       </div>
 
-      {modalOpen && <ApplyModal vacancy={vacancy} onClose={() => setModalOpen(false)} onSubmitted={handleSubmitted} />}
+      {modalOpen && <ApplyModal vacancy={vacancy} initialLetter={aiDraftLetter} onClose={() => setModalOpen(false)} onSubmitted={handleSubmitted} />}
       {toast && (
         <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100 }}>
           <Snackbar>{toast}</Snackbar>
@@ -177,7 +186,7 @@ function Page() {
   );
 }
 
-function ApplyModal({ vacancy, onClose, onSubmitted }) {
+function ApplyModal({ vacancy, initialLetter, onClose, onSubmitted }) {
   const p = D.person;
   const [lastName, setLastName] = React.useState(p.lastName);
   const [firstName, setFirstName] = React.useState(p.firstName);
@@ -188,7 +197,7 @@ function ApplyModal({ vacancy, onClose, onSubmitted }) {
   const [phone, setPhone] = React.useState(p.phone);
   const [email, setEmail] = React.useState(p.email);
   const [city, setCity] = React.useState(p.city);
-  const [letter, setLetter] = React.useState("");
+  const [letter, setLetter] = React.useState(initialLetter || "");
   const [resume, setResume] = React.useState(null);
 
   return (
@@ -196,7 +205,11 @@ function ApplyModal({ vacancy, onClose, onSubmitted }) {
       secondary={<Button mode="secondary" onClick={onClose}>Отмена</Button>}
       primary={<Button variant="accent" disabled={!resume} onClick={onSubmitted}>Отправить отклик</Button>}>
       <div className="sk-col sk-gap-3 sk-modal-scroll">
-        <Alert hue="neutral">Личные данные ниже подставлены из вашего профиля — проверьте и поправьте при необходимости. Резюме нужно прикрепить отдельно.</Alert>
+        <Alert hue={initialLetter ? "accent" : "neutral"}>
+          {initialLetter
+            ? "Данные и мотивационное письмо подготовлены Skillaz AI по вашему профилю — проверьте, поправьте при необходимости, прикрепите резюме и отправьте сами."
+            : "Личные данные ниже подставлены из вашего профиля — проверьте и поправьте при необходимости. Резюме нужно прикрепить отдельно."}
+        </Alert>
 
         <div className="sk-row sk-gap-3">
           <Input label="Фамилия" value={lastName} onChange={(e) => setLastName(e.target.value || "")} style={{ flex: 1 }} />
