@@ -690,6 +690,133 @@ function aiEmployeeVacancyIntent(queryRaw) {
   return aiEmployeeVacancyMatchIntent();
 }
 
+// ---------------- Разбор запросов: Сотрудник / мой план адаптации ----------------
+// В отличие от остальных сценариев виджет не переходит на другую страницу, а
+// открывает нужный дровер/модалку прямо на текущей странице плана — так же, как
+// уже устроен переход в мастер целей у руководителя (window.__skAiOpenGoalModal).
+// Синтетические команды ("__openSubgoal:...", "__openCheckpoint:...", "__openItem:...")
+// приходят от кнопок в карточках результата, а не от текста, который ввёл пользователь.
+// Локальные копии helper'ов из employee/plan.html — тот инлайновый скрипт не
+// экспортирует их на window, а виджет живёт в отдельном shell.js.
+function aiStripDuePrefix(label) {
+  return (label || "").replace(/^до\s+/i, "");
+}
+function aiFindChecklistItem(plan, id) {
+  for (const s of plan.stages) {
+    const it = s.items.find((i) => i.id === id);
+    if (it) return { item: it, stage: s };
+  }
+  return null;
+}
+function aiEmployeePlanCurrent() {
+  const D = window.SITE_DATA;
+  const id = new URLSearchParams(window.location.search).get("plan");
+  return D.plans[id] || D.plans.onboarding;
+}
+function aiEmployeePlanUpcomingCheckpoint(plan) {
+  const cps = Object.values(plan.checkpoints || {});
+  return cps.find((c) => c.status !== "done") || null;
+}
+function aiEmployeePlanActiveSubgoals(plan) {
+  return (plan.goals || []).flatMap((g) => (g.subgoals || [])
+    .filter((sg) => sg.status === "in_progress" || sg.status === "returned")
+    .map((sg) => ({ ...sg, goalId: g.id, goalTitle: g.title })));
+}
+function aiEmployeePlanUrgentChecklist(plan) {
+  return plan.stages.flatMap((s) => s.items.filter((i) => i.kind !== "checkpoint" && !i.done && i.highlight === "warning"));
+}
+function aiEmployeePlanIntent(queryRaw) {
+  const D = window.SITE_DATA;
+  const plan = aiEmployeePlanCurrent();
+  const raw = (queryRaw || "").trim();
+
+  if (raw.indexOf("__openSubgoal:") === 0) {
+    const [goalId, subgoalId] = raw.slice("__openSubgoal:".length).split(":");
+    const goal = (plan.goals || []).find((g) => g.id === goalId);
+    const sg = goal && goal.subgoals.find((s) => s.id === subgoalId);
+    if (!sg) return { text: "Не нашёл этот шаг.", results: [] };
+    return { text: "Открываю шаг «" + sg.title + "»…", results: [], action: "openSubgoal", actionPayload: { goalId, subgoalId } };
+  }
+  if (raw.indexOf("__openCheckpoint:") === 0) {
+    const cpId = raw.slice("__openCheckpoint:".length);
+    const cp = plan.checkpoints[cpId];
+    if (!cp) return { text: "Не нашёл эту контрольную точку.", results: [] };
+    return { text: "Открываю контрольную точку «" + cp.title + "»…", results: [], action: "openCheckpoint", actionPayload: cpId };
+  }
+  if (raw.indexOf("__openItem:") === 0) {
+    const itemId = raw.slice("__openItem:".length);
+    const found = aiFindChecklistItem(plan, itemId);
+    if (!found) return { text: "Не нашёл этот шаг.", results: [] };
+    return { text: "Открываю «" + found.item.title + "»…", results: [], action: "openItem", actionPayload: itemId };
+  }
+
+  const q = raw.toLowerCase();
+  if (!q) return null;
+  const activeSubgoals = aiEmployeePlanActiveSubgoals(plan);
+  const urgentChecklist = aiEmployeePlanUrgentChecklist(plan);
+  const nextCp = aiEmployeePlanUpcomingCheckpoint(plan);
+
+  if (q.indexOf("контрольн") !== -1 || q.indexOf(" кт") !== -1) {
+    if (!nextCp) return { text: "Ближайших контрольных точек по этому плану сейчас нет.", results: [] };
+    const stepsText = (nextCp.agenda || []).map((a) => "• " + a).join("\n");
+    const surveyLine = nextCp.survey ? nextCp.survey.length + " " + aiPluralRu(nextCp.survey.length, "вопрос", "вопроса", "вопросов") + " в коротком опросе." : "";
+    return {
+      text: "К контрольной точке «" + nextCp.title + "» (" + nextCp.dueLabel + "):\n\n" + stepsText + "\n\n" + surveyLine,
+      results: [{
+        id: nextCp.id, title: nextCp.title, subtitle: (nextCp.daysLeftLabel ? nextCp.daysLeftLabel + " · " : "") + nextCp.dueLabel,
+        actions: [{ kind: "query", label: "Пройти контрольную точку", query: "__openCheckpoint:" + nextCp.id }],
+      }],
+    };
+  }
+
+  if (q.indexOf("работе") !== -1 || q.indexOf("текущ") !== -1) {
+    if (!activeSubgoals.length) return { text: "Сейчас нет шагов, взятых в работу — загляните во вкладку «План адаптации» и возьмите очередной шаг.", results: [] };
+    return {
+      text: "Вот что у вас сейчас в работе:",
+      results: activeSubgoals.map((sg) => ({
+        id: sg.id, title: sg.title, subtitle: sg.goalTitle + " · " + aiStripDuePrefix(sg.dueLabel),
+        actions: [{ kind: "query", label: "Открыть", query: "__openSubgoal:" + sg.goalId + ":" + sg.id }],
+      })),
+    };
+  }
+
+  if (q.indexOf("провер") !== -1) {
+    const pending = (plan.goals || []).flatMap((g) => (g.subgoals || [])
+      .filter((sg) => sg.status === "pending_review")
+      .map((sg) => ({ ...sg, goalId: g.id, goalTitle: g.title })));
+    if (!pending.length) return { text: "Сейчас ничего не ждёт проверки руководителя.", results: [] };
+    return {
+      text: "На проверке у руководителя сейчас:",
+      results: pending.map((sg) => ({
+        id: sg.id, title: sg.title, subtitle: (sg.reviewer || D.manager.name) + " · " + aiStripDuePrefix(sg.dueLabel),
+        actions: [{ kind: "query", label: "Открыть", query: "__openSubgoal:" + sg.goalId + ":" + sg.id }],
+      })),
+    };
+  }
+
+  if (q.indexOf("сегодня") !== -1 || q.indexOf("сделать") !== -1) {
+    const results = [];
+    urgentChecklist.forEach((it) => results.push({
+      id: "item-" + it.id, title: it.title, subtitle: "Базовые действия" + (it.date ? " · " + it.date : ""), action: "Скоро дедлайн",
+      actions: [{ kind: "query", label: "Открыть", query: "__openItem:" + it.id }],
+    }));
+    activeSubgoals.forEach((sg) => results.push({
+      id: "sg-" + sg.id, title: sg.title, subtitle: sg.goalTitle + " · " + aiStripDuePrefix(sg.dueLabel),
+      actions: [{ kind: "query", label: "Открыть", query: "__openSubgoal:" + sg.goalId + ":" + sg.id }],
+    }));
+    if (nextCp) results.push({
+      id: "cp-" + nextCp.id, title: nextCp.title, subtitle: (nextCp.daysLeftLabel ? nextCp.daysLeftLabel + " · " : "") + nextCp.dueLabel,
+      actions: [{ kind: "query", label: "Пройти контрольную точку", query: "__openCheckpoint:" + nextCp.id }],
+    });
+    return {
+      text: results.length ? "Вот что сейчас актуально по вашему плану адаптации:" : "Срочных задач по плану сейчас нет — можно спокойно двигаться в своём темпе.",
+      results,
+    };
+  }
+
+  return null;
+}
+
 // ---------------- Конфигурация виджета по текущей странице ----------------
 function aiPageKey() {
   const p = window.location.pathname;
@@ -698,6 +825,7 @@ function aiPageKey() {
   if (/\/manager\/plan\.html$/.test(p)) return "manager-plan";
   if (/\/employee\/vacancies\.html$/.test(p)) return "employee-vacancies";
   if (/\/employee\/vacancy\.html$/.test(p)) return "employee-vacancy";
+  if (/\/employee\/plan\.html$/.test(p)) return "employee-plan";
   return null;
 }
 const AI_PAGE_CONFIG = {
@@ -720,6 +848,10 @@ const AI_PAGE_CONFIG = {
   "employee-vacancy": {
     chips: ["Подойдёт ли мне эта вакансия?", "Заполнить отклик за меня"],
     resolve: aiEmployeeVacancyIntent,
+  },
+  "employee-plan": {
+    chips: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Что у меня в работе?", "Что сейчас на проверке?"],
+    resolve: aiEmployeePlanIntent,
   },
 };
 const AI_FALLBACK_LINKS = {
@@ -826,7 +958,11 @@ function AiBubble({ from, text, results, confirm, thinking, onSend }) {
                       {r.actions.map((a, i) => (
                         <Button key={i} size="s" mode={a.kind === "apply" ? "primary" : "secondary"}
                           variant={a.kind === "apply" ? "accent" : undefined}
-                          onClick={() => a.kind === "apply" ? onSend("__apply:" + a.vacancyId) : (window.location.href = a.href)}>
+                          onClick={() => {
+                            if (a.kind === "apply") onSend("__apply:" + a.vacancyId);
+                            else if (a.kind === "query") onSend(a.query);
+                            else window.location.href = a.href;
+                          }}>
                           {a.label}
                         </Button>
                       ))}
@@ -907,6 +1043,21 @@ function AiAssistantWidget({ role }) {
       if (reply.action === "navigateApply") {
         window.setTimeout(function () {
           window.location.href = "vacancy.html?id=" + reply.actionPayload + "&aiApply=1";
+        }, 500);
+      }
+      if (reply.action === "openSubgoal") {
+        window.setTimeout(function () {
+          if (window.__skAiOpenSubgoal) { window.__skAiOpenSubgoal(reply.actionPayload); setOpen(false); }
+        }, 500);
+      }
+      if (reply.action === "openCheckpoint") {
+        window.setTimeout(function () {
+          if (window.__skAiOpenCheckpoint) { window.__skAiOpenCheckpoint(reply.actionPayload); setOpen(false); }
+        }, 500);
+      }
+      if (reply.action === "openItem") {
+        window.setTimeout(function () {
+          if (window.__skAiOpenItem) { window.__skAiOpenItem(reply.actionPayload); setOpen(false); }
         }, 500);
       }
     }, 550);

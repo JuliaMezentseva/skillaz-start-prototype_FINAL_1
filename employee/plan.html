@@ -872,6 +872,20 @@ function Page() {
   const [goalDrawer, setGoalDrawer] = React.useState(null); // goalId
   const [cpModal, setCpModal] = React.useState(null);
 
+  // Точки входа для AI-помощника (см. aiEmployeePlanIntent в shell.js) — виджет живёт
+  // вне этой страницы, поэтому открывает дровер/модалку через глобальные хуки, а не
+  // через собственный React-стейт. Регистрируем на каждый рендер, чтобы замыкания
+  // всегда видели актуальные setSubgoalDrawer/setCpModal и plan.
+  React.useEffect(() => {
+    window.__skAiOpenSubgoal = (payload) => setSubgoalDrawer({ goalId: payload.goalId, subgoalId: payload.subgoalId });
+    window.__skAiOpenCheckpoint = (cpId) => setCpModal(cpId);
+    window.__skAiOpenItem = (itemId) => {
+      const found = findChecklistItem(plan, itemId);
+      if (found) setItemModal(found.item);
+    };
+    return () => { delete window.__skAiOpenSubgoal; delete window.__skAiOpenCheckpoint; delete window.__skAiOpenItem; };
+  });
+
   function showToast(msg) {
     setToast(msg);
     window.clearTimeout(showToast._t);
