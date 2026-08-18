@@ -65,6 +65,7 @@ const IconRocket = mkIcon(<><path d="M12 3c2.8 1.4 4.6 4.2 4.6 8 0 2-.6 3.7-1.6 
 // добавлено для сценария "Создание цели с ИИ-помощником" (роль Руководитель) — в наборе
 // ДС нет иконки-маркера ИИ; звёздочки-искры — стандартный визуальный код для AI-функций.
 const IconSparkles = mkIcon(<><path d="M12 3.5 13.5 9 19 10.5 13.5 12 12 17.5 10.5 12 5 10.5 10.5 9Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" /><path d="M18.5 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" /></>);
+const IconSparklesSolid = mkIcon(<><path d="M12 3.5 13.5 9 19 10.5 13.5 12 12 17.5 10.5 12 5 10.5 10.5 9Z" fill="currentColor" /><path d="M18.5 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7Z" fill="currentColor" /></>);
 // добавлено для "Полезные материалы" у шага цели (роль Руководитель) — раскрытая книга
 // читается понятнее плюсика как маркер прикреплённых учебных/справочных материалов.
 const IconBookOpen = mkIcon(<><path d="M12 6.5c-1.6-1.3-3.6-2-6.5-2-.6 0-1 .4-1 1v11c0 .6.4 1 1 1 2.7 0 4.7.6 6.5 2 1.8-1.4 3.8-2 6.5-2 .6 0 1-.4 1-1v-11c0-.6-.4-1-1-1-2.9 0-4.9.7-6.5 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M12 6.5v13" stroke="currentColor" strokeWidth="1.5" /></>);
@@ -98,7 +99,7 @@ window.SiteIcons = {
   IconFileText, IconLink2, IconMessageCircle, IconHelpCircle, IconInfo, IconBriefcase, IconUsers,
   IconTarget, IconMapPin, IconPhone, IconMail, IconSend, IconUpload, IconX, IconFilter, IconAlertCircle,
   IconGraduationCap, IconGift, IconLayers, IconPlusSm, IconEye, IconPaperclip, IconCalendar, IconUser,
-  IconMoreHorizontal, IconEdit, IconTrash, IconFlag, IconSettings, IconClipboard, IconRocket, IconSparkles, IconBookOpen,
+  IconMoreHorizontal, IconEdit, IconTrash, IconFlag, IconSettings, IconClipboard, IconRocket, IconSparkles, IconSparklesSolid, IconBookOpen,
   IconUnlink, IconUserSwitch, IconRepeat, IconColumns, IconInbox, IconUserX, IconCopyLocal2, IconMic, IconImage,
 };
 
