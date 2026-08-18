@@ -30,7 +30,7 @@ function EmployeeVacanciesTabs({ active, responsesCount }) {
   }
   return (
     <Tabs active={active} onChange={go} items={[
-      { id: "showcase", label: "Витрина" },
+      { id: "showcase", label: "Вакансии" },
       { id: "my-responses", label: "Мои отклики", count: responsesCount || undefined },
     ]} />
   );
@@ -136,7 +136,7 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
           </div>
 
           {matchPercent != null && (
-            <ProgressCircle value={matchPercent} size={52} thickness={4} hue="positive" label="Соответствие" />
+            <ProgressCircle value={matchPercent} size={40} thickness={3} hue="positive" label="ВАМ ПОДХОДИТ" />
           )}
         </div>
       </Card>
@@ -300,7 +300,7 @@ function Page() {
           {/* Поиск с AI: открывает общий дровер-помощник (см. AiAssistantWidget в assets/shell.js)
               и сразу прогоняет запрос подбора, чтобы список подходящих вакансий появился без
               дополнительного клика по чипу внутри чата. */}
-          <Button style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)", fontWeight: 600 }} icon={<IconSparklesSolid size={16} />}
+          <Button style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)", fontWeight: 500 }} icon={<IconSparklesSolid size={16} />}
             onClick={() => window.__skAiOpenAssistant && window.__skAiOpenAssistant("Подходящие мне вакансии")}>
             Вакансии для меня
           </Button>
