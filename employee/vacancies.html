@@ -133,9 +133,9 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
                   <ProgressCircle value={matchPercent} size={48} thickness={4} hue="positive" showValue={false} />
                   <span style={{
                     position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                    font: "600 14px/1 var(--sk-font-ui)", color: "var(--sk-text-primary)",
+                    font: "400 12px/1 var(--sk-font-ui)", color: "var(--sk-text-primary)",
                   }}>
-                    {Math.round(matchPercent)}<span style={{ fontSize: 11 }}>%</span>
+                    {Math.round(matchPercent)}<span style={{ fontSize: 10 }}>%</span>
                   </span>
                 </div>
                 <span className="sk-muted" style={{ font: "500 11px/14px var(--sk-font-ui)", whiteSpace: "nowrap" }}>Вам подходит</span>
@@ -149,7 +149,7 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
             ) : (
               <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>По договорённости</div>
             )}
-            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{vacancy.postedDate}</span>
+            <span style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-tertiary)", whiteSpace: "nowrap" }}>{vacancy.postedDate}</span>
           </div>
         </div>
       </Card>
