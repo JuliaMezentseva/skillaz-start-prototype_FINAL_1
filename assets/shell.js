@@ -866,6 +866,14 @@ function AiAssistantWidget({ role }) {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, thinking, open]);
 
+  // Точка входа для кнопок вне виджета ("Вакансии для меня" на витрине сотрудника) —
+  // открывает дровер и сразу прогоняет запрос, как если бы его отправили в чат. Регистрируем
+  // на каждый рендер (не только на монтирование), чтобы замыкание всегда видело актуальный send.
+  React.useEffect(() => {
+    window.__skAiOpenAssistant = (query) => { setOpen(true); if (query) send(query); };
+    return () => { delete window.__skAiOpenAssistant; };
+  });
+
   const greetingText = config
     ? AI_GREETING
     : "В этой демо-версии для этой страницы пока нет готового сценария." + (AI_FALLBACK_LINKS[role] ? " Попробуйте: «" + AI_FALLBACK_LINKS[role].label + "»." : "");

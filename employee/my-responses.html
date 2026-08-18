@@ -15,10 +15,25 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Tabs } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconArrowLeft, IconMapPin, IconBriefcase } = Icons;
+const { IconMapPin, IconBriefcase } = Icons;
 const D = window.SITE_DATA;
+
+// Тот же переключатель "Витрина / Мои отклики", что и на employee/vacancies.html —
+// переход между двумя HTML-страницами, поэтому onChange меняет location, а не состояние.
+function EmployeeVacanciesTabs({ active, responsesCount }) {
+  function go(id) {
+    if (id === active) return;
+    window.location.href = id === "showcase" ? "vacancies.html" : "my-responses.html";
+  }
+  return (
+    <Tabs active={active} onChange={go} items={[
+      { id: "showcase", label: "Витрина" },
+      { id: "my-responses", label: "Мои отклики", count: responsesCount || undefined },
+    ]} />
+  );
+}
 
 // Статус самого отклика в ATS не синхронизируется — единственное, что система знает
 // достоверно, это факт и дата отправки. Вместо выдуманного статуса — тег "Отправлен",
@@ -52,10 +67,11 @@ function ResponseRow({ r }) {
 function Page() {
   const responses = D.myResponses;
   return (
-    <AppShell role="employee" active="vacancies" base=".."
-      breadcrumb={<a href="vacancies.html" className="sk-row sk-gap-1" style={{ color: "var(--sk-text-secondary)" }}><IconArrowLeft size={14} /> Вакансии</a>}>
+    <AppShell role="employee" active="vacancies" base="..">
+      <div className="sk-title-4">Мои отклики</div>
+      <EmployeeVacanciesTabs active="my-responses" responsesCount={responses.length} />
+
       <div className="sk-col sk-gap-2">
-        <div className="sk-title-4">Мои отклики</div>
         <div className="sk-muted">Вакансии, на которые вы откликнулись. Дальнейшая обработка и обратная связь — на стороне рекрутера.</div>
       </div>
       <div className="sk-col sk-gap-3">
