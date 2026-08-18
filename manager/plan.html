@@ -184,6 +184,13 @@ function Page() {
     showToast._t = window.setTimeout(() => setToast(null), 3200);
   }
 
+  // Мостик для общего AI-виджета (assets/shell.js): позволяет открыть тот же
+  // мастер создания целей с AI, что и обычная кнопка "Добавить цель" → "С AI-помощником".
+  React.useEffect(() => {
+    window.__skAiOpenGoalModal = () => setAiGoalModal(true);
+    return () => { delete window.__skAiOpenGoalModal; };
+  }, []);
+
   // ---------------- Цели: CRUD ----------------
   function addGoal(draft) {
     const id = "g" + Date.now();

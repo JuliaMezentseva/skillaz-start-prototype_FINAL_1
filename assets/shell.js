@@ -6,6 +6,7 @@
 (function () {
 const {
   Header, SkillazLogo, Badge, Tag, Avatar, Divider, Menu, Snackbar, IconButton, SegmentedControl,
+  Input, SkOverlayHeader,
 } = window.SkillazCoreDesignSystem_bf9566;
 
 // ---------------- Иконки (в наборе ДС нет экспортируемых svg-икон отдельным
@@ -354,6 +355,7 @@ function AppShell({ role, active, base, breadcrumb, children }) {
           </div>
         </div>
       </div>
+      <AiAssistantWidget role={role} />
     </div>
   );
 }
@@ -402,6 +404,354 @@ const PERSON_PHOTOS = {
 };
 function personPhoto(name) {
   return PERSON_PHOTOS[name] || null;
+}
+
+// ==================== AI-ассистент Skillaz (демо) ====================
+// Единая точка входа вместо AI-помощника на каждый модуль отдельно (см. ТЗ
+// "Skillaz AI: сценарий демонстрации") — один и тот же виджет встроен в общий
+// AppShell, поэтому доступен на всех страницах всех ролей. "Понимание" запроса —
+// не настоящая генерация, а разбор текста по ключевым словам и фильтрация уже
+// существующих моковых данных (SITE_DATA), чтобы ответы всегда совпадали с тем,
+// что реально показано на самих страницах. Кнопка-триггер — круг со звёздочкой
+// внизу слева; панель ответов открывается справа отдельным плавающим блоком без
+// затемняющего фона (в отличие от Drawer/Modal из ДС) — так страница за ней
+// остаётся видной и кликабельной.
+function IconAiSpark({ size = 24, color = "currentColor", style }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={style}>
+      <path d="M12 3.5 13.5 9 19 10.5 13.5 12 12 17.5 10.5 12 5 10.5 10.5 9Z" fill={color} />
+      <path d="M18.5 14.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9Z" fill={color} />
+    </svg>
+  );
+}
+
+function aiPluralRu(n, one, few, many) {
+  const mod10 = n % 10, mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+  return many;
+}
+
+// ---------------- Разбор запросов: HR-Админ / "Планы сотрудников" ----------------
+function aiHrPlansIntent(queryRaw) {
+  const D = window.SITE_DATA;
+  const q = queryRaw.toLowerCase();
+  let test, reasonOf, label;
+  if (q.indexOf("риск") !== -1) {
+    test = (p) => p.risks.length > 0;
+    reasonOf = (p) => p.risks[0] + (p.risks.length > 1 ? " (и ещё " + (p.risks.length - 1) + ")" : "");
+    label = "с риском";
+  } else if (q.indexOf("цел") !== -1 && (q.indexOf("без") !== -1 || q.indexOf("не опубликова") !== -1)) {
+    test = (p) => !p.goalsPublished;
+    reasonOf = () => "Цели ещё не опубликованы";
+    label = "без опубликованных целей";
+  } else if (q.indexOf("просроч") !== -1 || q.indexOf("контрольн") !== -1) {
+    test = (p) => p.overdueCheckpoint;
+    reasonOf = () => "Просрочена контрольная точка";
+    label = "с просроченной контрольной точкой";
+  } else {
+    return null;
+  }
+  const results = D.hrAssignedPlans.filter(test).map((p) => ({
+    id: p.id, title: p.name, subtitle: p.planTitle + " · " + p.department,
+    reason: reasonOf(p), href: "plan-detail.html?id=" + p.id,
+  }));
+  return {
+    text: results.length
+      ? "Нашёл " + results.length + " " + aiPluralRu(results.length, "план", "плана", "планов") + " " + label + ":"
+      : "Планов " + label + " сейчас нет.",
+    results,
+  };
+}
+
+// ---------------- Разбор запросов: Руководитель / "Моя команда" ----------------
+function aiManagerTeamIntent(queryRaw) {
+  const D = window.SITE_DATA;
+  const q = queryRaw.toLowerCase();
+  let test, reasonOf, label;
+  if (q.indexOf("риск") !== -1) {
+    test = (m) => m.risks.length > 0;
+    reasonOf = (m) => m.risks[0] + (m.risks.length > 1 ? " (и ещё " + (m.risks.length - 1) + ")" : "");
+    label = "с риском по адаптации";
+  } else if (q.indexOf("не начал") !== -1) {
+    test = (m) => m.status === "not_started";
+    reasonOf = () => "План ещё не начат";
+    label = "которые ещё не начали план";
+  } else if (q.indexOf("вниман") !== -1 || q.indexOf("действ") !== -1 || q.indexOf("нужно") !== -1) {
+    test = (m) => m.risks.length > 0 || !!m.action;
+    reasonOf = (m) => m.risks.length > 0
+      ? m.risks[0] + (m.risks.length > 1 ? " (и ещё " + (m.risks.length - 1) + ")" : "")
+      : m.action.label + (m.action.due ? " до " + m.action.due : "");
+    label = "которым нужно внимание";
+  } else {
+    return null;
+  }
+  const results = D.team.filter(test).map((m) => ({
+    id: m.id, title: m.name, subtitle: m.position + " · " + m.department,
+    reason: reasonOf(m), href: "plan.html?employee=" + m.id,
+  }));
+  return {
+    text: results.length
+      ? "Нашёл " + results.length + " " + aiPluralRu(results.length, "сотрудника", "сотрудников", "сотрудников") + " " + label + ":"
+      : "Сейчас таких сотрудников нет.",
+    results,
+  };
+}
+
+// ---------------- Разбор запросов: Руководитель / план сотрудника ----------------
+function aiManagerPlanEmployee() {
+  const D = window.SITE_DATA;
+  const id = new URLSearchParams(window.location.search).get("employee");
+  const m = D.team.find((t) => t.id === id && t.planId);
+  return m || D.team.find((t) => t.id === "yulia");
+}
+function aiManagerPlanIntent() {
+  const member = aiManagerPlanEmployee();
+  return { text: "Открываю мастер создания целей адаптации для " + member.name + "…", results: [], action: "openAiGoalModal" };
+}
+
+// ---------------- Разбор запросов: Сотрудник / витрина вакансий ----------------
+function aiEmployeeVacanciesIntent(queryRaw) {
+  const D = window.SITE_DATA;
+  const q = queryRaw.toLowerCase().trim();
+  if (!q) return null;
+  const pool = D.vacancies.filter((v) => v.visibleToEmployees !== false && v.status === "open");
+  const constraints = [];
+  const cityList = D.cities.filter((c) => c !== "Удалённо");
+  const stem = (s) => (s.length > 5 ? s.slice(0, 5) : s);
+  const foundCity = cityList.find((c) => q.indexOf(stem(c.toLowerCase())) !== -1);
+  if (foundCity) constraints.push((v) => v.city === foundCity);
+  if (q.indexOf("удал") !== -1) constraints.push((v) => v.format === "Удалённо");
+  else if (q.indexOf("гибрид") !== -1) constraints.push((v) => v.format === "Гибрид");
+  else if (q.indexOf("офис") !== -1) constraints.push((v) => v.format === "Офис");
+  if (q.indexOf("подразделен") !== -1 || q.indexOf("департамент") !== -1) {
+    constraints.push((v) => v.department === D.person.department);
+  }
+  if (q.indexOf("должност") !== -1) constraints.push((v) => v.title === D.person.position);
+
+  let matched;
+  if (constraints.length) {
+    matched = pool.filter((v) => constraints.every((fn) => fn(v)));
+  } else {
+    matched = pool.filter((v) =>
+      v.title.toLowerCase().indexOf(q) !== -1 || v.direction.toLowerCase().indexOf(q) !== -1
+      || v.department.toLowerCase().indexOf(q) !== -1 || v.city.toLowerCase().indexOf(q) !== -1);
+  }
+  const results = matched.map((v) => ({
+    id: v.id, title: v.title, subtitle: v.city + " · " + v.department,
+    reason: (v.salaryFrom && v.salaryTo ? v.salaryFrom.toLocaleString("ru-RU") + "–" + v.salaryTo.toLocaleString("ru-RU") + " ₽" : "По договорённости") + " · " + v.format,
+    href: "vacancy.html?id=" + v.id,
+  }));
+  return {
+    text: results.length
+      ? "Нашёл " + results.length + " " + aiPluralRu(results.length, "вакансию", "вакансии", "вакансий") + ":"
+      : "По такому запросу вакансий не нашлось — попробуйте другой город или формат работы.",
+    results,
+  };
+}
+
+// ---------------- Разбор запросов: Сотрудник / карточка вакансии ----------------
+function aiEmployeeVacancyIntent() {
+  const D = window.SITE_DATA;
+  const id = new URLSearchParams(window.location.search).get("id");
+  const vacancy = D.vacancies.find((v) => v.id === id) || D.vacancies[0];
+  const person = D.person;
+  const sameDept = vacancy.department === person.department;
+  const sameCity = vacancy.city === person.city;
+  const lines = [];
+  lines.push(sameDept
+    ? "Вакансия в вашем текущем подразделении (" + person.department + ") — это внутренний переход."
+    : "Подразделение вакансии — «" + vacancy.department + "», у вас сейчас «" + person.department + "».");
+  lines.push(sameCity
+    ? "Город совпадает с вашим (" + person.city + ")."
+    : "Город вакансии — " + vacancy.city + " (формат: " + vacancy.format + "), у вас указан " + person.city + ".");
+  lines.push("Грейд " + vacancy.grade + ", опыт " + vacancy.experience + " — сопоставьте с вашим стажем в текущей роли (" + person.tenure + ").");
+  lines.push("Ключевые навыки в требованиях: " + vacancy.requiredSkills.join(", ") + ".");
+  lines.push("Если появятся вопросы — можно написать рекрутёру, " + vacancy.recruiter.name + ".");
+  return { text: lines.join("\n"), results: [] };
+}
+
+// ---------------- Конфигурация виджета по текущей странице ----------------
+function aiPageKey() {
+  const p = window.location.pathname;
+  if (/\/hr\/plans\.html$/.test(p)) return "hr-plans";
+  if (/\/manager\/team\.html$/.test(p)) return "manager-team";
+  if (/\/manager\/plan\.html$/.test(p)) return "manager-plan";
+  if (/\/employee\/vacancies\.html$/.test(p)) return "employee-vacancies";
+  if (/\/employee\/vacancy\.html$/.test(p)) return "employee-vacancy";
+  return null;
+}
+const AI_PAGE_CONFIG = {
+  "hr-plans": {
+    chips: ["Какие планы у меня в риске?", "Где ещё не опубликованы цели?", "Где просрочены контрольные точки?"],
+    resolve: aiHrPlansIntent,
+  },
+  "manager-team": {
+    chips: ["Кто требует моего внимания?", "Сотрудники с рисками в планах", "Кто ещё не начал план?"],
+    resolve: aiManagerTeamIntent,
+  },
+  "manager-plan": {
+    chips: ["Создать цели адаптации с AI"],
+    resolve: aiManagerPlanIntent,
+  },
+  "employee-vacancies": {
+    chips: ["Есть вакансии в Москве?", "Есть вакансии удалённо?", "Вакансии в моём подразделении"],
+    resolve: aiEmployeeVacanciesIntent,
+  },
+  "employee-vacancy": {
+    chips: ["Подойдёт ли мне эта вакансия?"],
+    resolve: aiEmployeeVacancyIntent,
+  },
+};
+const AI_FALLBACK_LINKS = {
+  hr: { label: "Планы сотрудников", href: "hr/plans.html" },
+  manager: { label: "Моя команда", href: "manager/team.html" },
+  employee: { label: "Витрина вакансий", href: "employee/vacancies.html" },
+};
+const AI_GREETING = "Учитываю страницу, которую вы открыли, выбранный объект, вашу роль и права доступа — помогу быстрее разобраться в ситуации и, если нужно, сразу подготовлю действие вместо вас (черновик, вы подтверждаете). Что подсказать?";
+
+function AiBubble({ from, text, results, thinking }) {
+  const isUser = from === "user";
+  const avatar = (
+    <span style={{
+      display: "inline-flex", width: 26, height: 26, borderRadius: "50%", flexShrink: 0, marginTop: 2,
+      background: "var(--sk-special-secondary)", alignItems: "center", justifyContent: "center",
+    }}>
+      <IconAiSpark size={14} color="var(--sk-icon-special)" />
+    </span>
+  );
+  if (thinking) {
+    return (
+      <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+        {avatar}
+        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Печатает…</span>
+      </div>
+    );
+  }
+  return (
+    <div className="sk-row sk-gap-2" style={{ alignItems: "flex-start", flexDirection: isUser ? "row-reverse" : "row" }}>
+      {!isUser && avatar}
+      <div style={{ maxWidth: "84%", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{
+          background: isUser ? "var(--sk-accent)" : "var(--sk-surface-secondary)",
+          color: isUser ? "var(--sk-text-contrast)" : "var(--sk-text-primary)",
+          borderRadius: "var(--sk-radius-3)", padding: "10px 14px", font: "var(--sk-label-3-regular)", whiteSpace: "pre-line",
+        }}>{text}</div>
+        {results && results.length > 0 && (
+          <div className="sk-col sk-gap-2">
+            {results.map((r) => (
+              <a key={r.id} href={r.href} style={{ textDecoration: "none" }}>
+                <div className="sk-clickable" style={{
+                  border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", padding: "10px 12px",
+                  background: "var(--sk-surface-page)",
+                }}>
+                  <div className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{r.title}</div>
+                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 2 }}>{r.subtitle}</div>
+                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 4 }}>{r.reason}</div>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AiAssistantWidget({ role }) {
+  const pageKey = React.useMemo(aiPageKey, []);
+  const config = pageKey ? AI_PAGE_CONFIG[pageKey] : null;
+  const [open, setOpen] = React.useState(false);
+  const [messages, setMessages] = React.useState([]);
+  const [input, setInput] = React.useState("");
+  const [thinking, setThinking] = React.useState(false);
+  const scrollRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, thinking, open]);
+
+  const greetingText = config
+    ? AI_GREETING
+    : "В этой демо-версии для этой страницы пока нет готового сценария." + (AI_FALLBACK_LINKS[role] ? " Попробуйте: «" + AI_FALLBACK_LINKS[role].label + "»." : "");
+
+  function send(text) {
+    const trimmed = (text || "").trim();
+    if (!trimmed || thinking) return;
+    setMessages((m) => [...m, { from: "user", text: trimmed }]);
+    setInput("");
+    setThinking(true);
+    window.setTimeout(function () {
+      const reply = (config && config.resolve && config.resolve(trimmed))
+        || { text: "Не нашёл подходящего сценария для этого запроса в демо. Попробуйте один из вариантов выше.", results: [] };
+      setThinking(false);
+      setMessages((m) => [...m, { from: "ai", text: reply.text, results: reply.results || [] }]);
+      if (reply.action === "openAiGoalModal") {
+        window.setTimeout(function () {
+          if (window.__skAiOpenGoalModal) { window.__skAiOpenGoalModal(); setOpen(false); }
+        }, 500);
+      }
+    }, 550);
+  }
+
+  return (
+    <React.Fragment>
+      {!open && (
+        <button aria-label="Skillaz AI" onClick={() => setOpen(true)} style={{
+          position: "fixed", right: 24, bottom: 24, width: 56, height: 56, borderRadius: "50%",
+          border: "none", cursor: "pointer", zIndex: 160,
+          background: "linear-gradient(135deg, var(--sk-special), var(--sk-accent))",
+          boxShadow: "var(--sk-shadow-l)", display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <IconAiSpark size={26} color="var(--sk-text-contrast)" />
+        </button>
+      )}
+
+      {open && (
+        <div style={{
+          position: "fixed", top: 12, right: 12, bottom: 12, width: 400, maxWidth: "calc(100vw - 24px)",
+          background: "var(--sk-surface-page)", borderRadius: "var(--sk-radius-4)", boxShadow: "var(--sk-shadow-l)",
+          display: "flex", flexDirection: "column", overflow: "hidden", zIndex: 155,
+        }}>
+          <SkOverlayHeader dense
+            title={<span className="sk-row sk-gap-2" style={{ alignItems: "center" }}><IconAiSpark size={18} color="var(--sk-icon-special)" />Skillaz AI</span>}
+            onClose={() => setOpen(false)} />
+          <div ref={scrollRef} className="sk-scroll" style={{ flex: "1 1 auto", overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+            <AiBubble from="ai" text={greetingText} />
+            {config && config.chips.length > 0 && (
+              <div className="sk-col sk-gap-2">
+                {config.chips.map((c) => (
+                  <button key={c} onClick={() => send(c)} className="sk-clickable" style={{
+                    display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
+                    border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
+                    borderRadius: "var(--sk-radius-3)", padding: "10px 14px", font: "var(--sk-label-3-regular)",
+                    color: "var(--sk-text-primary)", cursor: "pointer",
+                  }}>
+                    <IconAiSpark size={14} color="var(--sk-icon-special)" style={{ flexShrink: 0 }} />
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
+            {messages.map((m, i) => <AiBubble key={i} from={m.from} text={m.text} results={m.results} />)}
+            {thinking && <AiBubble from="ai" thinking />}
+          </div>
+          <div style={{ flexShrink: 0, borderTop: "1px solid var(--sk-stroke-divider)", padding: 14 }}>
+            <div className="sk-row sk-gap-2">
+              <Input size="s" placeholder="Спросите что-нибудь…" value={input}
+                onChange={(e) => setInput(e.target.value || "")}
+                onKeyDown={(e) => { if (e.key === "Enter") send(input); }}
+                style={{ flex: 1 }} />
+              <IconButton size="s" mode="primary" variant="accent" disabled={!input.trim()}
+                onClick={() => send(input)} title="Отправить">
+                <IconSend size={16} />
+              </IconButton>
+            </div>
+          </div>
+        </div>
+      )}
+    </React.Fragment>
+  );
 }
 
 window.Site = {
