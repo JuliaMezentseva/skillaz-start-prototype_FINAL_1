@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Новая вакансия — Skillaz Start</title>
 <link rel="stylesheet" href="../assets/styles.css" />
+<style>.sk-rte-body:empty:before { content: attr(data-ph); color: var(--sk-text-placeholder); }</style>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
@@ -15,7 +16,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Divider, Avatar, Input, Select, Textarea, Button, Modal, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Divider, Avatar, Input, Select, Button, Modal, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconArrowLeft, IconChevronDown, IconCheck } = Icons;
 const D = window.SITE_DATA;
@@ -52,6 +53,65 @@ function SkillTagInput({ value, onChange }) {
           font: "400 14px/20px var(--sk-font-ui)", color: "var(--sk-text-primary)",
         }} />
     </div>
+  );
+}
+
+// HTML-редактор для описания вакансии (Обязанности/Требования/Условия) — в экспорте
+// Skillgrid нет готового rich-text компонента (только Textarea для простого текста),
+// поэтому здесь свой contentEditable с минимальной панелью инструментов, но в той же
+// "коробке" из ДС (радиус формы, обводка, состояние фокуса), что и остальные поля формы.
+// Value/onChange работают со строкой HTML, а не с текстом.
+function RichTextEditor({ label, required, helper, placeholder, value, onChange, minHeight = 120 }) {
+  const ref = React.useRef(null);
+  const [focus, setFocus] = React.useState(false);
+  React.useEffect(() => {
+    if (ref.current && ref.current.innerHTML !== (value || "")) ref.current.innerHTML = value || "";
+    // eslint-disable-next-line
+  }, []);
+  function exec(cmd) {
+    document.execCommand(cmd);
+    ref.current && ref.current.focus();
+    onChange(ref.current.innerHTML);
+  }
+  function ToolbarButton({ cmd, title, children }) {
+    return (
+      <button type="button" title={title} onMouseDown={(e) => e.preventDefault()} onClick={() => exec(cmd)} style={{
+        width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center",
+        border: "none", borderRadius: 6, background: "transparent", cursor: "pointer",
+        color: "var(--sk-text-secondary)", font: "600 13px/1 var(--sk-font-ui)",
+      }}>
+        {children}
+      </button>
+    );
+  }
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {label && (
+        <span style={{ font: "var(--sk-label-3)", color: "var(--sk-text-primary)" }}>
+          {label}{required && <span style={{ color: "var(--sk-text-negative)" }}> *</span>}
+        </span>
+      )}
+      <div style={{
+        borderRadius: "var(--sk-radius-form)", background: "var(--sk-surface-page)",
+        boxShadow: `inset 0 0 0 ${focus ? 2 : 1}px ${focus ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
+        transition: "box-shadow var(--sk-duration) var(--sk-ease)",
+      }}>
+        <div className="sk-row sk-gap-1" style={{ padding: "4px 6px", borderBottom: "1px solid var(--sk-stroke)" }}>
+          <ToolbarButton cmd="bold" title="Жирный">B</ToolbarButton>
+          <ToolbarButton cmd="italic" title="Курсив"><span style={{ fontStyle: "italic" }}>I</span></ToolbarButton>
+          <ToolbarButton cmd="insertUnorderedList" title="Маркированный список">•—</ToolbarButton>
+          <ToolbarButton cmd="insertOrderedList" title="Нумерованный список">1.—</ToolbarButton>
+        </div>
+        <div ref={ref} contentEditable suppressContentEditableWarning className="sk-rte-body"
+          data-ph={placeholder || ""}
+          onFocus={() => setFocus(true)}
+          onBlur={() => setFocus(false)}
+          onInput={(e) => onChange(e.currentTarget.innerHTML)}
+          style={{ minHeight, padding: 12, outline: "none", font: "400 14px/20px var(--sk-font-ui)", color: "var(--sk-text-primary)" }}
+        />
+      </div>
+      {helper && <span style={{ font: "var(--sk-label-4-regular)", letterSpacing: "0.01em", color: "var(--sk-text-secondary)" }}>{helper}</span>}
+    </label>
   );
 }
 
@@ -196,12 +256,12 @@ function Page() {
 
           <div ref={sectionRefs.description} data-section="description" className="sk-col sk-gap-3">
             <div className="sk-label-2">Описание</div>
-            <Textarea label="Обязанности" required helper="Каждый пункт — с новой строки" rows={6}
-              value={form.responsibilities} onChange={(e) => set("responsibilities")(e.target.value || "")} />
-            <Textarea label="Требования и навыки" required helper="Каждый пункт — с новой строки" rows={6}
-              value={form.requirements} onChange={(e) => set("requirements")(e.target.value || "")} />
-            <Textarea label="Условия" helper="Каждый пункт — с новой строки" rows={4}
-              value={form.conditions} onChange={(e) => set("conditions")(e.target.value || "")} />
+            <RichTextEditor label="Обязанности" required placeholder="Опишите, чем предстоит заниматься"
+              value={form.responsibilities} onChange={set("responsibilities")} />
+            <RichTextEditor label="Требования и навыки" required placeholder="Опишите требования к кандидату"
+              value={form.requirements} onChange={set("requirements")} />
+            <RichTextEditor label="Условия" placeholder="Опишите условия работы" minHeight={90}
+              value={form.conditions} onChange={set("conditions")} />
           </div>
 
           <Divider />

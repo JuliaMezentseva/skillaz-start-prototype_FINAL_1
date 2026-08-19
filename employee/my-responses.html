@@ -15,9 +15,9 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Tabs, Divider, Button } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Tabs, Divider } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconFileText, IconDownload } = Icons;
+const { IconFileText } = Icons;
 const D = window.SITE_DATA;
 
 function fmtMoney(n) { return n.toLocaleString("ru-RU"); }
@@ -55,14 +55,13 @@ function downloadResumeStub(name, letter) {
   URL.revokeObjectURL(url);
 }
 
-// Карточка прикреплённого резюме — тот же вид, что и у ResumeCard в hr/vacancy-responses.html
-// (иконка файла в плашке + имя + кнопка скачивания), чтобы отклик выглядел одинаково что у
-// сотрудника, что у HR, который его читает.
+// Карточка прикреплённого резюме — по референсу (см. мои-отклики.svg): простая белая
+// плашка с рамкой, без отдельной кнопки — кликабельна целиком.
 function ResumeCard({ name, size, letter }) {
   return (
-    <div className="sk-row sk-gap-3" style={{
+    <div className="sk-row sk-gap-3 sk-clickable" onClick={(e) => { e.preventDefault(); e.stopPropagation(); downloadResumeStub(name, letter); }} style={{
       alignItems: "center", padding: "12px 14px", borderRadius: "var(--sk-radius-3)",
-      background: "var(--sk-surface-secondary)",
+      border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)", maxWidth: 320,
     }}>
       <div style={{
         width: 36, height: 36, borderRadius: "var(--sk-radius-2)", flexShrink: 0,
@@ -72,35 +71,16 @@ function ResumeCard({ name, size, letter }) {
         <div className="sk-label-4" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
         {size && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{size}</div>}
       </div>
-      <Button mode="secondary" size="s" icon={<IconDownload size={15} color="var(--sk-icon-accent)" />}
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); downloadResumeStub(name, letter); }}>Скачать</Button>
     </div>
   );
 }
 
-// Сопроводительное письмо — клэмп на 4 строки по умолчанию с "Читать полностью", как в
-// hr/vacancy-responses.html: письма бывают длиннее, чем видно сразу без разворачивания,
-// а вся карточка — ссылка на вакансию, поэтому клики по кнопке гасим отдельно.
+// Сопроводительное письмо — по референсу показывается целиком, без подложки и без
+// заголовка-лейбла: обычный текст абзацами (в данных уже разделены пустой строкой).
 function LetterBlock({ letter }) {
-  const [expanded, setExpanded] = React.useState(false);
   if (!letter) return null;
-  const isLong = letter.length > 220;
   return (
-    <div className="sk-col sk-gap-1" style={{
-      padding: "10px 12px", borderRadius: "var(--sk-radius-2)", background: "var(--sk-surface-secondary)",
-    }}>
-      <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Сопроводительное письмо</div>
-      <div className="sk-label-3-regular" style={{
-        color: "var(--sk-text-primary)", whiteSpace: "pre-wrap",
-        ...(isLong && !expanded ? { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" } : {}),
-      }}>{letter}</div>
-      {isLong && (
-        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setExpanded((x) => !x); }} className="sk-link-btn"
-          style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)", font: "var(--sk-label-4)" }}>
-          {expanded ? "Свернуть" : "Читать полностью"}
-        </button>
-      )}
-    </div>
+    <div className="sk-label-3-regular" style={{ color: "var(--sk-text-primary)", whiteSpace: "pre-wrap" }}>{letter}</div>
   );
 }
 
