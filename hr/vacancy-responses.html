@@ -15,9 +15,9 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Avatar, Divider, Button, Modal, Input, Select, Tag } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Avatar, Button, Input, Select, Tag } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconArrowLeft, IconMapPin, IconBriefcase, IconPhone, IconMail, IconSearch, IconFileText, IconDownload } = Icons;
+const { IconArrowLeft, IconMapPin, IconBriefcase, IconPhone, IconMail, IconSearch, IconDownload } = Icons;
 const D = window.SITE_DATA;
 
 function vacancyIdFromUrl() {
@@ -70,51 +70,15 @@ const SORT_OPTIONS = [
   { value: "city:asc", label: "Город: А→Я" },
 ];
 
-function DetailRow({ label, value }) {
-  return (
-    <div className="sk-row" style={{ justifyContent: "space-between", padding: "6px 0" }}>
-      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{label}</span>
-      <span className="sk-label-4">{value}</span>
-    </div>
-  );
-}
-
-// Карточка "файла" резюме — в контуре нет настоящего загруженного файла, поэтому вместо
-// пиктограммы конкретного формата показываем нейтральную карточку документа с кнопкой
-// скачивания сгенерированного на лету текстового слепка тех же данных (см. downloadResume).
-function ResumeCard({ r }) {
-  return (
-    <div className="sk-row sk-gap-3" style={{
-      alignItems: "center", padding: "12px 14px", borderRadius: "var(--sk-radius-3)",
-      background: "var(--sk-surface-secondary)",
-    }}>
-      <div style={{
-        width: 36, height: 36, borderRadius: "var(--sk-radius-2)", flexShrink: 0,
-        display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sk-surface-tertiary)",
-      }}>
-        <IconFileText size={18} color="var(--sk-icon-secondary)" />
-      </div>
-      <div className="sk-col" style={{ flex: 1, gap: 0, minWidth: 0 }}>
-        <div className="sk-label-4">Резюме_{r.lastName}_{r.firstName}</div>
-        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Собрано из данных отклика</div>
-      </div>
-      <Button mode="secondary" size="s" icon={<IconDownload size={15} />} onClick={() => downloadResume(r)}>Скачать</Button>
-    </div>
-  );
-}
-
-// Карточка отклика — основной вид списка. Раньше здесь была таблица, но сопроводительное
-// письмо в узкой колонке с обрезкой в 1–2 строки мелким серым текстом читалось плохо —
-// а именно ради него админ и открывает отклик. В карточке под письмо отдельный блок
-// нормальным по размеру и цвету текстом, видно сразу, без клика внутрь.
-function ResponseCard({ r, onOpen }) {
-  const [hovered, setHovered] = React.useState(false);
+// Карточка отклика — основной и единственный вид списка (без клика — вся нужная
+// информация, включая резюме, видна сразу на самой карточке, открывать больше нечего).
+// Раньше здесь была таблица, но сопроводительное письмо в узкой колонке с обрезкой
+// в 1–2 строки мелким серым текстом читалось плохо — а именно ради него админ и
+// открывает отклик, поэтому под письмо отдельный блок нормальным текстом.
+function ResponseCard({ r }) {
   const fio = r.lastName + " " + r.firstName + " " + r.patronymic;
   return (
-    <Card bordered onClick={onOpen} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} style={{
-      cursor: "pointer",
-      boxShadow: hovered ? "inset 0 0 0 1.5px var(--sk-stroke-accent)" : "inset 0 0 0 1px var(--sk-stroke)",
-    }}>
+    <Card bordered style={{ boxShadow: "inset 0 0 0 1px var(--sk-stroke)" }}>
       <div className="sk-col sk-gap-3">
         <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
           <div className="sk-row sk-gap-3" style={{ alignItems: "center", minWidth: 0 }}>
@@ -125,7 +89,7 @@ function ResponseCard({ r, onOpen }) {
             </div>
           </div>
           <Button mode="tertiary" size="s" icon={<IconDownload size={15} />}
-            onClick={(e) => { e.stopPropagation(); downloadResume(r); }} style={{ flexShrink: 0 }}>Резюме</Button>
+            onClick={() => downloadResume(r)} style={{ flexShrink: 0 }}>Резюме</Button>
         </div>
 
         <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
@@ -144,58 +108,12 @@ function ResponseCard({ r, onOpen }) {
           </div>
         </div>
 
-        <div className="sk-row sk-gap-4 sk-muted" style={{ font: "var(--sk-label-4-regular)", flexWrap: "wrap" }}>
-          <span className="sk-row sk-gap-1"><IconPhone size={13} />{r.phone}</span>
-          <span className="sk-row sk-gap-1"><IconMail size={13} />{r.email}</span>
+        <div className="sk-row sk-gap-4" style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-accent)", flexWrap: "wrap" }}>
+          <span className="sk-row sk-gap-1"><IconPhone size={13} color="var(--sk-icon-accent)" />{r.phone}</span>
+          <span className="sk-row sk-gap-1"><IconMail size={13} color="var(--sk-icon-accent)" />{r.email}</span>
         </div>
       </div>
     </Card>
-  );
-}
-
-function ResponseDetailModal({ r, onClose }) {
-  const fio = r.lastName + " " + r.firstName + " " + r.patronymic;
-  return (
-    <Modal open title={fio} onClose={onClose} size="m"
-      secondary={<Button mode="secondary" onClick={onClose}>Закрыть</Button>}>
-      <div className="sk-col sk-gap-4">
-        <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
-          <Avatar name={fio} size={44} />
-          <div className="sk-col" style={{ gap: 0 }}>
-            <div className="sk-label-2">{r.position}</div>
-            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.department}</div>
-          </div>
-        </div>
-
-        <Card bordered>
-          <DetailRow label="Стаж в компании" value={r.tenure} />
-          <Divider />
-          <DetailRow label="Город" value={r.city} />
-          <Divider />
-          <DetailRow label="Дата отклика" value={r.date} />
-          <Divider />
-          <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", padding: "6px 0", alignItems: "center" }}>
-            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}><IconPhone size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Телефон</span>
-            <span className="sk-label-4">{r.phone}</span>
-          </div>
-          <Divider />
-          <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", padding: "6px 0", alignItems: "center" }}>
-            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}><IconMail size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Почта</span>
-            <span className="sk-label-4">{r.email}</span>
-          </div>
-        </Card>
-
-        <div className="sk-col sk-gap-2">
-          <div className="sk-label-4" style={{ color: "var(--sk-text-tertiary)", textTransform: "uppercase" }}>Сопроводительное письмо</div>
-          <div className="sk-label-3-regular" style={{ whiteSpace: "pre-wrap" }}>{r.letter || "Кандидат не оставил сопроводительное письмо."}</div>
-        </div>
-
-        <div className="sk-col sk-gap-2">
-          <div className="sk-label-4" style={{ color: "var(--sk-text-tertiary)", textTransform: "uppercase" }}>Резюме</div>
-          <ResumeCard r={r} />
-        </div>
-      </div>
-    </Modal>
   );
 }
 
@@ -203,7 +121,6 @@ function Page() {
   const vacancy = D.vacancies.find((v) => v.id === vacancyIdFromUrl());
   const responses = vacancy.responses || [];
   const [q, setQ] = React.useState("");
-  const [openIndex, setOpenIndex] = React.useState(null);
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [filters, setFilters] = React.useState({ city: "", department: "", tenure: "" });
   const [sort, setSort] = React.useState("");
@@ -287,15 +204,11 @@ function Page() {
           {responses.length === 0 ? "Пока нет откликов на эту вакансию." : "Ничего не нашлось по заданным условиям."}
         </div></Card>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
           {filtered.map((r, i) => (
-            <ResponseCard key={i} r={r} onOpen={() => setOpenIndex(i)} />
+            <ResponseCard key={i} r={r} />
           ))}
         </div>
-      )}
-
-      {openIndex != null && filtered[openIndex] && (
-        <ResponseDetailModal r={filtered[openIndex]} onClose={() => setOpenIndex(null)} />
       )}
     </AppShell>
   );
