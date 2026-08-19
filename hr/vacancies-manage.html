@@ -16,7 +16,7 @@
 <div id="root"></div>
 <script type="text/babel">
 const { Card, Tag, Table, Switch, Input, Select, Textarea, Button, Tooltip, Modal, Snackbar, Alert } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, Icons } = window.Site;
+const { AppShell, Icons, ClearableSelect } = window.Site;
 const { IconPlusSm, IconUpload, IconSearch, IconEdit, IconFileText, IconArrowLeft, IconChevronRight } = Icons;
 
 const D = window.SITE_DATA;
@@ -342,27 +342,27 @@ function Page() {
       {filtersOpen && (
         <Card bordered>
           <div className="sk-row sk-gap-3" style={{ flexWrap: "wrap", alignItems: "flex-end" }}>
-            <Select label="Направление" value={filters.direction} placeholder="Любое направление"
+            <ClearableSelect label="Направление" value={filters.direction} placeholder="Любое направление"
               options={D.directions.map((d) => ({ value: d, label: d }))}
-              onChange={(v) => setFilters((f) => ({ ...f, direction: v }))} style={{ minWidth: 200 }} />
-            <Select label="Подразделение" value={filters.department} placeholder="Любое подразделение"
+              onChange={(v) => setFilters((f) => ({ ...f, direction: v }))} onClear={() => setFilters((f) => ({ ...f, direction: "" }))} style={{ minWidth: 200 }} />
+            <ClearableSelect label="Подразделение" value={filters.department} placeholder="Любое подразделение"
               options={departmentOptions.map((d) => ({ value: d, label: d }))}
-              onChange={(v) => setFilters((f) => ({ ...f, department: v }))} style={{ minWidth: 200 }} />
-            <Select label="Регион" value={filters.city} placeholder="Любой регион"
+              onChange={(v) => setFilters((f) => ({ ...f, department: v }))} onClear={() => setFilters((f) => ({ ...f, department: "" }))} style={{ minWidth: 200 }} />
+            <ClearableSelect label="Регион" value={filters.city} placeholder="Любой регион"
               options={cityOptions.map((c) => ({ value: c, label: c }))}
-              onChange={(v) => setFilters((f) => ({ ...f, city: v }))} style={{ minWidth: 180 }} />
-            <Select label="Формат работы" value={filters.format} placeholder="Любой формат"
+              onChange={(v) => setFilters((f) => ({ ...f, city: v }))} onClear={() => setFilters((f) => ({ ...f, city: "" }))} style={{ minWidth: 180 }} />
+            <ClearableSelect label="Формат работы" value={filters.format} placeholder="Любой формат"
               options={D.workFormats.map((f) => ({ value: f, label: f }))}
-              onChange={(v) => setFilters((f) => ({ ...f, format: v }))} style={{ minWidth: 180 }} />
-            <Select label="Тип занятости" value={filters.employment} placeholder="Любой тип"
+              onChange={(v) => setFilters((f) => ({ ...f, format: v }))} onClear={() => setFilters((f) => ({ ...f, format: "" }))} style={{ minWidth: 180 }} />
+            <ClearableSelect label="Тип занятости" value={filters.employment} placeholder="Любой тип"
               options={D.employmentTypes.map((e) => ({ value: e, label: e }))}
-              onChange={(v) => setFilters((f) => ({ ...f, employment: v }))} style={{ minWidth: 180 }} />
-            <Select label="Источник" value={filters.source} placeholder="Любой источник"
+              onChange={(v) => setFilters((f) => ({ ...f, employment: v }))} onClear={() => setFilters((f) => ({ ...f, employment: "" }))} style={{ minWidth: 180 }} />
+            <ClearableSelect label="Источник" value={filters.source} placeholder="Любой источник"
               options={[{ value: "ats", label: "АТС" }, { value: "manual", label: "Создана вручную" }]}
-              onChange={(v) => setFilters((f) => ({ ...f, source: v }))} style={{ minWidth: 180 }} />
-            <Select label="Видимость в витрине" value={filters.visibility} placeholder="Любой статус"
+              onChange={(v) => setFilters((f) => ({ ...f, source: v }))} onClear={() => setFilters((f) => ({ ...f, source: "" }))} style={{ minWidth: 180 }} />
+            <ClearableSelect label="Видимость в витрине" value={filters.visibility} placeholder="Любой статус"
               options={[{ value: "visible", label: "Видна" }, { value: "hidden", label: "Скрыта" }]}
-              onChange={(v) => setFilters((f) => ({ ...f, visibility: v }))} style={{ minWidth: 200 }} />
+              onChange={(v) => setFilters((f) => ({ ...f, visibility: v }))} onClear={() => setFilters((f) => ({ ...f, visibility: "" }))} style={{ minWidth: 200 }} />
             {hasActiveFilters && (
               <Button mode="tertiary" onClick={() => setFilters({ direction: "", department: "", city: "", format: "", employment: "", source: "", visibility: "" })}>Сбросить</Button>
             )}

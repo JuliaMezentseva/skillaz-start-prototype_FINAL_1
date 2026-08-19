@@ -384,6 +384,30 @@ function AppHeaderBar({ children, role }) {
   );
 }
 
+// Select из ДС не умеет очищаться сам (только шеврон, без крестика) — оборачиваем и
+// подрисовываем серый крестик справа от шеврона, когда значение выбрано, чтобы можно
+// было сбросить один конкретный фильтр не открывая выпадашку. Позиционирование от низа
+// контейнера предполагает, что у Select есть label и нет helper/error (как во всех
+// текущих фильтрах, где это используется) — тогда поле высотой 40 всегда внизу.
+function ClearableSelect({ onClear, ...rest }) {
+  const { Select } = window.SkillazCoreDesignSystem_bf9566;
+  const hasValue = rest.multiple ? (rest.value || []).length > 0 : !!rest.value;
+  return (
+    <div style={{ position: "relative" }}>
+      <Select {...rest} />
+      {hasValue && (
+        <button type="button" onClick={onClear} title="Очистить" style={{
+          position: "absolute", right: 30, bottom: 12, width: 16, height: 16, zIndex: 1,
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          border: "none", background: "none", padding: 0, cursor: "pointer", color: "var(--sk-icon-secondary)",
+        }}>
+          <IconX size={13} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 function AppShell({ role, active, base, breadcrumb, children }) {
   const showVacancies = role === "employee" || role === "hr";
   return (
@@ -1220,7 +1244,7 @@ function AiAssistantWidget({ role }) {
 }
 
 window.Site = {
-  ROLES, roleHref, AppShell, StatusTag, directionHue,
+  ROLES, roleHref, AppShell, StatusTag, directionHue, ClearableSelect,
   Icons: window.SiteIcons,
   personPhoto,
   AI: { vacancyApplyGuard: aiVacancyApplyGuard, vacancyLetterDraft: aiVacancyLetterDraft },

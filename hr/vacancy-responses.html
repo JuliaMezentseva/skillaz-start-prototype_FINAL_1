@@ -16,7 +16,7 @@
 <div id="root"></div>
 <script type="text/babel">
 const { Card, Avatar, Button, Input, Select, Tag } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, Icons } = window.Site;
+const { AppShell, Icons, ClearableSelect } = window.Site;
 const { IconArrowLeft, IconMapPin, IconBriefcase, IconPhone, IconMail, IconSearch, IconDownload } = Icons;
 const D = window.SITE_DATA;
 
@@ -75,6 +75,34 @@ const SORT_OPTIONS = [
 // Раньше здесь была таблица, но сопроводительное письмо в узкой колонке с обрезкой
 // в 1–2 строки мелким серым текстом читалось плохо — а именно ради него админ и
 // открывает отклик, поэтому под письмо отдельный блок нормальным текстом.
+// Письмо клэмпим на 4 строки по умолчанию и раскрываем по клику — так карточка не
+// разъезжается на весь экран сразу, но длинное письмо (по факту они будут длиннее,
+// чем в моке) всё равно можно дочитать целиком в один клик, без модалки.
+function LetterBlock({ letter }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const text = letter || "Кандидат не оставил сопроводительное письмо.";
+  const isLong = text.length > 220;
+  return (
+    <div className="sk-col sk-gap-1" style={{
+      padding: "10px 12px", borderRadius: "var(--sk-radius-2)", background: "var(--sk-surface-secondary)",
+    }}>
+      <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Сопроводительное письмо</div>
+      <div className="sk-label-3-regular" style={{
+        color: "var(--sk-text-primary)", whiteSpace: "pre-wrap",
+        ...(isLong && !expanded ? { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" } : {}),
+      }}>
+        {text}
+      </div>
+      {isLong && (
+        <button type="button" onClick={() => setExpanded((e) => !e)} className="sk-link-btn"
+          style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)", font: "var(--sk-label-4)" }}>
+          {expanded ? "Свернуть" : "Читать полностью"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ResponseCard({ r }) {
   const fio = r.lastName + " " + r.firstName + " " + r.patronymic;
   return (
@@ -92,6 +120,11 @@ function ResponseCard({ r }) {
             onClick={() => downloadResume(r)} style={{ flexShrink: 0 }}>Резюме</Button>
         </div>
 
+        <div className="sk-row sk-gap-4" style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-accent)", flexWrap: "wrap" }}>
+          <span className="sk-row sk-gap-1"><IconPhone size={13} color="var(--sk-icon-accent)" />{r.phone}</span>
+          <span className="sk-row sk-gap-1"><IconMail size={13} color="var(--sk-icon-accent)" />{r.email}</span>
+        </div>
+
         <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
           <Tag size="s" hue="gray">{r.tenure}</Tag>
           <span className="sk-row sk-gap-1 sk-muted" style={{ font: "var(--sk-label-4-regular)", alignItems: "center" }}>
@@ -99,19 +132,7 @@ function ResponseCard({ r }) {
           </span>
         </div>
 
-        <div className="sk-col sk-gap-1" style={{
-          padding: "10px 12px", borderRadius: "var(--sk-radius-2)", background: "var(--sk-surface-secondary)",
-        }}>
-          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Сопроводительное письмо</div>
-          <div className="sk-label-3-regular" style={{ color: "var(--sk-text-primary)", whiteSpace: "pre-wrap" }}>
-            {r.letter || "Кандидат не оставил сопроводительное письмо."}
-          </div>
-        </div>
-
-        <div className="sk-row sk-gap-4" style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-accent)", flexWrap: "wrap" }}>
-          <span className="sk-row sk-gap-1"><IconPhone size={13} color="var(--sk-icon-accent)" />{r.phone}</span>
-          <span className="sk-row sk-gap-1"><IconMail size={13} color="var(--sk-icon-accent)" />{r.email}</span>
-        </div>
+        <LetterBlock letter={r.letter} />
       </div>
     </Card>
   );
@@ -181,15 +202,15 @@ function Page() {
       {filtersOpen && (
         <Card bordered>
           <div className="sk-row sk-gap-3" style={{ flexWrap: "wrap", alignItems: "flex-end" }}>
-            <Select label="Город" value={filters.city} placeholder="Любой город"
+            <ClearableSelect label="Город" value={filters.city} placeholder="Любой город"
               options={cityOptions.map((c) => ({ value: c, label: c }))}
-              onChange={(v) => setFilters((f) => ({ ...f, city: v }))} style={{ minWidth: 180 }} />
-            <Select label="Подразделение" value={filters.department} placeholder="Любое подразделение"
+              onChange={(v) => setFilters((f) => ({ ...f, city: v }))} onClear={() => setFilters((f) => ({ ...f, city: "" }))} style={{ minWidth: 180 }} />
+            <ClearableSelect label="Подразделение" value={filters.department} placeholder="Любое подразделение"
               options={departmentOptions.map((d) => ({ value: d, label: d }))}
-              onChange={(v) => setFilters((f) => ({ ...f, department: v }))} style={{ minWidth: 220 }} />
-            <Select label="Стаж в компании" value={filters.tenure} placeholder="Любой стаж"
+              onChange={(v) => setFilters((f) => ({ ...f, department: v }))} onClear={() => setFilters((f) => ({ ...f, department: "" }))} style={{ minWidth: 220 }} />
+            <ClearableSelect label="Стаж в компании" value={filters.tenure} placeholder="Любой стаж"
               options={Object.entries(TENURE_BUCKET_LABELS).map(([value, label]) => ({ value, label }))}
-              onChange={(v) => setFilters((f) => ({ ...f, tenure: v }))} style={{ minWidth: 180 }} />
+              onChange={(v) => setFilters((f) => ({ ...f, tenure: v }))} onClear={() => setFilters((f) => ({ ...f, tenure: "" }))} style={{ minWidth: 180 }} />
             {hasActiveFilters && (
               <Button mode="tertiary" onClick={() => setFilters({ city: "", department: "", tenure: "" })}>Сбросить</Button>
             )}

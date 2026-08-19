@@ -79,13 +79,13 @@ function SubscribeBar({ filters, hasActiveFilters, subscriptions, onSubscribe, o
   return (
     <button type="button" disabled={!hasActiveFilters}
       onClick={() => (isOn ? onUnsubscribe(sig) : onSubscribe(sig, filters))}
-      className="sk-row sk-gap-2 sk-clickable" style={{
-        alignItems: "center", flexShrink: 0, height: 36, padding: "0 14px", border: "none",
-        borderRadius: "var(--sk-radius-full)", background: "var(--graphite-graphite-90-48-opacity)",
-        color: "var(--sk-text-primary)", font: "var(--sk-label-4-regular)",
+      className="sk-row sk-gap-1 sk-clickable" style={{
+        alignItems: "center", flexShrink: 0, height: 20, padding: "0 6px", border: "none",
+        borderRadius: 8, background: "var(--graphite-graphite-97)",
+        color: "var(--sk-text-secondary)", font: "var(--sk-label-4)", letterSpacing: "0.01em",
         cursor: hasActiveFilters ? "pointer" : "default", opacity: hasActiveFilters ? 1 : 0.6, whiteSpace: "nowrap",
       }} title={hasActiveFilters ? undefined : "Выберите фильтр, чтобы подписаться на уведомления"}>
-      <IconBell size={16} color={isOn ? "var(--sk-icon-accent)" : "var(--sk-icon-secondary)"} />
+      <IconBell size={12} color={isOn ? "var(--sk-icon-accent)" : "currentColor"} />
       {isOn ? "Вы подписаны" : "Подписаться на новые"}
     </button>
   );

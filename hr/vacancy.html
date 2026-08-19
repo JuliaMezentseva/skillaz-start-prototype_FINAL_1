@@ -17,20 +17,8 @@
 <script type="text/babel">
 const { Card, Tag, TextList, Divider, Modal, Input, Textarea, Select, Button, Avatar, Snackbar, Alert } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconArrowLeft, IconMapPin, IconMail, IconPhone, IconUpload, IconFileText, IconTarget, IconCheck, IconGift, IconLayers, IconClock, IconPlusSm, IconBriefcase, IconSparklesSolid, IconChevronRight } = Icons;
+const { IconArrowLeft, IconMail, IconPhone, IconUpload, IconFileText, IconTarget, IconCheck, IconGift, IconLayers, IconPlusSm, IconSparklesSolid, IconChevronRight, IconUser } = Icons;
 const D = window.SITE_DATA;
-
-// Локальная иконка для кнопки "Рекомендовать" — своя, т.к. в общем наборе Icons нет
-// подходящей "человек + плюс" (стилистика та же: viewBox 24, strokeWidth 1.5, currentColor).
-function IconUserPlus({ size = 24, color = "currentColor", style }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ color, flexShrink: 0, ...style }}>
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M19 8v6M22 11h-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 const RELATION_OPTIONS = [
   { value: "colleague_former", label: "Бывший коллега" },
@@ -178,24 +166,27 @@ function Page() {
 
   return (
     <AppShell role="hr" active="vacancies" base=".."
-      breadcrumb={<a href="vacancies-manage.html" className="sk-row sk-gap-1" style={{ color: "var(--sk-text-secondary)" }}><IconArrowLeft size={14} /> Управление вакансиями</a>}>
+      breadcrumb={
+        <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+          <a href="vacancies-manage.html" className="sk-row sk-gap-1" style={{ color: "var(--sk-text-secondary)" }}><IconArrowLeft size={14} /> Управление вакансиями</a>
+          {!closed && <span>{vacancy.postedDate}</span>}
+        </div>
+      }>
       <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div className="sk-col sk-gap-3" style={{ flex: 1 }}>
+        <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
           <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap", alignItems: "center" }}>
+            <div className="sk-title-4">{vacancy.title}</div>
             <Tag size="s" hue="gray">{vacancy.transitionType}</Tag>
             {closed
               ? <Tag size="s" hue="neutral">Закрыта</Tag>
               : <Tag size="s" hue="positive" icon={<IconCheck size={12} />}>Идёт поиск</Tag>}
           </div>
-          <div className="sk-title-4">{vacancy.title}</div>
-          <div className="sk-row sk-gap-4 sk-muted" style={{ flexWrap: "wrap" }}>
-            <span className="sk-row sk-gap-1"><IconMapPin size={15} />{vacancy.city} · {vacancy.format}</span>
-            <span className="sk-row sk-gap-1"><IconBriefcase size={15} />{vacancy.department}</span>
-            {!closed && <span className="sk-row sk-gap-1"><IconClock size={15} />{vacancy.postedDate}</span>}
+          <div className="sk-label-1" style={{ color: "var(--sk-text-primary)" }}>
+            {vacancy.salaryFrom && vacancy.salaryTo ? `${fmtMoney(vacancy.salaryFrom)} – ${fmtMoney(vacancy.salaryTo)} ₽` : "По договорённости"}
           </div>
         </div>
         <div className="sk-row sk-gap-2">
-          {!closed && <Button variant="accent" mode="secondary" icon={<IconUserPlus size={16} />} onClick={() => setRecommendOpen(true)}>Рекомендовать</Button>}
+          {!closed && <Button variant="accent" mode="secondary" icon={<IconUser size={16} />} onClick={() => setRecommendOpen(true)}>Рекомендовать</Button>}
           <ApplyCta />
         </div>
       </div>
@@ -243,14 +234,6 @@ function Page() {
 
           <Card bordered>
             <div className="sk-col sk-gap-4">
-              <div style={{ background: "var(--sk-accent-secondary)", borderRadius: "var(--sk-radius-3)", padding: "14px 16px" }}>
-                {vacancy.salaryFrom && vacancy.salaryTo ? (
-                  <div className="sk-title-5" style={{ color: "var(--sk-text-accent)" }}>{fmtMoney(vacancy.salaryFrom)} – {fmtMoney(vacancy.salaryTo)} ₽</div>
-                ) : (
-                  <div className="sk-title-5" style={{ color: "var(--sk-text-accent)" }}>По договорённости</div>
-                )}
-              </div>
-
               <div className="sk-col">
                 <DetailRow label="Регион" value={vacancy.city} />
                 <Divider />
