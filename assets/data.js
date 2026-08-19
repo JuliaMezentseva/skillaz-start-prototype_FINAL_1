@@ -420,8 +420,10 @@ window.SITE_DATA = {
       conditions: ["Оформление по ТК РФ", "ДМС после испытательного срока", "Обучение и наставник на старте"],
       recruiter: { name: "Мария Волкова", role: "Рекрутер, Контактный центр", email: "m.volkova@skillaz.com", phone: "+7 916 500 1122" },
       matchingEmployees: [
-        { name: "Артём Ковалёв", position: "Специалист контакт-центра", department: "Контактный центр", matchPercent: 91, email: "a.kovalev@skillaz.com" },
-        { name: "Дарья Фомина", position: "Оператор поддержки", department: "Контактный центр", matchPercent: 84, email: "d.fomina@skillaz.com" },
+        { name: "Артём Ковалёв", position: "Специалист контакт-центра", department: "Контактный центр", matchPercent: 91, email: "a.kovalev@skillaz.com",
+          matchReasons: ["Уже работает в поддержке клиентов, знаком с процессами контакт-центра", "Совпадение по ключевым навыкам: CRM, работа с возражениями", "В плане развития указан рост внутри контакт-центра"] },
+        { name: "Дарья Фомина", position: "Оператор поддержки", department: "Контактный центр", matchPercent: 84, email: "d.fomina@skillaz.com",
+          matchReasons: ["Работает оператором поддержки в соседней команде", "Проходила курс «Клиентский сервис»", "Указала контакт-центр как область интереса в профиле"] },
       ],
     },
     {
@@ -434,8 +436,10 @@ window.SITE_DATA = {
       conditions: ["Годовой бонус по результатам", "Оформление по ТК РФ", "Служебный телефон"],
       recruiter: { name: "Игорь Панов", role: "Рекрутер, Департамент продаж", email: "i.panov@skillaz.com", phone: "+7 916 500 2233" },
       matchingEmployees: [
-        { name: "Юлия Мезенцева", position: "Менеджер по продажам", department: "Департамент продаж", matchPercent: 88, email: "y.mezentseva@skillaz.com" },
-        { name: "Роман Дьяконов", position: "Ведущий менеджер по продажам", department: "Департамент продаж", matchPercent: 79, email: "r.dyakonov@skillaz.com" },
+        { name: "Юлия Мезенцева", position: "Менеджер по продажам", department: "Департамент продаж", matchPercent: 88, email: "y.mezentseva@skillaz.com",
+          matchReasons: ["Менеджер по продажам в том же департаменте", "Цель развития в плане — «Стать руководителем команды»", "Проходит курс «Управление командой»"] },
+        { name: "Роман Дьяконов", position: "Ведущий менеджер по продажам", department: "Департамент продаж", matchPercent: 79, email: "r.dyakonov@skillaz.com",
+          matchReasons: ["Ведущий менеджер по продажам, стаж в компании 3 года", "Уже неформально наставник для новых сотрудников отдела", "Совпадение по навыку «Постановка целей»"] },
       ],
     },
     {
