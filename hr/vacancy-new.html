@@ -5,7 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Новая вакансия — Skillaz Start</title>
 <link rel="stylesheet" href="../assets/styles.css" />
-<style>.sk-rte-body:empty:before { content: attr(data-ph); color: var(--sk-text-placeholder); }</style>
+<style>
+.sk-rte-body:empty:before { content: attr(data-ph); color: var(--sk-text-placeholder); }
+.sk-rte-body h3 { font: var(--sk-label-2); margin: 12px 0 6px; }
+.sk-rte-body h3:first-child { margin-top: 0; }
+.sk-rte-body p { margin: 0 0 8px; }
+.sk-rte-body ul, .sk-rte-body ol { margin: 4px 0 8px; padding-left: 22px; }
+.sk-rte-body a { color: var(--sk-text-accent); }
+</style>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
@@ -16,16 +23,16 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Divider, Avatar, Input, Select, Button, Modal, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Divider, Avatar, Input, Select, Switch, Button, Modal, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconArrowLeft, IconChevronDown, IconCheck } = Icons;
+const { IconArrowLeft, IconChevronDown, IconCheck, IconLink2 } = Icons;
 const D = window.SITE_DATA;
 
 const SECTIONS = [
   { key: "basic", label: "Основное" },
   { key: "description", label: "Описание" },
   { key: "params", label: "Параметры" },
-  { key: "publish", label: "Команда" },
+  { key: "publish", label: "Публикация и команда" },
 ];
 
 // Поле навыков — теги с крестиком-удалением (Tag.onRemove уже есть в ДС) плюс
@@ -56,27 +63,33 @@ function SkillTagInput({ value, onChange }) {
   );
 }
 
-// HTML-редактор для описания вакансии (Обязанности/Требования/Условия) — в экспорте
-// Skillgrid нет готового rich-text компонента (только Textarea для простого текста),
-// поэтому здесь свой contentEditable с минимальной панелью инструментов, но в той же
+// HTML-редактор описания вакансии — в экспорте Skillgrid нет готового rich-text
+// компонента (только Textarea для простого текста), поэтому здесь свой contentEditable
+// с панелью инструментов (стиль текста, начертание, списки, ссылка), но в той же
 // "коробке" из ДС (радиус формы, обводка, состояние фокуса), что и остальные поля формы.
-// Value/onChange работают со строкой HTML, а не с текстом.
-function RichTextEditor({ label, required, helper, placeholder, value, onChange, minHeight = 120 }) {
+// Value/onChange работают со строкой HTML, а не с текстом — HR сам оформляет разделы
+// (Обязанности/Требования/Условия) заголовками через панель, отдельных полей под них нет.
+function RichTextEditor({ label, required, helper, placeholder, value, onChange, minHeight = 220 }) {
   const ref = React.useRef(null);
   const [focus, setFocus] = React.useState(false);
   React.useEffect(() => {
     if (ref.current && ref.current.innerHTML !== (value || "")) ref.current.innerHTML = value || "";
     // eslint-disable-next-line
   }, []);
-  function exec(cmd) {
-    document.execCommand(cmd);
+  function commit() { onChange(ref.current.innerHTML); }
+  function exec(cmd, val) {
     ref.current && ref.current.focus();
-    onChange(ref.current.innerHTML);
+    document.execCommand(cmd, false, val);
+    commit();
   }
-  function ToolbarButton({ cmd, title, children }) {
+  function insertLink() {
+    const url = window.prompt("Ссылка (https://…)");
+    if (url) exec("createLink", url);
+  }
+  function ToolbarButton({ onAction, title, children }) {
     return (
-      <button type="button" title={title} onMouseDown={(e) => e.preventDefault()} onClick={() => exec(cmd)} style={{
-        width: 28, height: 28, display: "inline-flex", alignItems: "center", justifyContent: "center",
+      <button type="button" title={title} onMouseDown={(e) => e.preventDefault()} onClick={onAction} style={{
+        minWidth: 28, height: 28, padding: "0 6px", display: "inline-flex", alignItems: "center", justifyContent: "center",
         border: "none", borderRadius: 6, background: "transparent", cursor: "pointer",
         color: "var(--sk-text-secondary)", font: "600 13px/1 var(--sk-font-ui)",
       }}>
@@ -84,6 +97,7 @@ function RichTextEditor({ label, required, helper, placeholder, value, onChange,
       </button>
     );
   }
+  const ToolbarDivider = () => <div style={{ width: 1, height: 18, background: "var(--sk-stroke)", margin: "0 2px" }} />;
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {label && (
@@ -96,17 +110,29 @@ function RichTextEditor({ label, required, helper, placeholder, value, onChange,
         boxShadow: `inset 0 0 0 ${focus ? 2 : 1}px ${focus ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
         transition: "box-shadow var(--sk-duration) var(--sk-ease)",
       }}>
-        <div className="sk-row sk-gap-1" style={{ padding: "4px 6px", borderBottom: "1px solid var(--sk-stroke)" }}>
-          <ToolbarButton cmd="bold" title="Жирный">B</ToolbarButton>
-          <ToolbarButton cmd="italic" title="Курсив"><span style={{ fontStyle: "italic" }}>I</span></ToolbarButton>
-          <ToolbarButton cmd="insertUnorderedList" title="Маркированный список">•—</ToolbarButton>
-          <ToolbarButton cmd="insertOrderedList" title="Нумерованный список">1.—</ToolbarButton>
+        <div className="sk-row sk-gap-1" style={{ padding: "4px 6px", borderBottom: "1px solid var(--sk-stroke)", alignItems: "center", flexWrap: "wrap" }}>
+          <select onChange={(e) => { exec("formatBlock", e.target.value || "P"); e.target.value = ""; }} defaultValue="" style={{
+            border: "none", background: "transparent", font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)",
+            padding: "4px 6px", borderRadius: 6, cursor: "pointer", outline: "none",
+          }}>
+            <option value="">Обычный текст</option>
+            <option value="H3">Заголовок</option>
+          </select>
+          <ToolbarDivider />
+          <ToolbarButton onAction={() => exec("bold")} title="Жирный">B</ToolbarButton>
+          <ToolbarButton onAction={() => exec("italic")} title="Курсив"><span style={{ fontStyle: "italic" }}>I</span></ToolbarButton>
+          <ToolbarButton onAction={() => exec("underline")} title="Подчёркнутый"><span style={{ textDecoration: "underline" }}>U</span></ToolbarButton>
+          <ToolbarDivider />
+          <ToolbarButton onAction={() => exec("insertUnorderedList")} title="Маркированный список">•—</ToolbarButton>
+          <ToolbarButton onAction={() => exec("insertOrderedList")} title="Нумерованный список">1.—</ToolbarButton>
+          <ToolbarDivider />
+          <ToolbarButton onAction={insertLink} title="Ссылка"><IconLink2 size={15} /></ToolbarButton>
         </div>
         <div ref={ref} contentEditable suppressContentEditableWarning className="sk-rte-body"
           data-ph={placeholder || ""}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
-          onInput={(e) => onChange(e.currentTarget.innerHTML)}
+          onInput={commit}
           style={{ minHeight, padding: 12, outline: "none", font: "400 14px/20px var(--sk-font-ui)", color: "var(--sk-text-primary)" }}
         />
       </div>
@@ -173,10 +199,10 @@ function Page() {
 
   const [form, setForm] = React.useState({
     title: "", direction: D.directions[0], department: "", skills: [],
-    responsibilities: "", requirements: "", conditions: "",
+    description: "",
     city: D.cities[0], format: D.workFormats[0], employment: D.employmentTypes[0],
     grade: "", experience: D.experienceOptions[0], salaryFrom: "", salaryTo: "",
-    recruiter: recruiterOptions[0],
+    recruiter: recruiterOptions[0], visibleToEmployees: true,
   });
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
   const [toast, setToast] = React.useState(null);
@@ -199,14 +225,14 @@ function Page() {
     sectionRefs[key].current && sectionRefs[key].current.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const valid = form.title.trim() && form.department.trim() && form.responsibilities.trim()
-    && form.requirements.trim() && form.salaryFrom && form.salaryTo;
+  const valid = form.title.trim() && form.department.trim() && form.description.trim()
+    && form.salaryFrom && form.salaryTo;
 
   // Отмечает разделы навигации галочкой, когда все обязательные поля внутри заполнены —
   // так справа видно не просто "где я сейчас", а что ещё осталось дозаполнить до публикации.
   const sectionComplete = {
     basic: !!(form.title.trim() && form.department.trim()),
-    description: !!(form.responsibilities.trim() && form.requirements.trim()),
+    description: !!form.description.trim(),
     params: !!(form.salaryFrom && form.salaryTo),
     publish: true,
   };
@@ -256,12 +282,9 @@ function Page() {
 
           <div ref={sectionRefs.description} data-section="description" className="sk-col sk-gap-3">
             <div className="sk-label-2">Описание</div>
-            <RichTextEditor label="Обязанности" required placeholder="Опишите, чем предстоит заниматься"
-              value={form.responsibilities} onChange={set("responsibilities")} />
-            <RichTextEditor label="Требования и навыки" required placeholder="Опишите требования к кандидату"
-              value={form.requirements} onChange={set("requirements")} />
-            <RichTextEditor label="Условия" placeholder="Опишите условия работы" minHeight={90}
-              value={form.conditions} onChange={set("conditions")} />
+            <RichTextEditor label="Описание вакансии" required
+              placeholder="Опишите обязанности, требования и условия — оформите разделы заголовками через панель инструментов"
+              value={form.description} onChange={set("description")} />
           </div>
 
           <Divider />
@@ -283,10 +306,19 @@ function Page() {
           <Divider />
 
           <div ref={sectionRefs.publish} data-section="publish" className="sk-col sk-gap-4">
-            <div className="sk-label-2">Команда</div>
-            <div className="sk-col sk-gap-2">
-              <div className="sk-label-3">Контакт для связи</div>
-              <RecruiterPicker value={form.recruiter} options={recruiterOptions} onChange={set("recruiter")} />
+            <div className="sk-label-2">Публикация и команда</div>
+            <div className="sk-row sk-gap-6" style={{ alignItems: "flex-start", flexWrap: "wrap" }}>
+              <div className="sk-row sk-gap-3" style={{ alignItems: "center", flex: 1, minWidth: 240 }}>
+                <Switch checked={form.visibleToEmployees} onChange={set("visibleToEmployees")} />
+                <div className="sk-col" style={{ gap: 0 }}>
+                  <div className="sk-label-3">Видна сотрудникам</div>
+                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Появится на витрине сразу после публикации</div>
+                </div>
+              </div>
+              <div className="sk-col sk-gap-2" style={{ flex: 1, minWidth: 240 }}>
+                <div className="sk-label-3">Контакт для связи</div>
+                <RecruiterPicker value={form.recruiter} options={recruiterOptions} onChange={set("recruiter")} />
+              </div>
             </div>
           </div>
 

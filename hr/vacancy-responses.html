@@ -17,7 +17,7 @@
 <script type="text/babel">
 const { Card, Avatar, Button, Input, Select, Tag, Divider } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons, ClearableSelect } = window.Site;
-const { IconArrowLeft, IconMapPin, IconBriefcase, IconPhone, IconMail, IconSearch, IconDownload, IconFileText } = Icons;
+const { IconArrowLeft, IconMapPin, IconBriefcase, IconPhone, IconMail, IconSearch, IconFileText } = Icons;
 const D = window.SITE_DATA;
 
 function vacancyIdFromUrl() {
@@ -83,10 +83,7 @@ function LetterBlock({ letter }) {
   const text = letter || "Кандидат не оставил сопроводительное письмо.";
   const isLong = text.length > 220;
   return (
-    <div className="sk-col sk-gap-1" style={{
-      padding: "10px 12px", borderRadius: "var(--sk-radius-2)", background: "var(--sk-surface-secondary)",
-    }}>
-      <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Сопроводительное письмо</div>
+    <div className="sk-col sk-gap-1">
       <div className="sk-label-3-regular" style={{
         color: "var(--sk-text-primary)", whiteSpace: "pre-wrap",
         ...(isLong && !expanded ? { display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical", overflow: "hidden" } : {}),
@@ -103,23 +100,20 @@ function LetterBlock({ letter }) {
   );
 }
 
-// Тот же вид, что и ResumeCard в employee/my-responses.html (иконка файла в плашке + имя +
-// кнопка скачивания) — иконка синяя, как и остальные "контактные" иконки на карточке, а не
-// серая: серый здесь читался как отключённое/неважное, а это рабочая ссылка на файл.
+// Тот же вид, что и ResumeCard в employee/my-responses.html — простая белая плашка с
+// рамкой, без серой подложки и без отдельной кнопки, кликабельна целиком.
 function ResumeCard({ r }) {
   const name = "Резюме_" + r.lastName + "_" + r.firstName + ".pdf";
   return (
-    <div className="sk-row sk-gap-3" style={{
+    <div className="sk-row sk-gap-3 sk-clickable" onClick={() => downloadResume(r)} style={{
       alignItems: "center", padding: "12px 14px", borderRadius: "var(--sk-radius-3)",
-      background: "var(--sk-surface-secondary)",
+      border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)", maxWidth: 320,
     }}>
       <div style={{
         width: 36, height: 36, borderRadius: "var(--sk-radius-2)", flexShrink: 0,
         display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sk-accent-secondary)",
       }}><IconFileText size={18} color="var(--sk-icon-accent)" /></div>
       <div className="sk-label-4" style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
-      <Button mode="secondary" size="s" icon={<IconDownload size={15} color="var(--sk-icon-accent)" />}
-        onClick={() => downloadResume(r)}>Скачать</Button>
     </div>
   );
 }
@@ -249,7 +243,7 @@ function Page() {
           {responses.length === 0 ? "Пока нет откликов на эту вакансию." : "Ничего не нашлось по заданным условиям."}
         </div></Card>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+        <div className="sk-col sk-gap-3">
           {filtered.map((r, i) => (
             <ResponseCard key={i} r={r} />
           ))}
