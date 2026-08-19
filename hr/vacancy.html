@@ -57,7 +57,7 @@ function DetailRow({ label, value }) {
 
 function MatchTag({ percent, compact }) {
   return (
-    <Tag size="s" pill icon={<IconSparklesSolid size={12} />} style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)", flexShrink: 0 }}>
+    <Tag size="s" icon={<IconSparklesSolid size={12} />} style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)", flexShrink: 0 }}>
       {compact ? `${percent}%` : `Подходит на ${percent}%`}
     </Tag>
   );
@@ -228,7 +228,7 @@ function Page() {
             <div className="sk-col sk-gap-3">
               <div className="sk-row sk-gap-2 sk-label-2"><IconLayers size={18} color="var(--sk-icon-accent)" />Ключевые навыки</div>
               <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
-                {vacancy.requiredSkills.map((s, i) => <Tag key={i} size="s" hue="gray" pill>{s}</Tag>)}
+                {vacancy.requiredSkills.map((s, i) => <Tag key={i} size="s" hue="gray">{s}</Tag>)}
               </div>
             </div>
           </Card>

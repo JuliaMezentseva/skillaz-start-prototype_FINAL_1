@@ -43,7 +43,7 @@ function SkillTagInput({ value, onChange }) {
       borderRadius: "var(--sk-radius-form)", background: "var(--sk-surface-secondary)",
     }}>
       {value.map((s) => (
-        <Tag key={s} size="s" pill onRemove={() => onChange(value.filter((x) => x !== s))}>{s}</Tag>
+        <Tag key={s} size="s" onRemove={() => onChange(value.filter((x) => x !== s))}>{s}</Tag>
       ))}
       <input value={draft} onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Return" || e.key === ",") { e.preventDefault(); commit(); } }}

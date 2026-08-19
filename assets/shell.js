@@ -52,6 +52,9 @@ const IconFilter = mkIcon(<>
   <circle cx="10" cy="16.5" r="2" stroke="currentColor" strokeWidth="1.6" />
 </>);
 const IconAlertCircle = mkIcon(<><circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.5" /><path d="M12 7.5v5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><circle cx="12" cy="16.3" r="0.9" fill="currentColor" /></>);
+// Тот же колокольчик, что в шапке ДС (см. Header.jsx) — общий, чтобы страницы не
+// заводили свою локальную копию (как было в employee/vacancies.html и hr/vacancies.html).
+const IconBell = mkIcon(<><path d="M12 4a6 6 0 0 0-6 6v3.2l-1.4 2.4a.8.8 0 0 0 .7 1.2h13.4a.8.8 0 0 0 .7-1.2L18 13.2V10a6 6 0 0 0-6-6Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /><path d="M10 19.5a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></>);
 const IconGraduationCap = mkIcon(<><path d="M2.5 9.5 12 5l9.5 4.5-9.5 4.5-9.5-4.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M6.5 11.6v4c0 1.4 2.5 2.6 5.5 2.6s5.5-1.2 5.5-2.6v-4" stroke="currentColor" strokeWidth="1.5" /></>);
 const IconGift = mkIcon(<><rect x="4" y="9.5" width="16" height="4" rx="1" stroke="currentColor" strokeWidth="1.5" /><path d="M12 9.5V21M18 13v6.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 19.5V13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M12 9.5c-1.8 0-3.3-1.1-3.3-2.8S9.8 4 10.8 4.5 12 6.8 12 9.5M12 9.5c1.8 0 3.3-1.1 3.3-2.8S14.2 4 13.2 4.5 12 6.8 12 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></>);
 const IconLayers = mkIcon(<><path d="M12 3.5 21 8.5 12 13.5 3 8.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="m3 13 9 5 9-5M3 10.75 12 15.75l9-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></>);
@@ -120,7 +123,7 @@ function IconCopyLocal2({ size = 16, color = "currentColor" }) {
 window.SiteIcons = {
   IconSearch, IconChevronDown, IconChevronUp, IconChevronRight, IconArrowLeft, IconCheck, IconLock, IconClock,
   IconFileText, IconLink2, IconMessageCircle, IconHelpCircle, IconInfo, IconBriefcase, IconUsers,
-  IconTarget, IconMapPin, IconPhone, IconMail, IconSend, IconUpload, IconDownload, IconX, IconFilter, IconAlertCircle,
+  IconTarget, IconMapPin, IconPhone, IconMail, IconSend, IconUpload, IconDownload, IconX, IconFilter, IconAlertCircle, IconBell,
   IconGraduationCap, IconGift, IconLayers, IconPlusSm, IconEye, IconPaperclip, IconCalendar, IconUser,
   IconMoreHorizontal, IconEdit, IconTrash, IconFlag, IconSettings, IconClipboard, IconRocket, IconSparkles, IconSparklesSolid, IconBookOpen,
   IconUnlink, IconUserSwitch, IconRepeat, IconColumns, IconInbox, IconUserX, IconCopyLocal2, IconMic, IconImage,

@@ -17,7 +17,7 @@
 <script type="text/babel">
 const { Card, Tag, Input, Button, Checkbox, Tabs, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconSearch, IconMapPin, IconBriefcase, IconX, IconFilter, IconSparklesSolid } = Icons;
+const { IconSearch, IconMapPin, IconBriefcase, IconX, IconFilter, IconSparklesSolid, IconBell } = Icons;
 const D = window.SITE_DATA;
 
 // Переключатель "Вакансии / Мои отклики" — это переход между двумя разными HTML-страницами
@@ -44,16 +44,6 @@ function IconThumbUp({ size = 24, color = "currentColor", style }) {
         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M8 11H6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"
         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function IconBell({ size = 24, color = "currentColor", style }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ color, flexShrink: 0, ...style }}>
-      <path d="M12 4a6 6 0 0 0-6 6v3.2l-1.4 2.4a.8.8 0 0 0 .7 1.2h13.4a.8.8 0 0 0 .7-1.2L18 13.2V10a6 6 0 0 0-6-6Z"
-        stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M10 19.5a2 2 0 0 0 4 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -91,8 +81,8 @@ function SubscribeBar({ filters, hasActiveFilters, subscriptions, onSubscribe, o
       onClick={() => (isOn ? onUnsubscribe(sig) : onSubscribe(sig, filters))}
       className="sk-row sk-gap-2 sk-clickable" style={{
         alignItems: "center", flexShrink: 0, height: 36, padding: "0 14px", border: "none",
-        borderRadius: "var(--sk-radius-full)", background: "var(--sk-surface-tertiary)",
-        color: "var(--sk-text-secondary)", font: "var(--sk-label-4-regular)",
+        borderRadius: "var(--sk-radius-full)", background: "var(--graphite-graphite-90-48-opacity)",
+        color: "var(--sk-text-primary)", font: "var(--sk-label-4-regular)",
         cursor: hasActiveFilters ? "pointer" : "default", opacity: hasActiveFilters ? 1 : 0.6, whiteSpace: "nowrap",
       }} title={hasActiveFilters ? undefined : "Выберите фильтр, чтобы подписаться на уведомления"}>
       <IconBell size={16} color={isOn ? "var(--sk-icon-accent)" : "var(--sk-icon-secondary)"} />
@@ -268,7 +258,7 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
               ? <Tag size="s" hue="positive" icon={<IconThumbUp size={13} />}>Уже откликнулись</Tag>
               : closed
                 ? <Tag size="s" hue="neutral">Закрыта</Tag>
-                : (vacancy.isNew && <Tag size="s" pill style={{ background: "var(--sk-accent)", color: "var(--sk-text-contrast)" }}>Новая</Tag>)}
+                : (vacancy.isNew && <Tag size="s" style={{ background: "var(--sk-accent)", color: "var(--sk-text-contrast)" }}>Новая</Tag>)}
           </div>
 
           <div className="sk-label-3-regular">
@@ -277,11 +267,11 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
 
           <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
             {matchPercent != null && (
-              <Tag size="s" pill icon={<IconSparklesSolid size={12} />} style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)" }}>
+              <Tag size="s" icon={<IconSparklesSolid size={12} />} style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)" }}>
                 Подходите на {Math.round(matchPercent)}%
               </Tag>
             )}
-            <Tag size="s" hue="gray" pill>{vacancy.transitionType}</Tag>
+            <Tag size="s" hue="gray">{vacancy.transitionType}</Tag>
           </div>
 
           <div className="sk-row sk-gap-2 sk-muted" style={{ font: "var(--sk-label-4-regular)", flexWrap: "wrap" }}>
