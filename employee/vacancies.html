@@ -15,7 +15,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Input, Select, Button, Checkbox, Tabs, Divider, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Input, Select, Button, Checkbox, Tabs, Switch, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconSearch, IconMapPin, IconBriefcase, IconX, IconChevronDown, IconSparklesSolid } = Icons;
 const D = window.SITE_DATA;
@@ -127,7 +127,7 @@ const DEMO_MATCH = { v1: 95, v2: 80 };
 // Тип занятости, Тип перехода) — обычный мультиселект-дропдаун, значения видны сразу
 // (заголовок + закрытый контрол), без отдельного шага "раскрыть раздел".
 function FilterSelect({ label, options, value, onChange }) {
-  return <Select label={label} multiple options={options} value={value} onChange={onChange} placeholder="Все варианты" />;
+  return <Select size="s" label={label} multiple options={options} value={value} onChange={onChange} placeholder="Все варианты" />;
 }
 
 // Фильтр с потенциально длинным списком вариантов (Направление, Должность, Подразделение) —
@@ -155,7 +155,7 @@ function FilterSearchDropdown({ label, options, value, onChange }) {
     <div ref={ref} className="sk-col" style={{ gap: 6, position: "relative" }}>
       <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{label}</span>
       <button type="button" onClick={() => setOpen((o) => !o)} style={{
-        display: "flex", alignItems: "center", gap: 8, height: 48, padding: "0 12px", width: "100%",
+        display: "flex", alignItems: "center", gap: 8, height: 40, padding: "0 12px", width: "100%",
         borderRadius: "var(--sk-radius-form)", border: "none", cursor: "pointer", textAlign: "left",
         background: "var(--sk-surface-page)", boxShadow: `inset 0 0 0 ${open ? 2 : 1}px ${open ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
         font: "400 14px/20px var(--sk-font-ui)", color: value.length ? "var(--sk-text-primary)" : "var(--sk-text-placeholder)",
@@ -232,7 +232,7 @@ function FiltersPanel({ filters, onChange, hasActiveFilters, onReset, directionO
   const set = (key) => (v) => onChange((f) => ({ ...f, [key]: v }));
   return (
     <Card bordered style={{ width: 280, flexShrink: 0, padding: 16 }}>
-      <div className="sk-col sk-gap-4">
+      <div className="sk-col sk-gap-3">
         <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
           <div className="sk-label-2">Фильтры</div>
           {hasActiveFilters && (
@@ -240,18 +240,13 @@ function FiltersPanel({ filters, onChange, hasActiveFilters, onReset, directionO
           )}
         </div>
         <FilterSearchDropdown label="Направление" options={directionOptions} value={filters.directions} onChange={set("directions")} />
-        <Divider />
         <FilterSearchDropdown label="Должность" options={positionOptions} value={filters.positions} onChange={set("positions")} />
-        <Divider />
         <FilterSelect label="Тип перехода" options={toOptions(D.transitionTypes)} value={filters.transitionTypes} onChange={set("transitionTypes")} />
-        <Divider />
         <FilterSearchDropdown label="Подразделение" options={departmentOptions} value={filters.departments} onChange={set("departments")} />
-        <Divider />
         <FilterSelect label="Опыт" options={toOptions(D.experienceOptions)} value={filters.experience} onChange={set("experience")} />
         <FilterSelect label="Регион" options={toOptions(D.cities)} value={filters.cities} onChange={set("cities")} />
         <FilterCheckboxGroup label="Формат работы" options={toOptions(D.workFormats)} value={filters.formats} onChange={set("formats")} />
         <FilterCheckboxGroup label="Тип занятости" options={toOptions(D.employmentTypes)} value={filters.employments} onChange={set("employments")} />
-        <Divider />
         <SubscribeBar filters={filters} hasActiveFilters={hasActiveFilters} subscriptions={subscriptions}
           onSubscribe={onSubscribe} onUnsubscribe={onUnsubscribe} />
       </div>
