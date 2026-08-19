@@ -15,7 +15,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, TextList, Divider, Modal, Input, Textarea, Select, Button, Avatar, Snackbar, Alert } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, TextList, Divider, Modal, Input, Textarea, Select, Button, IconButton, Avatar, Snackbar, Alert } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconArrowLeft, IconMail, IconPhone, IconUpload, IconFileText, IconTarget, IconCheck, IconGift, IconLayers, IconPlusSm, IconSparklesSolid, IconChevronRight, IconUser } = Icons;
 const D = window.SITE_DATA;
@@ -154,25 +154,30 @@ function Page() {
     showToast("Рекомендация отправлена рекрутёру " + vacancy.recruiter.name + ".");
   }
 
-  const ApplyCta = ({ block }) => {
-    if (closed) return <Button disabled style={block ? { width: "100%" } : undefined}>Вакансия закрыта</Button>;
+  const ApplyCta = () => {
+    if (closed) return <Button disabled>Вакансия закрыта</Button>;
     if (myResponse) return (
       <a href="../employee/my-responses.html" style={{ textDecoration: "none" }}>
-        <Button mode="secondary" icon={<IconCheck size={16} />} style={block ? { width: "100%" } : undefined}>Отклик отправлен</Button>
+        <Button mode="secondary" icon={<IconCheck size={16} />}>Отклик отправлен</Button>
       </a>
     );
-    return <Button variant="accent" onClick={() => setModalOpen(true)} style={block ? { width: "100%" } : undefined}>Откликнуться</Button>;
+    return <Button variant="accent" onClick={() => setModalOpen(true)}>Откликнуться</Button>;
   };
 
   return (
     <AppShell role="hr" active="vacancies" base=".."
       breadcrumb={
         <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-          <a href="vacancies-manage.html" className="sk-row sk-gap-1" style={{ color: "var(--sk-text-secondary)" }}><IconArrowLeft size={14} /> Управление вакансиями</a>
+          <IconButton size="s" variant="gray" mode="tertiary" title="Назад" onClick={() => { window.location.href = "vacancies-manage.html"; }}>
+            <IconArrowLeft size={16} />
+          </IconButton>
           {!closed && <span>{vacancy.postedDate}</span>}
         </div>
       }>
-      <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div className="sk-row" style={{
+        justifyContent: "space-between", alignItems: "flex-start",
+        position: "sticky", top: 0, zIndex: 5, background: "var(--sk-surface-page)",
+      }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
           <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap", alignItems: "center" }}>
             <div className="sk-title-4">{vacancy.title}</div>
@@ -223,8 +228,6 @@ function Page() {
               </div>
             </div>
           </Card>
-
-          {!closed && !myResponse && <ApplyCta block />}
         </div>
 
         <div className="sk-col sk-gap-5" style={{ width: 300, flexShrink: 0 }}>
@@ -315,9 +318,16 @@ function ApplyModal({ vacancy, initialLetter, onClose, onSubmitted }) {
   const [city, setCity] = React.useState(p.city);
   const [letter, setLetter] = React.useState(initialLetter || "");
   const [resume, setResume] = React.useState(null);
+  const [usedPrompts, setUsedPrompts] = React.useState([]);
+  const remainingPrompts = D.motivationPrompts.filter((p) => !usedPrompts.includes(p));
+
+  function insertPrompt(pr) {
+    setUsedPrompts((u) => [...u, pr]);
+    setLetter((l) => (l ? l + "\n" : "") + pr);
+  }
 
   return (
-    <Modal open title={"Отклик: " + vacancy.title} onClose={onClose} size="m"
+    <Modal open title={"Отклик: " + vacancy.title} onClose={onClose} size="l"
       secondary={<Button mode="secondary" onClick={onClose}>Отмена</Button>}
       primary={<Button variant="accent" disabled={!resume} onClick={onSubmitted}>Отправить отклик</Button>}>
       <div className="sk-col sk-gap-3 sk-modal-scroll">
@@ -346,21 +356,28 @@ function ApplyModal({ vacancy, initialLetter, onClose, onSubmitted }) {
         </div>
 
         <div className="sk-col sk-gap-2">
-          <Textarea label="Мотивационное письмо" helper="Необязательно, но повышает шансы"
-            placeholder="Расскажите, почему вам интересна эта роль…" value={letter}
-            onChange={(e) => setLetter((e.target.value || "").slice(0, 800))} rows={3} />
-          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", alignSelf: "flex-end" }}>{letter.length}/800</div>
-          <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
-            {D.motivationPrompts.map((pr, i) => (
-              <button key={i} type="button" onClick={() => setLetter(l => (l ? l + "\n\n" : "") + pr + "\n")}
-                style={{
-                  display: "flex", alignItems: "center", gap: 4, border: "1px solid var(--sk-stroke)",
-                  background: "var(--sk-surface-page)", borderRadius: "var(--sk-radius-full)", padding: "4px 10px 4px 8px",
-                  font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)", cursor: "pointer",
-                }}>
-                <IconPlusSm size={12} />{pr}
-              </button>
-            ))}
+          {remainingPrompts.length > 0 && (
+            <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
+              {remainingPrompts.map((pr) => (
+                <button key={pr} type="button" onClick={() => insertPrompt(pr)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 4, border: "1px solid var(--sk-stroke)",
+                    background: "var(--sk-surface-page)", borderRadius: "var(--sk-radius-full)", padding: "4px 10px 4px 8px",
+                    font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)", cursor: "pointer",
+                  }}>
+                  <IconPlusSm size={12} />{pr}
+                </button>
+              ))}
+            </div>
+          )}
+          <div style={{ position: "relative" }}>
+            <Textarea label="Мотивационное письмо" helper="Необязательно, но повышает шансы"
+              placeholder="Расскажите, почему вам интересна эта роль…" value={letter}
+              onChange={(e) => setLetter((e.target.value || "").slice(0, 800))} rows={3} />
+            <span style={{
+              position: "absolute", right: 12, bottom: 36, pointerEvents: "none",
+              font: "var(--sk-label-4-regular)", color: "var(--sk-text-tertiary)",
+            }}>{letter.length}/800</span>
           </div>
         </div>
 
