@@ -66,13 +66,13 @@ function ResumeCard({ name, size, letter }) {
     }}>
       <div style={{
         width: 36, height: 36, borderRadius: "var(--sk-radius-2)", flexShrink: 0,
-        display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sk-surface-tertiary)",
-      }}><IconFileText size={18} color="var(--sk-icon-secondary)" /></div>
+        display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sk-accent-secondary)",
+      }}><IconFileText size={18} color="var(--sk-icon-accent)" /></div>
       <div className="sk-col" style={{ flex: 1, gap: 0, minWidth: 0 }}>
         <div className="sk-label-4" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
         {size && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{size}</div>}
       </div>
-      <Button mode="secondary" size="s" icon={<IconDownload size={15} />}
+      <Button mode="secondary" size="s" icon={<IconDownload size={15} color="var(--sk-icon-accent)" />}
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); downloadResumeStub(name, letter); }}>Скачать</Button>
     </div>
   );

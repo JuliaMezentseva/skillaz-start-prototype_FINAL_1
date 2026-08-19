@@ -391,17 +391,22 @@ function AppHeaderBar({ children, role }) {
 // текущих фильтрах, где это используется) — тогда поле высотой 40 всегда внизу.
 function ClearableSelect({ onClear, ...rest }) {
   const { Select } = window.SkillazCoreDesignSystem_bf9566;
+  const [hover, setHover] = React.useState(false);
   const hasValue = rest.multiple ? (rest.value || []).length > 0 : !!rest.value;
+  const h = rest.size === "l" ? 48 : 40;
   return (
     <div style={{ position: "relative" }}>
       <Select {...rest} />
       {hasValue && (
-        <button type="button" onClick={onClear} title="Очистить" style={{
-          position: "absolute", right: 30, bottom: 12, width: 16, height: 16, zIndex: 1,
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          border: "none", background: "none", padding: 0, cursor: "pointer", color: "var(--sk-icon-secondary)",
-        }}>
-          <IconX size={13} />
+        <button type="button" onClick={onClear} title="Очистить"
+          onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+          style={{
+            position: "absolute", right: 34, bottom: (h - 22) / 2, width: 22, height: 22, zIndex: 2,
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            border: "none", borderRadius: "50%", background: hover ? "var(--graphite-graphite-95)" : "transparent",
+            padding: 0, cursor: "pointer", color: "var(--sk-icon-secondary)",
+          }}>
+          <IconX size={14} />
         </button>
       )}
     </div>
