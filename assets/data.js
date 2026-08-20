@@ -384,6 +384,16 @@ window.SITE_DATA = {
       checkpoints: {},
       faq: [],
     },
+
+    roleTransition: {
+      id: "roleTransition",
+      title: "Адаптация в новой роли",
+      type: "Адаптация",
+      status: "in_progress",
+      statusLabel: "В процессе",
+      role: "Старший менеджер по продажам",
+      dateStart: "01.09.26",
+    },
   },
 
   // ---------------- Вакансии ----------------
