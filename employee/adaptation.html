@@ -38,7 +38,7 @@ function PlanCard({ plan, clickable = true }) {
   const body = (
     <Card bordered style={{
       cursor: clickable ? "pointer" : "default",
-      ...(pending ? { boxShadow: "none", border: "1px dashed var(--sk-stroke)" } : {}),
+      ...(pending ? { boxShadow: "none", border: "1.5px dashed var(--sk-icon-secondary)" } : {}),
     }}>
       <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between" }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
@@ -71,7 +71,7 @@ function PlanCard({ plan, clickable = true }) {
           <div style={{
             width: 72, height: 72, borderRadius: "50%", flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
-            border: "1px dashed var(--sk-stroke)", color: "var(--sk-icon-secondary)",
+            border: "1.5px dashed var(--sk-icon-secondary)", color: "var(--sk-icon-secondary)",
           }}>
             <IconLock size={22} />
           </div>
@@ -106,7 +106,6 @@ function Page() {
     <AppShell role="employee" active="my-adaptation" base="..">
       <div className="sk-col sk-gap-2">
         <div className="sk-title-4">Моя адаптация</div>
-        <div className="sk-muted">Здесь собраны все ваши планы — от пребординга до адаптации в роли.</div>
       </div>
 
       {newRolePlan && (
