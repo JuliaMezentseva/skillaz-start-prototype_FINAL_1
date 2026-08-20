@@ -106,7 +106,7 @@ function Page() {
       </div>
 
       {newRolePlan && (
-        <RoleGroup title={newRolePlan.role} period={`с ${newRolePlan.dateStart}`}>
+        <RoleGroup title={newRolePlan.role}>
           <PlanCard plan={newRolePlan} clickable={false} />
         </RoleGroup>
       )}
