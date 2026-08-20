@@ -387,7 +387,7 @@ window.SITE_DATA = {
 
     roleTransition: {
       id: "roleTransition",
-      title: "Адаптация для новичка: Старший менеджер по продажам",
+      title: "Адаптация в новой роли",
       type: "Адаптация",
       status: "awaiting_start",
       statusLabel: "Ожидает начала",
