@@ -34,8 +34,8 @@ function PlanCard({ plan }) {
   const pct = plan.status === "completed" ? 100 : progressOf(plan);
   const checkpoints = Object.values(plan.checkpoints || {});
   return (
-    <a href={"plan.html?plan=" + plan.id} style={{ textDecoration: "none", display: "block", height: "100%" }}>
-      <Card bordered style={{ cursor: "pointer", height: "100%", boxSizing: "border-box" }}>
+    <a href={"plan.html?plan=" + plan.id} style={{ textDecoration: "none" }}>
+      <Card bordered style={{ cursor: "pointer" }}>
         <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between" }}>
           <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
             <div className="sk-row sk-gap-2">
@@ -79,7 +79,7 @@ function Page() {
         <div className="sk-title-4">Моя адаптация</div>
         <div className="sk-muted">Здесь собраны все ваши планы — от пребординга до адаптации в роли.</div>
       </div>
-      <div className="sk-gap-4" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))", gap: "var(--sk-space-4, 16px)" }}>
+      <div className="sk-col sk-gap-4">
         {plans.map(p => <PlanCard key={p.id} plan={p} />)}
       </div>
     </AppShell>
