@@ -17,7 +17,7 @@
 <script type="text/babel">
 const { Card, ProgressCircle, Tag } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, StatusTag, Icons } = window.Site;
-const { IconTarget, IconCheck, IconLock } = Icons;
+const { IconTarget, IconCheck } = Icons;
 const D = window.SITE_DATA;
 
 function progressOf(plan) {
@@ -38,7 +38,7 @@ function PlanCard({ plan, clickable = true }) {
   const body = (
     <Card bordered style={{
       cursor: clickable ? "pointer" : "default",
-      ...(pending ? { boxShadow: "none", border: "1.5px dashed var(--sk-icon-secondary)" } : {}),
+      ...(pending ? { background: "var(--sk-surface-secondary)" } : {}),
     }}>
       <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between" }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
@@ -68,12 +68,9 @@ function PlanCard({ plan, clickable = true }) {
           )}
         </div>
         {pending ? (
-          <div style={{
-            width: 72, height: 72, borderRadius: "50%", flexShrink: 0,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            border: "1.5px dashed var(--sk-icon-secondary)", color: "var(--sk-icon-secondary)",
-          }}>
-            <IconLock size={22} />
+          <div style={{ textAlign: "center", flexShrink: 0 }}>
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>старт</div>
+            <div className="sk-title-5">{plan.dateStart.slice(0, 5)}</div>
           </div>
         ) : (
           <ProgressCircle value={pct} size={72} thickness={5} hue={plan.status === "completed" ? "positive" : "accent"} />
