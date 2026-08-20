@@ -2037,7 +2037,7 @@ window.SITE_DATA = {
   window.SITE_DATA.candidatePerson = { name: "Максим Орлов", position: "Кандидат · Frontend-разработчик" };
   window.SITE_DATA.plans.candidatePreboarding = {
     id: "candidatePreboarding",
-    title: "Пребординг",
+    title: "Подготовка к выходу на работу",
     type: "Пребординг",
     status: "in_progress",
     statusLabel: "В процессе",
