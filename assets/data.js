@@ -389,10 +389,11 @@ window.SITE_DATA = {
       id: "roleTransition",
       title: "Адаптация в новой роли",
       type: "Адаптация",
-      status: "in_progress",
-      statusLabel: "В процессе",
+      status: "awaiting_start",
+      statusLabel: "Ожидает начала",
       role: "Старший менеджер по продажам",
       dateStart: "01.09.26",
+      note: "Начнётся после согласования перевода — план ещё не сформирован",
     },
   },
 

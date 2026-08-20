@@ -449,6 +449,7 @@ const STATUS_MAP = {
   cancelled: { label: "Отменена", hue: "gray" },
   completed: { label: "Завершён", hue: "positive" },
   in_progress_plan: { label: "В процессе", hue: "blue" },
+  awaiting_start: { label: "Ожидает начала", hue: "neutral" },
   on_review: { label: "На финальном ревью", hue: "warning" },
   failed_plan: { label: "Завершён неуспешно", hue: "negative" },
   cp_done: { label: "Проведена", hue: "positive" },

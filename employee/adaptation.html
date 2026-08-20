@@ -17,7 +17,7 @@
 <script type="text/babel">
 const { Card, ProgressCircle, Tag } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, StatusTag, Icons } = window.Site;
-const { IconTarget, IconCheck } = Icons;
+const { IconTarget, IconCheck, IconLock } = Icons;
 const D = window.SITE_DATA;
 
 function progressOf(plan) {
@@ -31,19 +31,24 @@ function progressOf(plan) {
 }
 
 function PlanCard({ plan, clickable = true }) {
+  const pending = plan.status === "awaiting_start";
   const pct = plan.status === "completed" ? 100 : (plan.stages ? progressOf(plan) : 0);
   const checkpoints = Object.values(plan.checkpoints || {});
+  const statusKey = plan.status === "completed" ? "completed" : pending ? "awaiting_start" : "in_progress_plan";
   const body = (
-    <Card bordered style={{ cursor: clickable ? "pointer" : "default" }}>
+    <Card bordered style={{
+      cursor: clickable ? "pointer" : "default",
+      ...(pending ? { boxShadow: "none", border: "1px dashed var(--sk-stroke)" } : {}),
+    }}>
       <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between" }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
           <div className="sk-row sk-gap-2">
             <Tag size="s" hue="neutral">{plan.type}</Tag>
-            <StatusTag status={plan.status === "completed" ? "completed" : "in_progress_plan"} />
+            <StatusTag status={statusKey} />
           </div>
           <div className="sk-title-5">{plan.title}</div>
           <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-            {plan.dateEnd ? `${plan.dateStart} – ${plan.dateEnd}` : `с ${plan.dateStart}`}
+            {pending ? plan.note : (plan.dateEnd ? `${plan.dateStart} – ${plan.dateEnd}` : `с ${plan.dateStart}`)}
           </div>
           {checkpoints.length > 0 && (
             <div className="sk-row sk-gap-2" style={{ marginTop: 2 }}>
@@ -62,7 +67,17 @@ function PlanCard({ plan, clickable = true }) {
             </div>
           )}
         </div>
-        <ProgressCircle value={pct} size={72} thickness={5} hue={plan.status === "completed" ? "positive" : "accent"} />
+        {pending ? (
+          <div style={{
+            width: 72, height: 72, borderRadius: "50%", flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            border: "1px dashed var(--sk-stroke)", color: "var(--sk-icon-secondary)",
+          }}>
+            <IconLock size={22} />
+          </div>
+        ) : (
+          <ProgressCircle value={pct} size={72} thickness={5} hue={plan.status === "completed" ? "positive" : "accent"} />
+        )}
       </div>
     </Card>
   );
@@ -78,7 +93,7 @@ function RoleGroup({ title, period, children }) {
         <span className="sk-label-3">{title}</span>
         {period && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>· {period}</span>}
       </div>
-      <div className="sk-col sk-gap-4">{children}</div>
+      <div className="sk-col sk-gap-4" style={{ maxWidth: "94%" }}>{children}</div>
     </div>
   );
 }
@@ -100,7 +115,7 @@ function Page() {
         </RoleGroup>
       )}
 
-      <RoleGroup title="Менеджер по продажам" period={`${D.plans.preboarding.dateStart} – ${D.plans.onboarding.dateEnd}`}>
+      <RoleGroup title="Менеджер по продажам">
         {currentRolePlans.map(p => <PlanCard key={p.id} plan={p} />)}
       </RoleGroup>
     </AppShell>
