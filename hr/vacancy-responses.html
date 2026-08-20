@@ -62,7 +62,14 @@ function tenureBucket(t) {
 }
 const TENURE_BUCKET_LABELS = { lt1: "До 1 года", "1to3": "От 1 до 3 лет", gt3: "Более 3 лет" };
 
+function parseDate(d) {
+  const [dd, mm, yy] = (d || "").split(".").map(Number);
+  return new Date(2000 + (yy || 0), (mm || 1) - 1, dd || 1).getTime();
+}
+
 const SORT_OPTIONS = [
+  { value: "date:desc", label: "Дата отклика: сначала новые" },
+  { value: "date:asc", label: "Дата отклика: сначала старые" },
   { value: "", label: "Без сортировки" },
   { value: "name:asc", label: "Имя: А→Я" },
   { value: "tenure:desc", label: "Стаж: сначала больше" },
@@ -129,10 +136,11 @@ function ResponseCard({ r }) {
       <div className="sk-col sk-gap-3">
         <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
           <Avatar name={fio} size={40} />
-          <div className="sk-col" style={{ gap: 0, minWidth: 0 }}>
+          <div className="sk-col" style={{ gap: 0, minWidth: 0, flex: 1 }}>
             <div className="sk-label-3">{fio}</div>
-            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.position} · {r.department}</div>
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Сейчас: {r.position} · {r.department}</div>
           </div>
+          {r.date && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", flexShrink: 0 }}>{r.date}</div>}
         </div>
 
         <div className="sk-row sk-gap-4" style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-accent)", flexWrap: "wrap" }}>
@@ -141,7 +149,7 @@ function ResponseCard({ r }) {
         </div>
 
         <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
-          <Tag size="s" hue="gray">{r.tenure}</Tag>
+          <Tag size="s" hue="gray" icon={<IconBriefcase size={12} />}>Стаж: {r.tenure}</Tag>
           <span className="sk-row sk-gap-1 sk-muted" style={{ font: "var(--sk-label-4-regular)", alignItems: "center" }}>
             <IconMapPin size={13} />{r.city}
           </span>
@@ -162,7 +170,7 @@ function Page() {
   const [q, setQ] = React.useState("");
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [filters, setFilters] = React.useState({ city: "", department: "", tenure: "" });
-  const [sort, setSort] = React.useState("");
+  const [sort, setSort] = React.useState("date:desc");
 
   const cityOptions = React.useMemo(() => [...new Set(responses.map((r) => r.city))].sort(), [responses]);
   const departmentOptions = React.useMemo(() => [...new Set(responses.map((r) => r.department))].sort(), [responses]);
@@ -187,6 +195,7 @@ function Page() {
         if (key === "name") { av = a.lastName + a.firstName; bv = b.lastName + b.firstName; }
         else if (key === "tenure") { av = parseTenureMonths(a.tenure); bv = parseTenureMonths(b.tenure); }
         else if (key === "city") { av = a.city; bv = b.city; }
+        else if (key === "date") { av = parseDate(a.date); bv = parseDate(b.date); }
         if (typeof av === "number" && typeof bv === "number") return (av - bv) * m;
         return String(av).localeCompare(String(bv), "ru") * m;
       });
@@ -200,7 +209,8 @@ function Page() {
       <div className="sk-col sk-gap-1">
         <div className="sk-title-4">Отклики</div>
         <div className="sk-row sk-gap-2 sk-muted" style={{ alignItems: "center", flexWrap: "wrap" }}>
-          <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{vacancy.title}</span>
+          <a href={"vacancy.html?id=" + vacancy.id} className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{vacancy.title}</a>
+          <Tag size="s" hue={vacancy.status === "open" ? "positive" : "neutral"}>{vacancy.status === "open" ? "Идёт поиск" : "Закрыта"}</Tag>
           <span>·</span>
           <span className="sk-row sk-gap-1"><IconMapPin size={13} />{vacancy.city}</span>
           <span className="sk-row sk-gap-1"><IconBriefcase size={13} />{vacancy.department}</span>
