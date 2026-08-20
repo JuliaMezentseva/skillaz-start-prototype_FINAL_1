@@ -38,7 +38,7 @@ function PlanCard({ plan, clickable = true }) {
   const body = (
     <Card bordered style={{
       cursor: clickable ? "pointer" : "default",
-      ...(pending ? { background: "color-mix(in srgb, var(--sk-surface-secondary) 70%, white)" } : {}),
+      ...(pending ? { background: "color-mix(in srgb, var(--sk-surface-secondary) 45%, white)" } : {}),
     }}>
       <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between" }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
