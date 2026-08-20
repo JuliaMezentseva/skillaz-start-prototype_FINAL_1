@@ -356,7 +356,7 @@ window.SITE_DATA = {
 
     preboarding: {
       id: "preboarding",
-      title: "Пребординг",
+      title: "Подготовка к выходу на работу",
       type: "Пребординг",
       status: "completed",
       statusLabel: "Завершён",
