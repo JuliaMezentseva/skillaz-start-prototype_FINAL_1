@@ -20,12 +20,15 @@ const { AppShell, Icons } = window.Site;
 const { IconAiSpark, IconSearch, IconCheck, IconChevronRight, IconGift, IconRocket, IconLayers, IconBookOpen, IconGraduationCap } = Icons;
 const D = window.SITE_DATA;
 
-// Режимы "Личное / Команда / Администрирование" — как в референсе AI-ассистента
-// (https://yulia405.github.io/skillaz-ai-assistant-demo/): один и тот же логин, три разных
-// взгляда AI на данные (свои задачи / команда руководителя / очередь HR-админа). Меняет
-// только контент блоков ниже — сайдбар и роль в шапке остаются "Сотрудник", это не
-// настоящий переход в другую роль, а демонстрация того, что покажет AI под разными углами.
-const MODE_LABELS = { personal: "Личное", team: "Команда", admin: "Администрирование" };
+// Режимы "Личный / Командный / Административный" — формулировка из продуктовой спецификации
+// ("персональный, командный и административный режимы", см. Skillaz AI: продуктово-
+// техническая спецификация, п.2 и п.10.1), а не придуманное название. По спеке это НЕ выбор
+// одной из взаимоисключающих ролей — один и тот же человек может одновременно быть
+// сотрудником, руководителем и администратором, и режим должен вычисляться автоматически по
+// правам. Здесь это тумблер, потому что в прототипе нет бэкенда с реальными правами — он
+// просто показывает, как AI-главная выглядит под каждым углом для одного и того же логина.
+// Сайдбар и роль в шапке остаются "Сотрудник" — это не переход в другую роль приложения.
+const MODE_LABELS = { personal: "Личный", team: "Командный", admin: "Административный" };
 const MODE_HERO_SUBTITLE = {
   personal: "Открою нужный объект, подскажу или выполню действия за вас — скажите, что нужно",
   team: "Покажу, кому из команды нужно ваше внимание, и помогу с адаптацией сотрудников",
@@ -146,7 +149,7 @@ function AiHero({ subtitle }) {
 
 // Переключатель модулей — прямо над блоком, который он фильтрует, без своей рамки: активный
 // таб получает акцентную заливку, неактивный — обычный текст с лёгкой подсветкой по ховеру.
-// available — id модулей, доступных в текущем режиме (Личное/Команда/Администрирование).
+// available — id модулей, доступных в текущем режиме (Личный/Командный/Административный).
 function ModuleTabs({ active, onChange, available }) {
   return (
     <div className="sk-row sk-gap-1" style={{ flexWrap: "wrap" }}>
@@ -166,7 +169,7 @@ function ModuleTabs({ active, onChange, available }) {
 }
 
 // href — переход на реальную страницу (план/вакансия/сотрудник); query — для строк без
-// своей страницы (Оценка/ИПР и часть режимов Команда/Администрирование в этом прототипе)
+// своей страницы (Оценка/ИПР и часть режимов Командный/Административный в этом прототипе)
 // вместо этого открывает AI с готовым вопросом.
 function FocusRow({ kind, title, subtitle, tone, href, query, first }) {
   const rowStyle = {
@@ -279,20 +282,20 @@ function CourseCard({ title, state, progressPct, meta, href, tile }) {
   );
 }
 
-// Светлые (не насыщенные) тона той же палитры — новости на ступень тише курсов по цвету,
-// чтобы визуально не спорить с более важным блоком "Продолжить обучение" выше.
+// Серые плашки вместо цветных — новости на ступень тише курсов, чтобы визуально не
+// спорить с более важным блоком "Продолжить обучение" выше.
 const NEWS_TILES = [
-  { bg: "#FFB7E8", Icon: IconGift },
-  { bg: "#98DEFF", Icon: IconRocket },
-  { bg: "#8FFF92", Icon: IconLayers },
+  { Icon: IconGift },
+  { Icon: IconRocket },
+  { Icon: IconLayers },
 ];
 
 function NewsCard({ label, title, date, tile }) {
   const Icon = tile.Icon;
   return (
     <Card bordered padding={0} style={{ overflow: "hidden", display: "flex", height: "100%" }}>
-      <div style={{ width: 92, flexShrink: 0, background: tile.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Icon size={28} color="#171a20" />
+      <div style={{ width: 92, flexShrink: 0, background: "var(--sk-surface-secondary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icon size={28} color="var(--sk-icon-secondary)" />
       </div>
       <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 6, minWidth: 0, flex: 1 }}>
         <Tag size="s" hue="neutral">{label}</Tag>
@@ -325,7 +328,7 @@ const NEWS = [
   { label: "Продукт", title: "Новая версия CRM: что важно знать менеджерам", date: "5 августа" },
 ];
 
-// ---------------- Режим "Личное" — реальные данные плана адаптации и вакансий ----------------
+// ---------------- Режим "Личный" — реальные данные плана адаптации и вакансий ----------------
 function buildPersonalContent(plan, planHref) {
   const cp = upcomingCheckpoint(plan);
   const subgoals = activeSubgoals(plan);
@@ -376,7 +379,7 @@ function buildPersonalContent(plan, planHref) {
   };
 }
 
-// ---------------- Режим "Команда" — реальные данные D.team (как в manager/team.html) ----------------
+// ---------------- Режим "Командный" — реальные данные D.team (как в manager/team.html) ----------------
 function buildTeamContent() {
   const attention = D.team.filter((m) => m.risks.length > 0 || !!m.action);
   const rows = attention.map((m) => ({
@@ -403,7 +406,7 @@ function buildTeamContent() {
   };
 }
 
-// ---------------- Режим "Администрирование" — реальные данные D.hrAssignedPlans (как в hr/plans.html) ----------------
+// ---------------- Режим "Административный" — реальные данные D.hrAssignedPlans (как в hr/plans.html) ----------------
 function buildAdminContent() {
   const attention = D.hrAssignedPlans.filter((p) => !p.goalsPublished || p.overdueCheckpoint || (p.risks && p.risks.length));
   const rows = attention.map((p) => ({
@@ -458,7 +461,7 @@ function Page() {
         <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <div className="sk-title-4">Добрый день, {D.person.firstName}!</div>
           <SegmentedControl size="s" active={mode} onChange={changeMode}
-            items={[{ id: "personal", label: "Личное" }, { id: "team", label: "Команда" }, { id: "admin", label: "Администрирование" }]} />
+            items={Object.keys(MODE_LABELS).map((id) => ({ id, label: MODE_LABELS[id] }))} />
         </div>
 
         <AiHero subtitle={MODE_HERO_SUBTITLE[mode]} />
