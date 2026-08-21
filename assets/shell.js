@@ -926,6 +926,69 @@ function aiEmployeePlanIntent(queryRaw) {
   return null;
 }
 
+// ---------------- Разбор запросов: Главная / режим "Команда" ----------------
+// Та же логика, что у aiManagerTeamIntent (manager/team.html), продублирована здесь с
+// hrefs относительно employee/, потому что вызывается с Главной, а не со страницы команды.
+function aiHomeTeamIntent(q) {
+  const D = window.SITE_DATA;
+  if (q.indexOf("саммариз") !== -1) {
+    return {
+      text: "Сильные стороны: исследование пользователей и работа с гипотезами. Зона развития: финансовое моделирование. Резюме — по последнему доступному отчёту 360.",
+      results: [],
+    };
+  }
+  let test, label;
+  if (q.indexOf("риск") !== -1) { test = (m) => m.risks.length > 0; label = "с риском по адаптации"; }
+  else if (q.indexOf("не начал") !== -1) { test = (m) => m.status === "not_started"; label = "которые ещё не начали план"; }
+  else if (q.indexOf("вниман") !== -1 || q.indexOf("действ") !== -1 || q.indexOf("нужно") !== -1) { test = (m) => m.risks.length > 0 || !!m.action; label = "которым нужно внимание"; }
+  else return null;
+  const results = D.team.filter(test).map((m) => ({
+    id: m.id, title: m.name, subtitle: m.position + " · " + m.department,
+    href: "../manager/plan.html?employee=" + m.id, openLabel: "Открыть план сотрудника",
+    risks: m.risks.length ? m.risks : null,
+  }));
+  return {
+    text: results.length
+      ? "Нашёл " + results.length + " " + aiPluralRu(results.length, "сотрудника", "сотрудников", "сотрудников") + " " + label + ":"
+      : "Сейчас таких сотрудников нет.",
+    results,
+  };
+}
+
+// ---------------- Разбор запросов: Главная / режим "Администрирование" ----------------
+// Та же логика, что у aiHrPlansIntent (hr/plans.html), продублирована здесь с hrefs
+// относительно employee/.
+function aiHomeAdminIntent(q) {
+  const D = window.SITE_DATA;
+  if (q.indexOf("черновик курса") !== -1 || q.indexOf("создать курс") !== -1) {
+    return {
+      text: "Готовлю структуру курса: 3 раздела (теория, практика, итоговый тест). Дальше уточним программу в редакторе материалов.",
+      results: [],
+    };
+  }
+  if (q.indexOf("сгенерировать тест") !== -1) {
+    return {
+      text: "Подготовила 10 вопросов: 6 с одним ответом, 3 с несколькими и 1 открытый. Можно проверить формулировки перед публикацией.",
+      results: [],
+    };
+  }
+  let test, label;
+  if (q.indexOf("риск") !== -1) { test = (p) => p.risks && p.risks.length > 0; label = "с риском"; }
+  else if (q.indexOf("цел") !== -1 && (q.indexOf("без") !== -1 || q.indexOf("не опубликова") !== -1)) { test = (p) => !p.goalsPublished; label = "без опубликованных целей"; }
+  else if (q.indexOf("просроч") !== -1 || q.indexOf("контрольн") !== -1) { test = (p) => p.overdueCheckpoint; label = "с просроченной контрольной точкой"; }
+  else return null;
+  const results = D.hrAssignedPlans.filter(test).map((p) => ({
+    id: p.id, title: p.name, subtitle: p.planTitle + " · " + p.department,
+    href: "../hr/plan-detail.html?id=" + p.id, openLabel: "Открыть план",
+  }));
+  return {
+    text: results.length
+      ? "Нашёл " + results.length + " " + aiPluralRu(results.length, "план", "плана", "планов") + " " + label + ":"
+      : "Планов " + label + " сейчас нет.",
+    results,
+  };
+}
+
 // ---------------- Разбор запросов: Сотрудник / Главная ----------------
 // Переиспользует те же вопросы, что и виджет на самой странице плана
 // (aiEmployeePlanIntent), но результаты всегда ведут обратно на employee/plan.html
@@ -941,6 +1004,32 @@ function aiEmployeeHomeIntent(queryRaw) {
   const q = raw.toLowerCase();
   if (!q) return null;
   if (q.indexOf("вакан") !== -1 || q.indexOf("подходя") !== -1) return aiEmployeeVacanciesIntent(raw);
+
+  // "Оценка" и "ИПР" не реализованы как отдельные разделы в этом прототипе (нет своих
+  // страниц/данных), но Главная показывает по ним иллюстративный пример контента для демо —
+  // здесь только текстовый ответ, без карточек-результатов, чтобы не было ссылок в никуда.
+  // Проверяем раньше "курс"/"обучен", иначе "Подобрать обучение по целям ИПР" перехватит
+  // соседняя ветка про курсы.
+  if (q.indexOf("ипр") !== -1 || q.indexOf("план развития") !== -1) {
+    return {
+      text: "Ваш ИПР «Развитие продуктовых компетенций» сейчас заполнен на 30% (2 цели, 5 задач), черновик. Раздел «ИПР» ещё не реализован в этом прототипе как отдельная страница, но по итогам последней оценки 360 я уже смогу предложить цели и подобрать под них обучение.",
+      results: [],
+    };
+  }
+  if (q.indexOf("360") !== -1 || q.indexOf("оценк") !== -1) {
+    return {
+      text: "Ближайшая оценка — самооценка «Product competencies», 12 вопросов, до 20 августа. Раздел «Оценка» ещё не реализован в этом прототипе как отдельная страница, но помочь подготовиться я уже могу: соберу список компетенций и последние комментарии руководителя.",
+      results: [],
+    };
+  }
+  // Режимы "Команда"/"Администрирование" на Главной (см. employee/home.html) переиспользуют
+  // те же вопросы, что и у настоящих aiManagerTeamIntent/aiHrPlansIntent (manager/team.html,
+  // hr/plans.html) — но с реальными D.team/D.hrAssignedPlans и ссылками относительно
+  // employee/, а не копированием чужих hrefs, которые вели бы не туда с этой страницы.
+  const teamReply = aiHomeTeamIntent(q);
+  if (teamReply) return teamReply;
+  const adminReply = aiHomeAdminIntent(q);
+  if (adminReply) return adminReply;
 
   const plan = aiEmployeePlanCurrent();
   const planHref = "plan.html?plan=" + plan.id;

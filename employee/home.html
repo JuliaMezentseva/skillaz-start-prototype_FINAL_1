@@ -15,16 +15,29 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, SegmentedControl, Button } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconAiSpark, IconSearch, IconCheck, IconChevronRight, IconGift, IconRocket, IconLayers, IconBookOpen, IconGraduationCap } = Icons;
 const D = window.SITE_DATA;
 
-// Переключатель модулей ("Все / Адаптация / Обучение / Оценка / ИПР / Вакансии") — идея
-// из референса AI-ассистента, но здесь это просто фильтр того, что показывают блоки "Что
-// сейчас важно" и "Быстрые действия с AI" ниже. "Оценка" и "ИПР" в этом прототипе не
-// реализованы как отдельные разделы (нет своих данных/страниц), поэтому у них честная
-// заглушка "скоро", а не выдуманный контент, ведущий в никуда.
+// Режимы "Личное / Команда / Администрирование" — как в референсе AI-ассистента
+// (https://yulia405.github.io/skillaz-ai-assistant-demo/): один и тот же логин, три разных
+// взгляда AI на данные (свои задачи / команда руководителя / очередь HR-админа). Меняет
+// только контент блоков ниже — сайдбар и роль в шапке остаются "Сотрудник", это не
+// настоящий переход в другую роль, а демонстрация того, что покажет AI под разными углами.
+const MODE_LABELS = { personal: "Личное", team: "Команда", admin: "Администрирование" };
+const MODE_HERO_SUBTITLE = {
+  personal: "Открою нужный объект, подскажу или выполню действия за вас — скажите, что нужно",
+  team: "Покажу, кому из команды нужно ваше внимание, и помогу с адаптацией сотрудников",
+  admin: "Найду планы без целей, черновики курсов или помогу подготовить оценку",
+};
+// Модули (табы), доступные в каждом режиме — "Вакансии" только у личного взгляда
+// сотрудника, "ИПР" не имеет смысла у HR-админа (это личный план сотрудника).
+const MODE_MODULES = {
+  personal: ["all", "adaptation", "learning", "assessment", "idp", "vacancies"],
+  team: ["all", "adaptation", "learning", "assessment", "idp"],
+  admin: ["all", "adaptation", "learning", "assessment"],
+};
 const MODULES = [
   { id: "all", label: "Всё" },
   { id: "adaptation", label: "Адаптация" },
@@ -33,18 +46,6 @@ const MODULES = [
   { id: "idp", label: "ИПР" },
   { id: "vacancies", label: "Вакансии" },
 ];
-// Подсказки для блока "Быстрые действия с AI", свои на каждый модуль — про то же самое,
-// что резолвер в shell.js реально понимает (aiEmployeeHomeIntent), поэтому клиент на демо
-// всегда получает содержательный ответ, а не "не нашёл сценария". У "Оценка"/"ИПР"
-// подсказок нет намеренно.
-const MODULE_PROMPTS = {
-  all: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Какие вакансии мне подходят?"],
-  adaptation: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Что у меня в работе?"],
-  learning: ["Какие курсы у меня есть?"],
-  assessment: [],
-  idp: [],
-  vacancies: ["Какие вакансии мне подходят?"],
-};
 
 // Локальные копии части логики виджета AI из shell.js (aiEmployeePlanUpcomingCheckpoint /
 // aiEmployeePlanActiveSubgoals / aiEmployeePlanUrgentChecklist / aiStripDuePrefix /
@@ -93,7 +94,7 @@ function askAi(query) {
 // в этом прототипе, а не придумываем новый). Переключатель модулей и быстрые вопросы живут
 // отдельно, ниже (см. ModuleTabs/ActionsCard) — так они визуально ближе к блоку, которым
 // управляют, а не спрятаны внутри градиента далеко от него.
-function AiHero() {
+function AiHero({ subtitle }) {
   const [value, setValue] = React.useState("");
   function submit() {
     if (!value.trim()) return;
@@ -116,7 +117,7 @@ function AiHero() {
         <div style={{ minWidth: 0 }}>
           <div style={{ font: "var(--sk-title-5)", color: "#fff" }}>Чем помочь сегодня?</div>
           <div style={{ font: "var(--sk-label-3-regular)", color: "rgba(255,255,255,0.76)", marginTop: 2 }}>
-            Открою нужный объект, подскажу или выполню действия за вас — скажите, что нужно
+            {subtitle}
           </div>
         </div>
       </div>
@@ -145,10 +146,11 @@ function AiHero() {
 
 // Переключатель модулей — прямо над блоком, который он фильтрует, без своей рамки: активный
 // таб получает акцентную заливку, неактивный — обычный текст с лёгкой подсветкой по ховеру.
-function ModuleTabs({ active, onChange }) {
+// available — id модулей, доступных в текущем режиме (Личное/Команда/Администрирование).
+function ModuleTabs({ active, onChange, available }) {
   return (
     <div className="sk-row sk-gap-1" style={{ flexWrap: "wrap" }}>
-      {MODULES.map((m) => {
+      {MODULES.filter((m) => available.indexOf(m.id) !== -1).map((m) => {
         const sel = m.id === active;
         return (
           <button key={m.id} onClick={() => onChange(m.id)} className={sel ? "" : "sk-clickable"} style={{
@@ -163,28 +165,36 @@ function ModuleTabs({ active, onChange }) {
   );
 }
 
-function FocusRow({ kind, title, subtitle, tone, href, first }) {
-  return (
-    <a href={href} className="sk-clickable" style={{
-      display: "grid", gridTemplateColumns: "84px minmax(0,1fr) 18px", gap: 12, alignItems: "center",
-      padding: "12px 4px", borderTop: first ? "none" : "1px solid var(--sk-stroke-divider)", textDecoration: "none",
-    }}>
+// href — переход на реальную страницу (план/вакансия/сотрудник); query — для строк без
+// своей страницы (Оценка/ИПР и часть режимов Команда/Администрирование в этом прототипе)
+// вместо этого открывает AI с готовым вопросом.
+function FocusRow({ kind, title, subtitle, tone, href, query, first }) {
+  const rowStyle = {
+    display: "grid", gridTemplateColumns: "84px minmax(0,1fr) 18px", gap: 12, alignItems: "center",
+    padding: "12px 4px", borderTop: first ? "none" : "1px solid var(--sk-stroke-divider)", textDecoration: "none",
+    width: "100%", textAlign: "left", border: "none", background: "transparent", cursor: "pointer",
+  };
+  const content = (
+    <React.Fragment>
       <span style={{ font: "var(--sk-label-4-regular)", color: tone === "warn" ? "var(--sk-text-negative)" : "var(--sk-text-secondary)" }}>{kind}</span>
       <span style={{ minWidth: 0 }}>
         <span className="sk-label-3" style={{ display: "block", color: "var(--sk-text-primary)" }}>{title}</span>
         <span className="sk-muted" style={{ display: "block", font: "var(--sk-label-4-regular)", marginTop: 2 }}>{subtitle}</span>
       </span>
       <IconChevronRight size={16} color="var(--sk-icon-accent)" />
-    </a>
+    </React.Fragment>
   );
+  return href
+    ? <a href={href} className="sk-clickable" style={rowStyle}>{content}</a>
+    : <button onClick={() => askAi(query)} className="sk-clickable" style={rowStyle}>{content}</button>;
 }
 
-function FocusCard({ rows, emptyText }) {
+function FocusCard({ title, rows, emptyText, onAsk }) {
   return (
     <Card bordered style={{ padding: 20 }}>
       <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", marginBottom: 10 }}>
-        <div className="sk-label-2">Что сейчас важно</div>
-        <Tag size="s" hue="special" icon={<IconAiSpark size={11} />}>AI</Tag>
+        <div className="sk-label-2">{title}</div>
+        <button className="sk-link-btn" style={{ font: "var(--sk-label-4)" }} onClick={onAsk}>Спросить AI</button>
       </div>
       {rows.length
         ? <div>{rows.map((r, i) => <FocusRow key={i} first={i === 0} {...r} />)}</div>
@@ -223,20 +233,6 @@ function ActionsCard({ prompts }) {
   );
 }
 
-function ComingSoonPanel({ label }) {
-  return (
-    <Card bordered style={{ padding: 20 }}>
-      <div className="sk-row sk-gap-2" style={{ alignItems: "center", marginBottom: 6 }}>
-        <Tag size="s" hue="neutral">Скоро</Tag>
-        <div className="sk-label-2">{label}</div>
-      </div>
-      <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>
-        Раздел ещё не подключён к Skillaz Start — здесь появится сводка и быстрые действия AI, когда модуль будет готов.
-      </div>
-    </Card>
-  );
-}
-
 // Цветные заглушки-иллюстрации для карточек обучения вместо фото — сплошная заливка
 // фирменными акцентными цветами (см. присланную палитру) плюс белая иконка по центру.
 const COURSE_TILES = [
@@ -245,50 +241,63 @@ const COURSE_TILES = [
   { bg: "#49DE4E", Icon: IconRocket },
 ];
 
+// Кнопка внизу — настоящая Button из ДС (не просто текст со стрелкой): "Продолжить"
+// вторичная для уже начатых/пройденных курсов, "Начать" акцентная для ещё не начатых.
+// Сама кнопка ведёт на план так же, как и клик по названию — своей страницы у курса нет.
 function CourseCard({ title, state, progressPct, meta, href, tile }) {
   const Icon = tile.Icon;
   return (
-    <a href={href} style={{ textDecoration: "none" }}>
-      <Card bordered padding={0} className="sk-clickable" style={{ overflow: "hidden", display: "flex", flexDirection: "column", height: "100%" }}>
-        <div style={{ height: 104, background: tile.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Icon size={34} color="#fff" />
+    <Card bordered padding={0} style={{ overflow: "hidden", display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ height: 104, background: tile.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icon size={34} color="#fff" />
+      </div>
+      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+        <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between" }}>
+          <Tag size="s" hue="neutral">Адаптация</Tag>
+          {state === "done"
+            ? <Tag size="s" hue="positive" icon={<IconCheck size={11} />}>Завершён</Tag>
+            : <Tag size="s" hue="neutral">Скоро</Tag>}
         </div>
-        <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-          <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between" }}>
-            <Tag size="s" hue="neutral">Адаптация</Tag>
-            {state === "done"
-              ? <Tag size="s" hue="positive" icon={<IconCheck size={11} />}>Завершён</Tag>
-              : <Tag size="s" hue="neutral">Скоро</Tag>}
-          </div>
+        <a href={href} style={{ textDecoration: "none" }}>
           <div className="sk-label-2" style={{ color: "var(--sk-text-primary)" }}>{title}</div>
-          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{meta}</div>
-          <div style={{ marginTop: "auto" }}>
-            <div style={{ height: 5, borderRadius: 4, background: "var(--sk-surface-secondary)", overflow: "hidden" }}>
-              <div style={{ width: progressPct + "%", height: "100%", background: state === "done" ? "var(--sk-positive)" : "var(--sk-accent)" }} />
-            </div>
-            <div className="sk-row" style={{ justifyContent: "space-between", marginTop: 6 }}>
-              <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{progressPct}%</span>
-              <span style={{ font: "var(--sk-label-4)", color: state === "done" ? "var(--sk-text-secondary)" : "var(--sk-text-accent)" }}>{state === "done" ? "Продолжить" : "Подробнее"} →</span>
-            </div>
+        </a>
+        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{meta}</div>
+        <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ height: 5, borderRadius: 4, background: "var(--sk-surface-secondary)", overflow: "hidden" }}>
+            <div style={{ width: progressPct + "%", height: "100%", background: state === "done" ? "var(--sk-positive)" : "var(--sk-accent)" }} />
+          </div>
+          <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{progressPct}%</span>
+            <Button size="s" mode={state === "done" ? "secondary" : "primary"} variant={state === "done" ? "neutral" : "accent"}
+              onClick={() => { window.location.href = href; }}>
+              {state === "done" ? "Продолжить" : "Начать"}
+            </Button>
           </div>
         </div>
-      </Card>
-    </a>
+      </div>
+    </Card>
   );
 }
 
-function NewsCard({ label, title, date, icon }) {
+// Светлые (не насыщенные) тона той же палитры — новости на ступень тише курсов по цвету,
+// чтобы визуально не спорить с более важным блоком "Продолжить обучение" выше.
+const NEWS_TILES = [
+  { bg: "#FFB7E8", Icon: IconGift },
+  { bg: "#98DEFF", Icon: IconRocket },
+  { bg: "#8FFF92", Icon: IconLayers },
+];
+
+function NewsCard({ label, title, date, tile }) {
+  const Icon = tile.Icon;
   return (
-    <Card bordered style={{ padding: 16, display: "flex", gap: 12, alignItems: "flex-start" }}>
-      <span style={{
-        width: 40, height: 40, borderRadius: "var(--sk-radius-3)", flexShrink: 0,
-        background: "var(--sk-surface-secondary)", color: "var(--sk-icon-secondary)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}>{icon}</span>
-      <div style={{ minWidth: 0 }}>
+    <Card bordered padding={0} style={{ overflow: "hidden", display: "flex", height: "100%" }}>
+      <div style={{ width: 92, flexShrink: 0, background: tile.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icon size={28} color="#171a20" />
+      </div>
+      <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 6, minWidth: 0, flex: 1 }}>
         <Tag size="s" hue="neutral">{label}</Tag>
-        <div className="sk-label-3" style={{ marginTop: 6 }}>{title}</div>
-        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 6 }}>{date}</div>
+        <div className="sk-label-3">{title}</div>
+        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: "auto" }}>{date}</div>
       </div>
     </Card>
   );
@@ -297,26 +306,27 @@ function NewsCard({ label, title, date, icon }) {
 // Курсы — это курсы из своего же плана адаптации (kind:"course" в stages), показанные
 // в виде плиток "как в LMS": отдельного каталога обучения в прототипе пока нет, поэтому
 // у всех карточек одна и та же ссылка — назад на employee/plan.html, где эти курсы и живут.
+// Прогресс для пройденных курсов показываем не как ровно 100% — в разделе "Продолжить
+// обучение" сплошная заливка бара рядом с кнопкой "Продолжить" читалась странно.
+const DONE_PROGRESS = [82, 91, 76, 88];
 function planCourses(plan) {
+  let doneIndex = 0;
   return plan.stages.flatMap((s) => s.items.filter((i) => i.kind === "course")).map((c) => ({
     id: c.id, title: c.title,
     state: c.done ? "done" : "upcoming",
-    progressPct: c.done ? 100 : 0,
+    progressPct: c.done ? DONE_PROGRESS[doneIndex++ % DONE_PROGRESS.length] : 0,
     meta: c.done ? "Пройден" : (c.date ? "Начнётся " + c.date : "Ещё не начат"),
   }));
 }
 
 const NEWS = [
-  { label: "Компания", title: "Обновили регламент по бенефитам: что изменилось", date: "18 августа", icon: <IconGift size={18} /> },
-  { label: "Адаптация", title: "Как проходит контрольная точка с руководителем", date: "12 августа", icon: <IconRocket size={18} /> },
-  { label: "Продукт", title: "Новая версия CRM: что важно знать менеджерам", date: "5 августа", icon: <IconLayers size={18} /> },
+  { label: "Компания", title: "Обновили регламент по бенефитам: что изменилось", date: "18 августа" },
+  { label: "Адаптация", title: "Как проходит контрольная точка с руководителем", date: "12 августа" },
+  { label: "Продукт", title: "Новая версия CRM: что важно знать менеджерам", date: "5 августа" },
 ];
 
-function Page() {
-  const [activeModule, setActiveModule] = React.useState("all");
-  const plan = D.plans.onboarding;
-  const planHref = "plan.html?plan=" + plan.id;
-
+// ---------------- Режим "Личное" — реальные данные плана адаптации и вакансий ----------------
+function buildPersonalContent(plan, planHref) {
   const cp = upcomingCheckpoint(plan);
   const subgoals = activeSubgoals(plan);
   const urgent = urgentChecklist(plan);
@@ -335,35 +345,130 @@ function Page() {
     kind: "Вакансия", title: v.title, subtitle: v.city + " · подходит на " + pct + "%", tone: "", href: "vacancy.html?id=" + v.id,
   }));
 
-  const MODULE_CONTENT = {
-    all: { rows: [...adaptationRows.slice(0, 2), ...vacancyRows.slice(0, 1)], emptyText: "Срочных задач сейчас нет — можно спокойно двигаться в своём темпе." },
-    adaptation: { rows: adaptationRows, emptyText: "Срочных задач по плану адаптации сейчас нет." },
-    learning: { rows: learningRows, emptyText: "Все курсы по плану адаптации уже пройдены." },
-    vacancies: { rows: vacancyRows, emptyText: "Подходящих открытых вакансий сейчас нет." },
-    assessment: { comingSoon: true },
-    idp: { comingSoon: true },
+  // Иллюстративный пример для "Оценка"/"ИПР" (нет своих страниц в прототипе, см. верхний
+  // комментарий) — адаптировано из https://yulia405.github.io/skillaz-ai-assistant-demo/,
+  // без href: строка открывает AI с готовым вопросом вместо перехода в никуда.
+  const assessmentRows = [
+    { kind: "360", title: "Самооценка Product competencies", subtitle: "12 вопросов · до 20 августа", tone: "warn", query: "Подготовиться к оценке 360" },
+    { kind: "Опрос", title: "Пульс команды", subtitle: "5 вопросов · до 25 августа", tone: "", query: "Подготовиться к оценке 360" },
+  ];
+  const idpRows = [
+    { kind: "ИПР", title: "Развитие продуктовых компетенций", subtitle: "Черновик · заполнено на 30%", tone: "", query: "Что по моему ИПР?" },
+  ];
+
+  return {
+    content: {
+      all: { rows: [adaptationRows[0], learningRows[0], idpRows[0]].filter(Boolean), emptyText: "Срочных задач сейчас нет — можно спокойно двигаться в своём темпе." },
+      adaptation: { rows: adaptationRows, emptyText: "Срочных задач по плану адаптации сейчас нет." },
+      learning: { rows: learningRows, emptyText: "Все курсы по плану адаптации уже пройдены." },
+      vacancies: { rows: vacancyRows, emptyText: "Подходящих открытых вакансий сейчас нет." },
+      assessment: { rows: assessmentRows, emptyText: "Активных оценок сейчас нет." },
+      idp: { rows: idpRows, emptyText: "ИПР пока не создан." },
+    },
+    prompts: {
+      all: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Какие вакансии мне подходят?"],
+      adaptation: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Что у меня в работе?"],
+      learning: ["Какие курсы у меня есть?"],
+      assessment: ["Подготовиться к оценке 360", "Показать результаты прошлой оценки"],
+      idp: ["Что по моему ИПР?", "Подобрать обучение по целям ИПР"],
+      vacancies: ["Какие вакансии мне подходят?"],
+    },
   };
-  const content = MODULE_CONTENT[activeModule];
-  const moduleLabel = MODULES.find((m) => m.id === activeModule).label;
-  const prompts = MODULE_PROMPTS[activeModule] || [];
+}
+
+// ---------------- Режим "Команда" — реальные данные D.team (как в manager/team.html) ----------------
+function buildTeamContent() {
+  const attention = D.team.filter((m) => m.risks.length > 0 || !!m.action);
+  const rows = attention.map((m) => ({
+    kind: "Сотрудник", title: m.name,
+    subtitle: m.risks.length ? m.risks[0] : (m.action.label + (m.action.due ? " · до " + m.action.due : "")),
+    tone: m.risks.length ? "warn" : "",
+    href: "../manager/plan.html?employee=" + m.id,
+  }));
+  return {
+    content: {
+      all: { rows: rows.slice(0, 3), emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
+      adaptation: { rows, emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
+      learning: { rows: [{ kind: "Обучение", title: "Несколько сотрудников близки к сроку обучения", subtitle: "Стоит проверить назначения команды", tone: "", query: "Покажи просроченные действия команды" }], emptyText: "" },
+      assessment: { rows: [{ kind: "360", title: "Игорь Савченко: требуется ваша оценка", subtitle: "Team lead profile · до 21 августа", tone: "warn", query: "Саммаризировать оценку 360" }], emptyText: "" },
+      idp: { rows: [{ kind: "ИПР", title: "Часть планов развития команды не обновлялась", subtitle: "Больше месяца без изменений", tone: "", query: "Кто требует моего внимания?" }], emptyText: "" },
+    },
+    prompts: {
+      all: ["Кто требует моего внимания и почему?", "Сотрудники с рисками в планах", "Кто ещё не начал план?"],
+      adaptation: ["Кто требует моего внимания и почему?", "Сотрудники с рисками в планах", "Кто ещё не начал план?"],
+      learning: ["Покажи просроченные действия команды"],
+      assessment: ["Саммаризировать оценку 360"],
+      idp: ["Кто требует моего внимания и почему?"],
+    },
+  };
+}
+
+// ---------------- Режим "Администрирование" — реальные данные D.hrAssignedPlans (как в hr/plans.html) ----------------
+function buildAdminContent() {
+  const attention = D.hrAssignedPlans.filter((p) => !p.goalsPublished || p.overdueCheckpoint || (p.risks && p.risks.length));
+  const rows = attention.map((p) => ({
+    kind: "План", title: p.name,
+    subtitle: !p.goalsPublished ? "Цели ещё не опубликованы" : p.overdueCheckpoint ? "Просрочена контрольная точка" : "Есть риск по плану",
+    tone: "warn",
+    href: "../hr/plan-detail.html?id=" + p.id,
+  }));
+  return {
+    content: {
+      all: { rows: rows.slice(0, 3), emptyText: "Сейчас нет планов, которые требуют внимания." },
+      adaptation: { rows, emptyText: "Сейчас нет планов, которые требуют внимания." },
+      learning: { rows: [{ kind: "Курс", title: "6 черновиков курсов не опубликованы", subtitle: "Изменены на этой неделе", tone: "", query: "Создать черновик курса" }], emptyText: "" },
+      assessment: { rows: [{ kind: "Оценка", title: "Product competencies 360", subtitle: "Запуск 22 августа · требует настройки", tone: "warn", query: "Сгенерировать тест" }], emptyText: "" },
+    },
+    prompts: {
+      all: ["Какие планы у меня в риске?", "Где ещё не опубликованы цели?", "Где просрочены контрольные точки?"],
+      adaptation: ["Какие планы у меня в риске?", "Где ещё не опубликованы цели?", "Где просрочены контрольные точки?"],
+      learning: ["Создать черновик курса"],
+      assessment: ["Сгенерировать тест"],
+    },
+  };
+}
+
+function Page() {
+  const [mode, setMode] = React.useState("personal");
+  const [activeModule, setActiveModule] = React.useState("all");
+  const plan = D.plans.onboarding;
+  const planHref = "plan.html?plan=" + plan.id;
+  const courses = planCourses(plan);
+
+  function changeMode(m) {
+    setMode(m);
+    setActiveModule("all");
+  }
+
+  const BY_MODE = {
+    personal: buildPersonalContent(plan, planHref),
+    team: buildTeamContent(),
+    admin: buildAdminContent(),
+  };
+  const availableModules = MODE_MODULES[mode];
+  const safeModule = availableModules.indexOf(activeModule) !== -1 ? activeModule : "all";
+  const content = BY_MODE[mode].content[safeModule];
+  const prompts = BY_MODE[mode].prompts[safeModule] || [];
+  const defaultAsk = prompts[0] || "Что мне сделать сегодня?";
+  const focusTitle = safeModule === "all" ? "Сегодня и ближайшие сроки" : "Что сейчас важно";
 
   return (
     <AppShell role="employee" active="home" base="..">
       <div className="sk-col sk-gap-6">
-        <div className="sk-title-4">Добрый день, {D.person.firstName}!</div>
+        <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div className="sk-title-4">Добрый день, {D.person.firstName}!</div>
+          <SegmentedControl size="s" active={mode} onChange={changeMode}
+            items={[{ id: "personal", label: "Личное" }, { id: "team", label: "Команда" }, { id: "admin", label: "Администрирование" }]} />
+        </div>
 
-        <AiHero />
+        <AiHero subtitle={MODE_HERO_SUBTITLE[mode]} />
 
-        <ModuleTabs active={activeModule} onChange={setActiveModule} />
+        <ModuleTabs active={safeModule} onChange={setActiveModule} available={availableModules} />
 
-        {content.comingSoon ? (
-          <ComingSoonPanel label={moduleLabel} />
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(280px,1fr)", gap: 16 }}>
-            <FocusCard rows={content.rows} emptyText={content.emptyText} />
-            <ActionsCard prompts={prompts} />
-          </div>
-        )}
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(280px,1fr)", gap: 16 }}>
+          <FocusCard title={focusTitle} rows={content.rows} emptyText={content.emptyText} onAsk={() => askAi(defaultAsk)} />
+          <ActionsCard prompts={prompts} />
+        </div>
 
         <div className="sk-col sk-gap-3">
           <div className="sk-row" style={{ justifyContent: "space-between" }}>
@@ -378,7 +483,7 @@ function Page() {
         <div className="sk-col sk-gap-3">
           <div className="sk-title-5">Новости</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
-            {NEWS.map((n, i) => <NewsCard key={i} {...n} />)}
+            {NEWS.map((n, i) => <NewsCard key={i} {...n} tile={NEWS_TILES[i % NEWS_TILES.length]} />)}
           </div>
         </div>
       </div>
