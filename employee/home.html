@@ -161,7 +161,7 @@ function ModuleTabs({ active, onChange }) {
           <button key={m.id} onClick={() => onChange(m.id)} className={sel ? "" : "sk-clickable"} style={{
             border: "none", cursor: "pointer", borderRadius: "var(--sk-radius-full)", padding: "8px 16px",
             font: sel ? "var(--sk-label-3)" : "var(--sk-label-3-regular)",
-            background: sel ? "var(--sk-surface-tertiary)" : "transparent",
+            background: sel ? "var(--sk-surface-secondary)" : "transparent",
             color: sel ? "var(--sk-text-primary)" : "var(--sk-text-secondary)",
           }}>{m.label}</button>
         );
@@ -398,7 +398,7 @@ function buildPersonalContent(plan, planHref) {
         rows: [
           withKind(adaptationRows[0], "Адаптация"),
           withKind(learningRows[0], "Обучение"),
-          withKind(idpRows[0], "ИПР"),
+          withKind(assessmentRows[1], "Оценка"),
         ].filter(Boolean),
         emptyText: "Срочных задач сейчас нет — можно спокойно двигаться в своём темпе.",
       },
@@ -433,9 +433,15 @@ function buildTeamContent() {
     riskTag: m.risks.length > 0,
     href: "../manager/plan.html?employee=" + m.id,
   }));
+  // Демо: на сводном табе "Всё" среди адаптационных пунктов — один пример из другого
+  // процесса (обучение), чтобы карточка не читалась как "только про адаптацию".
+  const allRows = [
+    ...rows.slice(0, 2),
+    { kind: "Обучение", title: "Игорь Савченко", subtitle: "Просрочен курс «Работа с Git» · 2 дня", tone: "warn", href: "../manager/plan.html?employee=igor" },
+  ];
   return {
     content: {
-      all: { rows: rows.slice(0, 3), emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
+      all: { rows: allRows, emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
       adaptation: { rows, emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
       learning: { rows: [{ kind: "Обучение", title: "Несколько сотрудников близки к сроку обучения", subtitle: "Стоит проверить назначения команды", tone: "", query: "Покажи просроченные действия команды" }], emptyText: "" },
     },
@@ -480,7 +486,7 @@ function Page() {
         <ModuleTabs active={activeModule} onChange={setActiveModule} />
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <FocusCard title="Что сейчас важно" rows={personalContent.rows} emptyText={personalContent.emptyText}
+          <FocusCard title="Важное для меня" rows={personalContent.rows} emptyText={personalContent.emptyText}
             onAsk={() => askAi(personalAsk)} />
           <ActionsCard prompts={personalPrompts} />
         </div>

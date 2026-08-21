@@ -1199,12 +1199,6 @@ function AiResultCardBody({ r }) {
           ))}
         </div>
       )}
-      {r.openLabel && !r.actions && (
-        <div className="sk-row sk-gap-1" style={{ marginTop: 8, alignItems: "center" }}>
-          <span style={{ font: "var(--sk-label-4)", color: "var(--sk-text-accent)" }}>{r.openLabel}</span>
-          <IconChevronRight size={13} color="var(--sk-icon-accent)" />
-        </div>
-      )}
     </React.Fragment>
   );
 }
@@ -1264,11 +1258,16 @@ function AiBubble({ from, text, results, confirm, thinking, onSend }) {
                 );
               }
               return (
-                <a key={r.id} href={r.href} style={{ textDecoration: "none" }}>
-                  <div className="sk-clickable" style={cardStyle}>
-                    <AiResultCardBody r={r} />
-                  </div>
-                </a>
+                <div key={r.id} style={cardStyle}>
+                  <AiResultCardBody r={r} />
+                  {r.openLabel && (
+                    <div style={{ marginTop: 10 }}>
+                      <Button size="s" mode="secondary" variant="neutral" onClick={() => { window.location.href = r.href; }}>
+                        {r.openLabel}
+                      </Button>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
