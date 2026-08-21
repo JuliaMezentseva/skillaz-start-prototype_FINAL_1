@@ -23,7 +23,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Avatar, Input, Select, Switch, Button, Modal, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Avatar, Input, Select, Switch, Button, Modal, Snackbar, IconButton, SkActionBar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconArrowLeft, IconChevronDown, IconCheck, IconLink2 } = Icons;
 const D = window.SITE_DATA;
@@ -247,16 +247,14 @@ function Page() {
 
   return (
     <AppShell role="hr" active="vacancies" base=".."
-      breadcrumb={<a href="vacancies-manage.html" className="sk-row sk-gap-1" style={{ color: "var(--sk-text-secondary)" }}><IconArrowLeft size={14} /> Управление вакансиями</a>}>
-      <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-        <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-          <div className="sk-title-4">Новая вакансия</div>
-          <Tag size="s" hue="neutral">Черновик</Tag>
-        </div>
-        <div className="sk-row sk-gap-2">
-          <Button mode="secondary" onClick={saveDraft}>Сохранить черновик</Button>
-          <Button variant="accent" disabled={!valid} onClick={() => setConfirmOpen(true)}>Опубликовать вакансию</Button>
-        </div>
+      breadcrumb={
+        <IconButton size="s" variant="gray" mode="tertiary" title="Назад" onClick={() => { window.location.href = "vacancies-manage.html"; }}>
+          <IconArrowLeft size={16} />
+        </IconButton>
+      }>
+      <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+        <div className="sk-title-4">Новая вакансия</div>
+        <Tag size="s" hue="neutral">Черновик</Tag>
       </div>
 
       <div className="sk-row" style={{ alignItems: "flex-start", gap: 40 }}>
@@ -374,6 +372,12 @@ function Page() {
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 4 }}>Черновик сохраняется автоматически</div>
           </div>
         </div>
+      </div>
+
+      <div style={{ position: "sticky", bottom: 0, zIndex: 10 }}>
+        <SkActionBar
+          secondary={<Button mode="secondary" onClick={saveDraft}>Сохранить черновик</Button>}
+          primary={<Button variant="accent" disabled={!valid} onClick={() => setConfirmOpen(true)}>Опубликовать</Button>} />
       </div>
 
       {confirmOpen && (
