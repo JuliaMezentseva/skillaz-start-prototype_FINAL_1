@@ -22,7 +22,7 @@
 <script type="text/babel">
 const { Card, Tag, Button } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconAiSpark, IconSearch, IconChevronRight, IconGift, IconRocket, IconLayers, IconBookOpen, IconGraduationCap, IconUsers } = Icons;
+const { IconAiSpark, IconSearch, IconChevronRight, IconRocket, IconBookOpen, IconGraduationCap, IconUsers, IconImage } = Icons;
 const D = window.SITE_DATA;
 
 // По продуктовой спецификации (Skillaz AI: продуктово-техническая спецификация, п.2, п.7.6):
@@ -191,7 +191,7 @@ function FocusRow({ kind, title, subtitle, due, riskTag, tone, href, query, firs
           {riskTag && <Tag size="s" hue="negative" style={{ flexShrink: 0, background: "var(--sk-negative)", color: "#fff" }}>Есть риск</Tag>}
         </span>
         {due
-          ? <Tag size="s" hue="negative" style={{ marginTop: 4, alignSelf: "flex-start" }}>{due}</Tag>
+          ? <Tag size="s" hue="warning" style={{ marginTop: 4, alignSelf: "flex-start" }}>{due}</Tag>
           : <span style={{
               display: "block", font: "var(--sk-label-4-regular)", marginTop: 2,
               color: tone === "warn" ? "var(--sk-text-negative)" : "var(--sk-text-secondary)",
@@ -291,7 +291,6 @@ function CourseCard({ title, state, progressPct, meta, href, tile }) {
         <Icon size={34} color="#fff" />
       </div>
       <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
-        <Tag size="s" hue="neutral" style={{ alignSelf: "flex-start" }}>Адаптация</Tag>
         <a href={href} style={{ textDecoration: "none" }}>
           <div className="sk-label-2" style={{ color: "var(--sk-text-primary)" }}>{title}</div>
         </a>
@@ -313,20 +312,13 @@ function CourseCard({ title, state, progressPct, meta, href, tile }) {
   );
 }
 
-// Серые плашки вместо цветных — новости на ступень тише курсов, чтобы визуально не
-// спорить с более важным блоком "Продолжить обучение" выше.
-const NEWS_TILES = [
-  { Icon: IconGift },
-  { Icon: IconRocket },
-  { Icon: IconLayers },
-];
-
-function NewsCard({ label, title, date, tile }) {
-  const Icon = tile.Icon;
+// Заглушка вместо реальной картинки новости — нейтральный серый блок с иконкой
+// изображения, одинаковый для всех карточек (не притворяется конкретной иллюстрацией).
+function NewsCard({ label, title, date }) {
   return (
     <Card bordered padding={0} style={{ overflow: "hidden", display: "flex", height: "100%" }}>
       <div style={{ width: 92, flexShrink: 0, background: "var(--sk-surface-secondary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Icon size={28} color="var(--sk-icon-secondary)" />
+        <IconImage size={28} color="var(--sk-icon-secondary)" />
       </div>
       <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 6, minWidth: 0, flex: 1 }}>
         <Tag size="s" hue="neutral" style={{ alignSelf: "flex-start" }}>{label}</Tag>
@@ -508,7 +500,7 @@ function Page() {
         <div className="sk-col sk-gap-3">
           <div className="sk-title-5">Новости</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
-            {NEWS.map((n, i) => <NewsCard key={i} {...n} tile={NEWS_TILES[i % NEWS_TILES.length]} />)}
+            {NEWS.map((n, i) => <NewsCard key={i} {...n} />)}
           </div>
         </div>
       </div>
