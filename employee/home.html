@@ -194,7 +194,7 @@ function FocusRow({ kind, title, subtitle, due, tone, href, query, first }) {
       <span style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)" }}>{kind}</span>
       <span style={{ minWidth: 0 }}>
         <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{title}</span>
-        {due && <Tag size="s" hue="warning" style={{ marginTop: 7, alignSelf: "flex-start" }}>{due}</Tag>}
+        {due && <Tag size="s" hue="warning" style={{ marginTop: 7, marginLeft: 6, alignSelf: "flex-start" }}>{due}</Tag>}
         {subtitle && <span style={{
               display: "block", font: "var(--sk-label-4-regular)", marginTop: due ? 6 : 2,
               color: tone === "warn" ? "var(--sk-text-negative)" : "var(--sk-text-secondary)",
