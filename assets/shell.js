@@ -1023,6 +1023,12 @@ function aiEmployeeHomeIntent(queryRaw) {
       results: [],
     };
   }
+  if (q.indexOf("отчёт") !== -1 || q.indexOf("отчет") !== -1) {
+    return {
+      text: "Отдельного раздела отчётов в этом прототипе пока нет, но я уже могу собрать сводку: прогресс по плану адаптации, пройденные курсы, статус целей. Что включить в отчёт?",
+      results: [],
+    };
+  }
   // Режимы "Команда"/"Администрирование" на Главной (см. employee/home.html) переиспользуют
   // те же вопросы, что и у настоящих aiManagerTeamIntent/aiHrPlansIntent (manager/team.html,
   // hr/plans.html) — но с реальными D.team/D.hrAssignedPlans и ссылками относительно

@@ -219,21 +219,19 @@ function FocusCard({ title, rows, emptyText, onAsk }) {
   );
 }
 
-function ActionRow({ title, onClick, first }) {
+// Облачко-чип, а не строка списка со счётчиком — то же визуальное решение, что и у
+// подсказок-вопросов внутри самой AI-панели (см. AI_PAGE_CONFIG.chips в shell.js), чтобы
+// эти же вопросы читались как "спросить AI", а не как ещё один пункт задач рядом.
+function ActionRow({ title, onClick }) {
   return (
     <button onClick={onClick} className="sk-clickable" style={{
       display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
-      border: "none", background: "transparent", padding: "11px 4px", cursor: "pointer",
-      borderTop: first ? "none" : "1px solid var(--sk-stroke-divider)",
+      border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
+      borderRadius: "var(--sk-radius-3)", padding: "10px 14px", font: "var(--sk-label-3-regular)",
+      color: "var(--sk-text-primary)", cursor: "pointer",
     }}>
-      <span style={{
-        width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
-        background: "var(--sk-special-secondary)", display: "flex", alignItems: "center", justifyContent: "center",
-      }}>
-        <IconAiSpark size={13} color="var(--sk-icon-special)" />
-      </span>
-      <span className="sk-label-3" style={{ flex: 1, minWidth: 0, color: "var(--sk-text-primary)" }}>{title}</span>
-      <IconChevronRight size={14} color="var(--sk-icon-accent)" />
+      <IconAiSpark size={14} color="var(--sk-icon-special)" style={{ flexShrink: 0 }} />
+      {title}
     </button>
   );
 }
@@ -241,9 +239,9 @@ function ActionRow({ title, onClick, first }) {
 function ActionsCard({ prompts }) {
   return (
     <Card bordered style={{ padding: 20 }}>
-      <div className="sk-label-2" style={{ marginBottom: 6 }}>Быстрые действия с AI</div>
+      <div className="sk-label-2" style={{ marginBottom: 10 }}>Быстрые действия с AI</div>
       {prompts.length
-        ? <div>{prompts.map((p, i) => <ActionRow key={p} first={i === 0} title={p} onClick={() => askAi(p)} />)}</div>
+        ? <div className="sk-col sk-gap-2">{prompts.map((p) => <ActionRow key={p} title={p} onClick={() => askAi(p)} />)}</div>
         : <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)", padding: "6px 2px" }}>Пока нет готовых подсказок для этого раздела.</div>}
     </Card>
   );
@@ -260,7 +258,7 @@ function TeamCard({ rows, emptyText, onAsk }) {
     <Card bordered style={{ padding: 20, boxShadow: "inset 3px 0 0 0 var(--sk-accent), inset 0 0 0 1px var(--sk-stroke)" }}>
       <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", marginBottom: 10 }}>
         <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-          <IconUsers size={16} color="var(--sk-icon-accent)" />
+          <IconUsers size={20} color="var(--sk-icon-accent)" />
           <div className="sk-label-2">Моя команда: кому нужно внимание</div>
         </div>
         <button className="sk-link-btn" style={{ font: "var(--sk-label-4)" }} onClick={onAsk}>Показать все</button>
@@ -409,7 +407,7 @@ function buildPersonalContent(plan, planHref) {
       idp: { rows: idpRows, emptyText: "ИПР пока не создан." },
     },
     prompts: {
-      all: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Какие вакансии мне подходят?"],
+      all: ["Найти курс", "Подготовить отчёт", "Подобрать вакансии для меня"],
       adaptation: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Что у меня в работе?"],
       learning: ["Какие курсы у меня есть?"],
       assessment: ["Подготовиться к оценке 360", "Показать результаты прошлой оценки"],
