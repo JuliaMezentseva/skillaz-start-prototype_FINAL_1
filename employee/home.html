@@ -484,13 +484,13 @@ function buildAdminContent() {
   const draft = D.planDrafts[0];
   const rows = [
     respondedVacancy && {
-      kind: "Отклики", title: respondedVacancy.title,
+      kind: "Вакансии", title: respondedVacancy.title,
       subtitle: respondedVacancy.responsesCount + " новых отклика",
       tone: "", href: "../hr/vacancy-responses.html?id=" + respondedVacancy.id,
     },
     draft && {
-      kind: "Черновик", title: draft.title,
-      subtitle: "Не опубликован · создан " + draft.createdAt.split(",")[0],
+      kind: "Адаптация", title: draft.title,
+      subtitle: "Опубликовать черновик · создан " + draft.createdAt.split(",")[0],
       tone: "", href: "../hr/plan.html?kind=draft&id=" + draft.id,
     },
   ].filter(Boolean);
