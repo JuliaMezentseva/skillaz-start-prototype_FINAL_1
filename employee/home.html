@@ -344,7 +344,7 @@ function buildPersonalContent(plan, planHref) {
   const adaptationRows = [];
   urgent.forEach((it) => adaptationRows.push({
     kind: "Шаг", title: it.title,
-    due: "Осталось 3 дня" + (it.date ? " (до " + it.date + ")" : ""),
+    due: "Осталось 2 дня",
     tone: "warn", href: planHref,
   }));
   subgoals.forEach((sg) => adaptationRows.push({ kind: "Цель", title: sg.title, subtitle: sg.goalTitle + " · " + stripDuePrefix(sg.dueLabel), tone: "", href: planHref }));

@@ -907,7 +907,7 @@ function aiEmployeePlanIntent(queryRaw) {
     const results = [];
     urgentChecklist.forEach((it) => results.push({
       id: "item-" + it.id, title: it.title, subtitle: "Базовые действия",
-      warning: "Осталось 3 дня" + (it.date ? " (до " + it.date + ")" : ""),
+      warning: "Осталось 2 дня",
       actions: [{ kind: "query", label: "Открыть", query: "__openItem:" + it.id }],
     }));
     activeSubgoals.forEach((sg) => results.push({
@@ -1080,7 +1080,7 @@ function aiEmployeeHomeIntent(queryRaw) {
     const results = [];
     urgentChecklist.forEach((it) => results.push({
       id: "item-" + it.id, title: it.title, subtitle: "Базовые действия",
-      warning: "Осталось 3 дня" + (it.date ? " (до " + it.date + ")" : ""),
+      warning: "Осталось 2 дня",
       href: planHref, openLabel: "Открыть план адаптации",
     }));
     activeSubgoals.forEach((sg) => results.push({
