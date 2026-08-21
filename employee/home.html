@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Главная — Skillaz Start</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="../assets/ds_bundle.js"></script>
+<script src="../assets/data.js"></script>
+<script type="text/babel" src="../assets/shell.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { Card, Tag, Button, Input, SegmentedControl } = window.SkillazCoreDesignSystem_bf9566;
+const { AppShell, Icons } = window.Site;
+const { IconAiSpark, IconSearch, IconCheck, IconClock, IconChevronRight, IconGift, IconRocket, IconLayers } = Icons;
+const D = window.SITE_DATA;
+
+// Демо: 2 варианта дизайна главной, переключаются прямо на странице (SegmentedControl
+// в шапке) — так удобнее сравнить, ничего общего с реальным пользовательским переключателем.
+const QUICK_PROMPTS = [
+  "Что мне сделать сегодня?",
+  "Подготовиться к контрольной точке",
+  "Что у меня в работе?",
+  "Какие вакансии мне подходят?",
+];
+
+// Локальные копии части логики виджета AI из shell.js (aiEmployeePlanUpcomingCheckpoint /
+// aiEmployeePlanActiveSubgoals / aiEmployeePlanUrgentChecklist / aiStripDuePrefix) — та
+// логика приватна для резолвера чата и не экспортирована наружу, а тут она нужна ещё раз,
+// чтобы «Фокус» и рекомендация на самой странице показывали те же реальные данные плана,
+// что и ответы AI в чате. Если модель данных плана изменится — поправить в обоих местах.
+function upcomingCheckpoint(plan) {
+  const cps = Object.values(plan.checkpoints || {});
+  return cps.find((c) => c.status !== "done") || null;
+}
+function activeSubgoals(plan) {
+  return (plan.goals || []).flatMap((g) => (g.subgoals || [])
+    .filter((sg) => sg.status === "in_progress" || sg.status === "returned")
+    .map((sg) => ({ ...sg, goalId: g.id, goalTitle: g.title })));
+}
+function urgentChecklist(plan) {
+  return plan.stages.flatMap((s) => s.items.filter((i) => i.kind !== "checkpoint" && !i.done && i.highlight === "warning"));
+}
+function stripDuePrefix(label) {
+  return (label || "").replace(/^до\s+/i, "");
+}
+
+function askAi(query) {
+  if (window.__skAiOpenAssistant) window.__skAiOpenAssistant(query);
+}
+
+function AiSearchCard({ dark }) {
+  const [value, setValue] = React.useState("");
+  function submit() {
+    if (value.trim()) askAi(value);
+  }
+  return (
+    <Card bordered style={{ padding: 20 }}>
+      <div className="sk-col sk-gap-3">
+        <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
+          <span style={{
+            width: 40, height: 40, borderRadius: "var(--sk-radius-3)", flexShrink: 0,
+            background: dark ? "var(--sk-surface-dark)" : "var(--sk-special-secondary)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <IconAiSpark size={20} color={dark ? "var(--sk-icon-warning, #ffd21f)" : "var(--sk-icon-special)"} />
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <div className="sk-label-2">Чем помочь сегодня?</div>
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 2 }}>
+              Спрошу про адаптацию, контрольные точки или подходящие вакансии — и сразу открою нужное.
+            </div>
+          </div>
+        </div>
+        <div className="sk-row sk-gap-2">
+          <Input size="m" icon={<IconSearch size={18} />} placeholder="Например: что мне важно успеть сегодня?"
+            value={value} onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
+            style={{ flex: 1 }} />
+          <Button mode="primary" variant="accent" disabled={!value.trim()} onClick={submit}>Спросить</Button>
+        </div>
+        <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
+          {QUICK_PROMPTS.map((p) => (
+            <button key={p} onClick={() => askAi(p)} className="sk-clickable" style={{
+              border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
+              borderRadius: "var(--sk-radius-full)", padding: "6px 12px", font: "var(--sk-label-4)",
+              color: "var(--sk-text-primary)", cursor: "pointer",
+            }}>{p}</button>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// Компактный вариант: одна самая срочная рекомендация — как в остальном прототипе
+// (ссылка-карточка без вложенных интерактивных элементов, как PlanCard в adaptation.html).
+function RecommendationBanner({ item, planHref }) {
+  if (!item) {
+    return (
+      <Card bordered style={{ padding: 16 }}>
+        <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>
+          Срочных задач по плану адаптации сейчас нет — можно спокойно двигаться в своём темпе.
+        </div>
+      </Card>
+    );
+  }
+  return (
+    <a href={planHref} style={{ textDecoration: "none" }}>
+      <Card bordered className="sk-clickable" style={{ padding: 16, boxShadow: "inset 3px 0 0 0 var(--sk-warning), inset 0 0 0 1px var(--sk-stroke)" }}>
+        <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
+          <span style={{
+            width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+            background: "var(--sk-warning-secondary)", display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <IconClock size={18} color="var(--sk-warning)" />
+          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="sk-label-3">Рекомендация AI на сегодня</div>
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 2 }}>
+              {item.title}{item.date ? " · срок " + item.date : ""}
+            </div>
+          </div>
+          <span className="sk-row sk-gap-1" style={{ flexShrink: 0, color: "var(--sk-text-accent)", font: "var(--sk-label-3)" }}>
+            Открыть план <IconChevronRight size={15} color="var(--sk-icon-accent)" />
+          </span>
+        </div>
+      </Card>
+    </a>
+  );
+}
+
+function FocusRow({ kind, title, subtitle, tone, href, first }) {
+  return (
+    <a href={href} className="sk-clickable" style={{
+      display: "grid", gridTemplateColumns: "84px minmax(0,1fr) 18px", gap: 12, alignItems: "center",
+      padding: "12px 4px", borderTop: first ? "none" : "1px solid var(--sk-stroke-divider)", textDecoration: "none",
+    }}>
+      <span style={{ font: "var(--sk-label-4-regular)", color: tone === "warn" ? "var(--sk-text-negative)" : "var(--sk-text-secondary)" }}>{kind}</span>
+      <span style={{ minWidth: 0 }}>
+        <span className="sk-label-3" style={{ display: "block", color: "var(--sk-text-primary)" }}>{title}</span>
+        <span className="sk-muted" style={{ display: "block", font: "var(--sk-label-4-regular)", marginTop: 2 }}>{subtitle}</span>
+      </span>
+      <IconChevronRight size={16} color="var(--sk-icon-accent)" />
+    </a>
+  );
+}
+
+function ActionRow({ title, onClick, first }) {
+  return (
+    <button onClick={onClick} className="sk-clickable" style={{
+      display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
+      border: "none", background: "transparent", padding: "11px 4px", cursor: "pointer",
+      borderTop: first ? "none" : "1px solid var(--sk-stroke-divider)",
+    }}>
+      <span style={{
+        width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
+        background: "var(--sk-special-secondary)", display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <IconAiSpark size={13} color="var(--sk-icon-special)" />
+      </span>
+      <span className="sk-label-3" style={{ flex: 1, minWidth: 0, color: "var(--sk-text-primary)" }}>{title}</span>
+      <IconChevronRight size={14} color="var(--sk-icon-accent)" />
+    </button>
+  );
+}
+
+function CourseCard({ title, state, progressPct, meta, href }) {
+  return (
+    <a href={href} style={{ textDecoration: "none" }}>
+      <Card bordered className="sk-clickable" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, height: "100%" }}>
+        <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between" }}>
+          <Tag size="s" hue="neutral">Адаптация</Tag>
+          {state === "done"
+            ? <Tag size="s" hue="positive" icon={<IconCheck size={11} />}>Завершён</Tag>
+            : <Tag size="s" hue="neutral">Скоро</Tag>}
+        </div>
+        <div className="sk-label-2" style={{ color: "var(--sk-text-primary)" }}>{title}</div>
+        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{meta}</div>
+        <div style={{ marginTop: "auto" }}>
+          <div style={{ height: 5, borderRadius: 4, background: "var(--sk-surface-secondary)", overflow: "hidden" }}>
+            <div style={{ width: progressPct + "%", height: "100%", background: state === "done" ? "var(--sk-positive)" : "var(--sk-accent)" }} />
+          </div>
+          <div className="sk-row" style={{ justifyContent: "space-between", marginTop: 6 }}>
+            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{progressPct}%</span>
+            <span style={{ font: "var(--sk-label-4)", color: "var(--sk-text-accent)" }}>{state === "done" ? "Открыть" : "Подробнее"} →</span>
+          </div>
+        </div>
+      </Card>
+    </a>
+  );
+}
+
+function NewsCard({ label, title, date, icon }) {
+  return (
+    <Card bordered style={{ padding: 16, display: "flex", gap: 12, alignItems: "flex-start" }}>
+      <span style={{
+        width: 40, height: 40, borderRadius: "var(--sk-radius-3)", flexShrink: 0,
+        background: "var(--sk-surface-secondary)", color: "var(--sk-icon-secondary)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>{icon}</span>
+      <div style={{ minWidth: 0 }}>
+        <Tag size="s" hue="neutral">{label}</Tag>
+        <div className="sk-label-3" style={{ marginTop: 6 }}>{title}</div>
+        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 6 }}>{date}</div>
+      </div>
+    </Card>
+  );
+}
+
+// Курсы — это курсы из своего же плана адаптации (kind:"course" в stages), показанные
+// в виде плиток "как в LMS": отдельного каталога обучения в прототипе пока нет, поэтому
+// у всех карточек одна и та же ссылка — назад на employee/plan.html, где эти курсы и живут.
+function planCourses(plan) {
+  return plan.stages.flatMap((s) => s.items.filter((i) => i.kind === "course")).map((c) => ({
+    id: c.id, title: c.title,
+    state: c.done ? "done" : "upcoming",
+    progressPct: c.done ? 100 : 0,
+    meta: c.done ? "Пройден" : (c.date ? "Начнётся " + c.date : "Ещё не начат"),
+  }));
+}
+
+const NEWS = [
+  { label: "Компания", title: "Обновили регламент по бенефитам: что изменилось", date: "18 августа", icon: <IconGift size={18} /> },
+  { label: "Адаптация", title: "Как проходит контрольная точка с руководителем", date: "12 августа", icon: <IconRocket size={18} /> },
+  { label: "Продукт", title: "Новая версия CRM: что важно знать менеджерам", date: "5 августа", icon: <IconLayers size={18} /> },
+];
+
+function Page() {
+  const [variant, setVariant] = React.useState("compact");
+  const plan = D.plans.onboarding;
+  const planHref = "plan.html?plan=" + plan.id;
+
+  const cp = upcomingCheckpoint(plan);
+  const subgoals = activeSubgoals(plan);
+  const urgent = urgentChecklist(plan);
+  const topItem = urgent[0]
+    ? { title: urgent[0].title, date: urgent[0].date }
+    : (subgoals[0] ? { title: subgoals[0].title, date: stripDuePrefix(subgoals[0].dueLabel) } : null);
+
+  const focusRows = [];
+  urgent.forEach((it) => focusRows.push({ kind: "Шаг", title: it.title, subtitle: it.date ? "Срок " + it.date : "Требует внимания", tone: "warn" }));
+  subgoals.forEach((sg) => focusRows.push({ kind: "Цель", title: sg.title, subtitle: sg.goalTitle + " · " + stripDuePrefix(sg.dueLabel), tone: "" }));
+  if (cp) focusRows.push({ kind: "Точка", title: cp.title, subtitle: (cp.daysLeftLabel ? cp.daysLeftLabel + " · " : "") + cp.dueLabel, tone: "" });
+
+  const courses = planCourses(plan);
+
+  return (
+    <AppShell role="employee" active="home" base="..">
+      <div className="sk-col sk-gap-6">
+        <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
+          <div>
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Главная</div>
+            <div className="sk-title-4" style={{ marginTop: 4 }}>Добрый день, {D.person.firstName}!</div>
+            <div className="sk-muted" style={{ font: "var(--sk-paragraph-3)", marginTop: 4, maxWidth: 560 }}>
+              AI посмотрел на ваш план адаптации и вакансии — вот что важно сегодня.
+            </div>
+          </div>
+          <div className="sk-col sk-gap-1" style={{ alignItems: "flex-end" }}>
+            <SegmentedControl size="s" active={variant} onChange={setVariant}
+              items={[{ id: "compact", label: "Вариант 1" }, { id: "ai", label: "Вариант 2" }]} />
+            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Демо: 2 варианта для сравнения</span>
+          </div>
+        </div>
+
+        <AiSearchCard dark={variant === "ai"} />
+
+        {variant === "compact" ? (
+          <RecommendationBanner item={topItem} planHref={planHref} />
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(280px,1fr)", gap: 16 }}>
+            <Card bordered style={{ padding: 16 }}>
+              <div className="sk-row" style={{ justifyContent: "space-between", marginBottom: 4 }}>
+                <div className="sk-label-2">Что сейчас важно</div>
+                <button className="sk-link-btn" style={{ font: "var(--sk-label-4)" }}
+                  onClick={() => askAi("Что мне сделать сегодня?")}>Спросить AI</button>
+              </div>
+              <div>
+                {focusRows.length
+                  ? focusRows.map((r, i) => <FocusRow key={i} first={i === 0} href={planHref} {...r} />)
+                  : <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", padding: "8px 4px" }}>Срочных задач по плану сейчас нет.</div>}
+              </div>
+            </Card>
+            <Card bordered style={{ padding: 16 }}>
+              <div className="sk-label-2" style={{ marginBottom: 4 }}>Быстрые действия с AI</div>
+              <div>
+                {QUICK_PROMPTS.map((p, i) => <ActionRow key={p} first={i === 0} title={p} onClick={() => askAi(p)} />)}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        <div className="sk-col sk-gap-3">
+          <div className="sk-row" style={{ justifyContent: "space-between" }}>
+            <div className="sk-title-5">Обучение по плану адаптации</div>
+            <a href={planHref} style={{ font: "var(--sk-label-3)", color: "var(--sk-text-accent)" }}>Открыть план →</a>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+            {courses.map((c) => <CourseCard key={c.id} {...c} href={planHref} />)}
+          </div>
+        </div>
+
+        <div className="sk-col sk-gap-3">
+          <div className="sk-title-5">Новости</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
+            {NEWS.map((n, i) => <NewsCard key={i} {...n} />)}
+          </div>
+        </div>
+      </div>
+    </AppShell>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Page />);
+</script>
+</body>
+</html>

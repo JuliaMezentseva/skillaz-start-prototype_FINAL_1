@@ -34,6 +34,8 @@ const IconHelpCircle = mkIcon(<><circle cx="12" cy="12" r="8.5" stroke="currentC
 const IconInfo = mkIcon(<><circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.5" /><path d="M12 11v5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><circle cx="12" cy="8" r="0.9" fill="currentColor" /></>);
 const IconBriefcase = mkIcon(<><rect x="3.5" y="7.5" width="17" height="11.5" rx="2" stroke="currentColor" strokeWidth="1.5" /><path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5" stroke="currentColor" strokeWidth="1.5" /><path d="M3.5 12.5h17" stroke="currentColor" strokeWidth="1.5" /></>);
 const IconUsers = mkIcon(<><circle cx="9" cy="8.5" r="3" stroke="currentColor" strokeWidth="1.5" /><path d="M3.5 19c.6-3 2.7-4.7 5.5-4.7s4.9 1.7 5.5 4.7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M15.5 6a3 3 0 0 1 0 5.8M20 19c-.4-2.2-1.5-3.7-3.3-4.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></>);
+// добавлено для пункта меню "Главная" (Сотрудник) — простой домик, отдельно от IconTarget/IconBriefcase.
+const IconHome = mkIcon(<><path d="M4 11.5 12 4l8 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M6 10v9a1 1 0 0 0 1 1h3.5v-5h3v5H17a1 1 0 0 0 1-1v-9" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></>);
 const IconTarget = mkIcon(<><circle cx="12" cy="12" r="8.2" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="4.6" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="1.1" fill="currentColor" /></>);
 const IconMapPin = mkIcon(<><path d="M12 21s6.5-5.6 6.5-11A6.5 6.5 0 0 0 5.5 10c0 5.4 6.5 11 6.5 11Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><circle cx="12" cy="10" r="2.1" stroke="currentColor" strokeWidth="1.5" /></>);
 const IconPhone = mkIcon(<path d="M6.5 4.5h3l1.5 4-2 1.5a11 11 0 0 0 5 5l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2C10.6 19 5 13.4 4.5 6.7a2 2 0 0 1 2-2.2Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />);
@@ -127,6 +129,7 @@ window.SiteIcons = {
   IconGraduationCap, IconGift, IconLayers, IconPlusSm, IconEye, IconPaperclip, IconCalendar, IconUser,
   IconMoreHorizontal, IconEdit, IconTrash, IconFlag, IconSettings, IconClipboard, IconRocket, IconSparkles, IconSparklesSolid, IconBookOpen,
   IconUnlink, IconUserSwitch, IconRepeat, IconColumns, IconInbox, IconUserX, IconCopyLocal2, IconMic, IconImage,
+  IconHome, IconAiSpark,
 };
 
 function directionHue(direction) {
@@ -153,8 +156,14 @@ function roleHref(base, roleId) {
 
 // items: [{ id, label, icon, href, indent? }] — плоский список с ручной группировкой,
 // группа "Адаптация" рисуется как некликабельный заголовок + один-два вложенных пункта.
+// "Главная" пока есть только у роли "Сотрудник" (см. employee/home.html) — у остальных
+// ролей нет готовой стартовой страницы, поэтому пункт меню и клик по логотипу (см.
+// logoHomeHref ниже) для них пока ведут туда же, куда и раньше.
 function buildNavGroups(role, base) {
   const groups = [];
+  if (role === "employee") {
+    groups.push({ kind: "item", id: "home", label: "Главная", icon: <IconHome />, href: base + "/employee/home.html" });
+  }
   if (role === "manager") {
     groups.push({ kind: "item", id: "team", label: "Моя команда", icon: <IconUsers />, href: base + "/manager/team.html" });
   }
@@ -204,8 +213,17 @@ function buildNavGroups(role, base) {
   return groups;
 }
 
+// Клик по логотипу возвращает на "Главную" — пока она есть только у "Сотрудника"
+// (см. комментарий у buildNavGroups), поэтому для остальных ролей логотип остаётся
+// некликабельным, а не ведёт в никуда.
+function logoHomeHref(role, base) {
+  if (role === "employee") return base + "/employee/home.html";
+  return null;
+}
+
 function NavSidebar({ role, active, base }) {
   const groups = buildNavGroups(role, base);
+  const homeHref = logoHomeHref(role, base);
   return (
     <aside className="sk-scroll" style={{
       width: 224, flexShrink: 0, minHeight: "100%",
@@ -213,7 +231,13 @@ function NavSidebar({ role, active, base }) {
       padding: "16px", gap: 12, overflowY: "auto",
     }}>
       <div style={{ display: "flex", alignItems: "center", height: 40, padding: "0 8px" }}>
-        <SkillazLogo variant="full" height={22} />
+        {homeHref ? (
+          <a href={homeHref} style={{ display: "inline-flex", color: "inherit" }}>
+            <SkillazLogo variant="full" height={22} />
+          </a>
+        ) : (
+          <SkillazLogo variant="full" height={22} />
+        )}
       </div>
       <div style={{
         display: "flex", alignItems: "center", gap: 8, height: 40, padding: "0 12px",
@@ -902,9 +926,76 @@ function aiEmployeePlanIntent(queryRaw) {
   return null;
 }
 
+// ---------------- Разбор запросов: Сотрудник / Главная ----------------
+// Переиспользует те же вопросы, что и виджет на самой странице плана
+// (aiEmployeePlanIntent), но результаты всегда ведут обратно на employee/plan.html
+// обычной ссылкой, а не открывают дровер конкретного шага "на месте" —
+// window.__skAiOpenSubgoal/__skAiOpenCheckpoint/__skAiOpenItem регистрирует только
+// сама страница плана (см. employee/plan.html), на "Главной" их не существует, и
+// синтетические команды __openSubgoal:/__openItem: там бы просто ничего не сделали.
+// Вопросы про вакансии отдаём как есть в aiEmployeeVacanciesIntent — там уже настоящие
+// ссылки и action:"navigateApply" (location.href), которые работают с любой страницы.
+function aiEmployeeHomeIntent(queryRaw) {
+  const raw = (queryRaw || "").trim();
+  if (raw.indexOf("__apply") === 0) return aiEmployeeVacanciesIntent(raw);
+  const q = raw.toLowerCase();
+  if (!q) return null;
+  if (q.indexOf("вакан") !== -1 || q.indexOf("подходя") !== -1) return aiEmployeeVacanciesIntent(raw);
+
+  const plan = aiEmployeePlanCurrent();
+  const planHref = "plan.html?plan=" + plan.id;
+  const nextCp = aiEmployeePlanUpcomingCheckpoint(plan);
+  const activeSubgoals = aiEmployeePlanActiveSubgoals(plan);
+  const urgentChecklist = aiEmployeePlanUrgentChecklist(plan);
+
+  if (q.indexOf("контрольн") !== -1 || q.indexOf(" кт") !== -1) {
+    if (!nextCp) return { text: "Ближайших контрольных точек по плану адаптации сейчас нет.", results: [] };
+    return {
+      text: "К контрольной точке «" + nextCp.title + "» (" + nextCp.dueLabel + "):",
+      results: [{
+        id: nextCp.id, title: nextCp.title,
+        subtitle: (nextCp.daysLeftLabel ? nextCp.daysLeftLabel + " · " : "") + nextCp.dueLabel,
+        href: planHref, openLabel: "Открыть план адаптации",
+      }],
+    };
+  }
+  if (q.indexOf("работе") !== -1 || q.indexOf("текущ") !== -1) {
+    if (!activeSubgoals.length) return { text: "Сейчас нет шагов, взятых в работу — загляните в план адаптации и возьмите очередной шаг.", results: [] };
+    return {
+      text: "Вот что у вас сейчас в работе:",
+      results: activeSubgoals.map((sg) => ({
+        id: sg.id, title: sg.title, subtitle: sg.goalTitle + " · " + aiStripDuePrefix(sg.dueLabel),
+        href: planHref, openLabel: "Открыть план адаптации",
+      })),
+    };
+  }
+  if (q.indexOf("сегодня") !== -1 || q.indexOf("сделать") !== -1) {
+    const results = [];
+    urgentChecklist.forEach((it) => results.push({
+      id: "item-" + it.id, title: it.title, subtitle: "Базовые действия" + (it.date ? " · " + it.date : ""),
+      warning: "Скоро дедлайн", href: planHref, openLabel: "Открыть план адаптации",
+    }));
+    activeSubgoals.forEach((sg) => results.push({
+      id: "sg-" + sg.id, title: sg.title, subtitle: sg.goalTitle + " · " + aiStripDuePrefix(sg.dueLabel),
+      href: planHref, openLabel: "Открыть план адаптации",
+    }));
+    if (nextCp) results.push({
+      id: "cp-" + nextCp.id, title: nextCp.title,
+      subtitle: (nextCp.daysLeftLabel ? nextCp.daysLeftLabel + " · " : "") + nextCp.dueLabel,
+      href: planHref, openLabel: "Открыть план адаптации",
+    });
+    return {
+      text: results.length ? "Вот что сейчас актуально по вашему плану адаптации:" : "Срочных задач по плану сейчас нет — можно спокойно двигаться в своём темпе.",
+      results,
+    };
+  }
+  return null;
+}
+
 // ---------------- Конфигурация виджета по текущей странице ----------------
 function aiPageKey() {
   const p = window.location.pathname;
+  if (/\/employee\/home\.html$/.test(p)) return "employee-home";
   if (/\/hr\/plans\.html$/.test(p)) return "hr-plans";
   if (/\/manager\/team\.html$/.test(p)) return "manager-team";
   if (/\/manager\/plan\.html$/.test(p)) return "manager-plan";
@@ -916,6 +1007,10 @@ function aiPageKey() {
   return null;
 }
 const AI_PAGE_CONFIG = {
+  "employee-home": {
+    chips: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Что у меня в работе?", "Какие вакансии мне подходят?"],
+    resolve: aiEmployeeHomeIntent,
+  },
   "hr-plans": {
     chips: ["Какие планы у меня в риске?", "Где ещё не опубликованы цели?", "Где просрочены контрольные точки?"],
     resolve: aiHrPlansIntent,
