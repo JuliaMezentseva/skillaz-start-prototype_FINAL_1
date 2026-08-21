@@ -367,7 +367,7 @@ function Page() {
             directionOptions={directionOptions} positionOptions={positionOptions} departmentOptions={departmentOptions} />
         )}
 
-        <div className="sk-row" style={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <div className="sk-row" style={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: "var(--sk-space-2)" }}>
           <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Найдено вакансий: {filtered.length}</div>
           <SubscribeBar filters={filters} hasActiveFilters={hasActiveFilters} subscriptions={subscriptions}
             onSubscribe={subscribe} onUnsubscribe={unsubscribe} />
