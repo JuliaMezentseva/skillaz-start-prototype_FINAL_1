@@ -224,12 +224,12 @@ function FocusCard({ title, rows, emptyText }) {
 function ActionRow({ title, onClick }) {
   return (
     <button onClick={onClick} className="sk-clickable" style={{
-      display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+      display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap",
       border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
-      borderRadius: "var(--sk-radius-full)", padding: "6px 12px", font: "var(--sk-label-4-regular)",
+      borderRadius: "var(--sk-radius-full)", padding: "8px 14px", font: "var(--sk-label-4-regular)",
       color: "var(--sk-text-primary)", cursor: "pointer",
     }}>
-      <IconAiSpark size={12} color="var(--sk-icon-special)" style={{ flexShrink: 0 }} />
+      <IconAiSpark size={13} color="var(--sk-icon-special)" style={{ flexShrink: 0 }} />
       {title}
     </button>
   );
