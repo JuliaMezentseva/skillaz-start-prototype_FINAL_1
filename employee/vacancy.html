@@ -171,22 +171,16 @@ function Page() {
             <div className="sk-col sk-gap-4">
               <div className="sk-col">
                 <DetailRow label="Регион" value={vacancy.city} />
-                <Divider />
                 <DetailRow label="Опыт работы" value={vacancy.experience} />
-                <Divider />
                 <DetailRow label="Тип занятости" value={vacancy.employment} />
-                <Divider />
                 <DetailRow label="Формат" value={vacancy.format} />
-                <Divider />
                 <DetailRow label="Подразделение" value={vacancy.department} />
-                <Divider />
                 <DetailRow label="Грейд" value={vacancy.grade} />
               </div>
 
               <Divider />
 
               <div className="sk-col sk-gap-2">
-                <div className="sk-label-4" style={{ color: "var(--sk-text-tertiary)", textTransform: "uppercase" }}>Рекрутёр вакансии</div>
                 <div className="sk-row sk-gap-3">
                   <Avatar name={vacancy.recruiter.name} size={36} />
                   <div className="sk-col" style={{ gap: 0 }}>
@@ -194,9 +188,13 @@ function Page() {
                     <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{vacancy.recruiter.role}</div>
                   </div>
                 </div>
-                <div className="sk-col sk-gap-1" style={{ paddingLeft: 48 }}>
-                  <div className="sk-row sk-gap-2 sk-muted" style={{ font: "var(--sk-label-4-regular)" }}><IconPhone size={13} />{vacancy.recruiter.phone}</div>
-                  <div className="sk-row sk-gap-2 sk-muted" style={{ font: "var(--sk-label-4-regular)" }}><IconMail size={13} />{vacancy.recruiter.email}</div>
+                <div className="sk-col sk-gap-1">
+                  <a href={"tel:" + vacancy.recruiter.phone} className="sk-row sk-gap-1" style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-4-regular)", textDecoration: "none" }}>
+                    <IconPhone size={13} color="var(--sk-icon-accent)" />{vacancy.recruiter.phone}
+                  </a>
+                  <a href={"mailto:" + vacancy.recruiter.email} className="sk-row sk-gap-1" style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-4-regular)", textDecoration: "none" }}>
+                    <IconMail size={13} color="var(--sk-icon-accent)" />{vacancy.recruiter.email}
+                  </a>
                 </div>
               </div>
             </div>
