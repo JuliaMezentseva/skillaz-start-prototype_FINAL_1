@@ -179,10 +179,9 @@ function ModuleTabs({ active, onChange }) {
 // href — переход на реальную страницу (план/вакансия/сотрудник); query — для строк без
 // своей страницы в этом прототипе (Оценка/ИПР и часть строк блока "Команда") вместо этого
 // открывает AI с готовым вопросом. due — если известен реальный срок (не выдуманный), рендерим
-// его тегом ("Осталось 3 дня (до 3 апреля)") вместо обычного серого подзаголовка; riskTag —
-// короткая красная метка "риск" перед именем (используется в "Моей команде" для тех, у кого
-// tone тёплый по-настоящему из-за риска, а не просто ближайшего дедлайна).
-function FocusRow({ kind, title, subtitle, due, riskTag, tone, href, query, first }) {
+// его тегом ("Осталось 3 дня (до 3 апреля)") вместо обычного серого подзаголовка; риск (tone
+// "warn" без due) выделяется не тегом, а просто красным цветом самого текста описания.
+function FocusRow({ kind, title, subtitle, due, tone, href, query, first }) {
   const rowStyle = {
     display: "grid", gridTemplateColumns: "84px minmax(0,1fr) 18px", gap: 12, alignItems: "center",
     padding: "12px 4px", borderTop: first ? "none" : "1px solid var(--sk-stroke-divider)", textDecoration: "none",
@@ -192,10 +191,7 @@ function FocusRow({ kind, title, subtitle, due, riskTag, tone, href, query, firs
     <React.Fragment>
       <span style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)" }}>{kind}</span>
       <span style={{ minWidth: 0 }}>
-        <span className="sk-label-3" style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--sk-text-primary)" }}>
-          {title}
-          {riskTag && <Tag size="s" hue="negative" style={{ flexShrink: 0, background: "var(--sk-negative)", color: "#fff" }}>Есть риск</Tag>}
-        </span>
+        <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{title}</span>
         {due
           ? <Tag size="s" hue="warning" style={{ marginTop: 4, alignSelf: "flex-start" }}>{due}</Tag>
           : <span style={{
@@ -425,19 +421,19 @@ function buildTeamContent() {
   // kind — не "Сотрудник" (и так ясно, что в списке люди), а процесс, из-за которого
   // человек здесь оказался: все action/risks у D.team сейчас об адаптации.
   // Сначала риски, потом остальные (в исходном порядке D.team) — кому нужно внимание
-  // в первую очередь, тот и выше в списке.
-  // tone остаётся пустым даже для риска — "Есть риск" тег уже красный сам по себе,
-  // не нужно ещё и текст описания дублировать красным.
+  // в первую очередь, тот и выше в списке. Риск выделяется красным текстом описания
+  // (tone "warn"), без отдельного тега — riskTag остаётся только внутренним флагом
+  // для сортировки, наружу не рендерится (см. FocusRow).
   const rows = attention.map((m) => ({
     kind: "Адаптация", title: m.name,
     subtitle: m.risks.length ? m.risks[0] : (m.action.label + (m.action.due ? " · до " + m.action.due : "")),
-    tone: "",
+    tone: m.risks.length ? "warn" : "",
     riskTag: m.risks.length > 0,
     href: "../manager/plan.html?employee=" + m.id,
   })).sort((a, b) => (b.riskTag ? 1 : 0) - (a.riskTag ? 1 : 0));
   // Демо: на сводном табе "Всё" — три конкретных сотрудника с их текущими действиями,
-  // риск (Дарья) выше срочного (Игорь), обычный дедлайн (Светлана) — ниже.
-  const igorRow = { kind: "Обучение", title: "Игорь Савченко", subtitle: "Просрочен курс «Работа с Git» · 2 дня", tone: "warn", href: "../manager/plan.html?employee=igor" };
+  // риск (Дарья) выше остальных, дальше обычные плановые действия руководителя (Игорь, Светлана).
+  const igorRow = { kind: "ИПР", title: "Игорь Савченко", subtitle: "Назначить план ИПР · до 20 сентября", tone: "", href: "../manager/plan.html?employee=igor" };
   const allRows = [
     rows.find((r) => r.title === "Дарья Белозёрова"),
     igorRow,
