@@ -423,10 +423,12 @@ function buildTeamContent() {
   // человек здесь оказался: все action/risks у D.team сейчас об адаптации.
   // Сначала риски, потом остальные (в исходном порядке D.team) — кому нужно внимание
   // в первую очередь, тот и выше в списке.
+  // tone остаётся пустым даже для риска — "Есть риск" тег уже красный сам по себе,
+  // не нужно ещё и текст описания дублировать красным.
   const rows = attention.map((m) => ({
     kind: "Адаптация", title: m.name,
     subtitle: m.risks.length ? m.risks[0] : (m.action.label + (m.action.due ? " · до " + m.action.due : "")),
-    tone: m.risks.length ? "warn" : "",
+    tone: "",
     riskTag: m.risks.length > 0,
     href: "../manager/plan.html?employee=" + m.id,
   })).sort((a, b) => (b.riskTag ? 1 : 0) - (a.riskTag ? 1 : 0));
