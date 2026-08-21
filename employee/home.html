@@ -424,19 +424,23 @@ function buildTeamContent() {
   const attention = D.team.filter((m) => m.risks.length > 0 || !!m.action);
   // kind — не "Сотрудник" (и так ясно, что в списке люди), а процесс, из-за которого
   // человек здесь оказался: все action/risks у D.team сейчас об адаптации.
+  // Сначала риски, потом остальные (в исходном порядке D.team) — кому нужно внимание
+  // в первую очередь, тот и выше в списке.
   const rows = attention.map((m) => ({
     kind: "Адаптация", title: m.name,
     subtitle: m.risks.length ? m.risks[0] : (m.action.label + (m.action.due ? " · до " + m.action.due : "")),
     tone: m.risks.length ? "warn" : "",
     riskTag: m.risks.length > 0,
     href: "../manager/plan.html?employee=" + m.id,
-  }));
-  // Демо: на сводном табе "Всё" среди адаптационных пунктов — один пример из другого
-  // процесса (обучение), чтобы карточка не читалась как "только про адаптацию".
+  })).sort((a, b) => (b.riskTag ? 1 : 0) - (a.riskTag ? 1 : 0));
+  // Демо: на сводном табе "Всё" — три конкретных сотрудника с их текущими действиями,
+  // риск (Дарья) выше срочного (Игорь), обычный дедлайн (Светлана) — ниже.
+  const igorRow = { kind: "Обучение", title: "Игорь Савченко", subtitle: "Просрочен курс «Работа с Git» · 2 дня", tone: "warn", href: "../manager/plan.html?employee=igor" };
   const allRows = [
-    ...rows.slice(0, 2),
-    { kind: "Обучение", title: "Игорь Савченко", subtitle: "Просрочен курс «Работа с Git» · 2 дня", tone: "warn", href: "../manager/plan.html?employee=igor" },
-  ];
+    rows.find((r) => r.title === "Дарья Белозёрова"),
+    igorRow,
+    rows.find((r) => r.title === "Светлана Морозова"),
+  ].filter(Boolean);
   return {
     content: {
       all: { rows: allRows, emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
