@@ -15,7 +15,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, Input, Button, Checkbox, Tabs, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Input, Button, Checkbox, Tabs, Snackbar, Tooltip } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconSearch, IconMapPin, IconBriefcase, IconX, IconFilter, IconSparklesSolid, IconSettings, IconBell } = Icons;
 const D = window.SITE_DATA;
@@ -86,19 +86,21 @@ function filtersSignature(filters) {
 function SubscribeBar({ filters, hasActiveFilters, subscriptions, onSubscribe, onUnsubscribe }) {
   const sig = filtersSignature(filters);
   const isOn = hasActiveFilters && subscriptions.some((s) => s.sig === sig);
-  return (
+  const btn = (
     <button type="button" disabled={!hasActiveFilters}
       onClick={() => (isOn ? onUnsubscribe(sig) : onSubscribe(sig, filters))}
       className="sk-row sk-gap-2 sk-clickable" style={{
         alignItems: "center", flexShrink: 0, height: 32, padding: "0 12px", border: "none",
         borderRadius: 8, background: "var(--sk-surface-secondary)",
-        color: "var(--sk-text-primary)", font: "var(--sk-label-3-regular)", letterSpacing: "0.01em",
+        color: "var(--graphite-graphite-35)", font: "var(--sk-label-3-regular)", letterSpacing: "0.01em",
         cursor: hasActiveFilters ? "pointer" : "default", opacity: hasActiveFilters ? 1 : 0.6, whiteSpace: "nowrap",
-      }} title={hasActiveFilters ? undefined : "Выберите фильтр, чтобы подписаться на уведомления"}>
+      }}>
       <IconBell size={15} color={isOn ? "var(--sk-icon-accent)" : "var(--sk-icon-secondary)"} />
       {isOn ? "Вы подписаны" : "Подписаться на новые"}
     </button>
   );
+  if (hasActiveFilters) return btn;
+  return <Tooltip content="Выберите фильтр, чтобы подписаться на уведомления о новых вакансиях">{btn}</Tooltip>;
 }
 
 function SubscriptionsList({ subscriptions, onUnsubscribe }) {
@@ -179,7 +181,7 @@ function FilterChip({ label, options, value, onChange, searchable }) {
       <button type="button" onClick={() => setOpen((o) => !o)} className="sk-clickable" style={{
         display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 14px",
         borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap",
-        border: `1.5px solid ${value.length ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
+        border: "1.5px solid var(--sk-stroke)",
         background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
         color: "var(--sk-text-primary)",
       }}>

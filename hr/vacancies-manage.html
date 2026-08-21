@@ -48,7 +48,7 @@ function FilterChip({ label, options, value, onChange, searchable }) {
       <button type="button" onClick={() => setOpen((o) => !o)} className="sk-clickable" style={{
         display: "inline-flex", alignItems: "center", gap: 6, height: 40, padding: "0 14px",
         borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap",
-        border: `1.5px solid ${value.length ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
+        border: "1.5px solid var(--sk-stroke)",
         background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
         color: "var(--sk-text-primary)",
       }}>
@@ -430,7 +430,7 @@ function Page() {
         <FiltersSummaryChip count={activeFilterCount} open={filtersOpen} onToggle={() => setFiltersOpen((o) => !o)} onReset={() => setFilters(emptyFilters)} />
         <div className="sk-row sk-gap-2" style={{ marginLeft: "auto", alignItems: "center" }}>
           <SegmentedControl
-            items={[{ id: "open", label: "Открытые" }, { id: "closed", label: "Закрытые" }]}
+            items={[{ id: "open", label: "Идёт найм" }, { id: "closed", label: "Закрытые" }]}
             active={showClosed ? "closed" : "open"}
             onChange={(id) => setShowClosed(id === "closed")} />
           <ColumnsPicker visible={visibleOptionalCols} onApply={setVisibleOptionalCols} />
