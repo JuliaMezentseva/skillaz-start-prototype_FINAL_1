@@ -219,15 +219,15 @@ function FocusCard({ title, rows, emptyText, onAsk }) {
   );
 }
 
-// Облачко-чип, а не строка списка со счётчиком — то же визуальное решение, что и у
-// подсказок-вопросов внутри самой AI-панели (см. AI_PAGE_CONFIG.chips в shell.js), чтобы
-// эти же вопросы читались как "спросить AI", а не как ещё один пункт задач рядом.
+// Круглое облачко-чип в ряд, а не строка списка — тот же визуальный язык, что у
+// подсказок-вопросов внутри самой AI-панели (см. AI_PAGE_CONFIG.chips в shell.js), только
+// pill-формой подчёркиваем, что это блок целиком, а не колонка рядом с "Важное для меня".
 function ActionRow({ title, onClick }) {
   return (
     <button onClick={onClick} className="sk-clickable" style={{
-      display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
+      display: "inline-flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
       border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
-      borderRadius: "var(--sk-radius-3)", padding: "10px 14px", font: "var(--sk-label-3-regular)",
+      borderRadius: "var(--sk-radius-full)", padding: "10px 16px", font: "var(--sk-label-3-regular)",
       color: "var(--sk-text-primary)", cursor: "pointer",
     }}>
       <IconAiSpark size={14} color="var(--sk-icon-special)" style={{ flexShrink: 0 }} />
@@ -241,7 +241,7 @@ function ActionsCard({ prompts }) {
     <Card bordered style={{ padding: 20 }}>
       <div className="sk-label-2" style={{ marginBottom: 10 }}>Быстрые действия с AI</div>
       {prompts.length
-        ? <div className="sk-col sk-gap-2">{prompts.map((p) => <ActionRow key={p} title={p} onClick={() => askAi(p)} />)}</div>
+        ? <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>{prompts.map((p) => <ActionRow key={p} title={p} onClick={() => askAi(p)} />)}</div>
         : <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)", padding: "6px 2px" }}>Пока нет готовых подсказок для этого раздела.</div>}
     </Card>
   );
@@ -418,8 +418,8 @@ function buildPersonalContent(plan, planHref) {
 }
 
 // ---------------- Блок "Моя команда" — реальные данные D.team (как в manager/team.html) ----------------
-// Только для табов, где у команды есть релевантный контент (см. TEAM_RELEVANT_MODULES в
-// Page()) — "Оценка"/"ИПР"/"Вакансии" здесь намеренно не описаны.
+// Показан на всех табах процессов кроме "Вакансии" (см. TEAM_RELEVANT_MODULES в Page()) —
+// у команды нет своих вакансий, это личный процесс сотрудника.
 function buildTeamContent() {
   const attention = D.team.filter((m) => m.risks.length > 0 || !!m.action);
   // kind — не "Сотрудник" (и так ясно, что в списке люди), а процесс, из-за которого
@@ -442,6 +442,8 @@ function buildTeamContent() {
       all: { rows: allRows, emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
       adaptation: { rows, emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
       learning: { rows: [{ kind: "Обучение", title: "Несколько сотрудников близки к сроку обучения", subtitle: "Стоит проверить назначения команды", tone: "", query: "Покажи просроченные действия команды" }], emptyText: "" },
+      assessment: { rows: [{ kind: "Оценка", title: "Дарья Белозёрова", subtitle: "Не прошла самооценку 360 · до 20 августа", tone: "warn", href: "../manager/plan.html?employee=darya" }], emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
+      idp: { rows: [{ kind: "ИПР", title: "Алексей Ковалев", subtitle: "Черновик ИПР ждёт согласования · до 15 сентября", tone: "warn", href: "../manager/plan.html?employee=alexey" }], emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
     },
     prompts: {
       all: ["Кто требует моего внимания и почему?", "Сотрудники с рисками в планах", "Кто ещё не начал план?"],
@@ -451,10 +453,8 @@ function buildTeamContent() {
   };
 }
 
-// Табы, где у "Моей команды" есть релевантный контент — руководителю важны, в частности,
-// адаптация и обучение подчинённых; оценку/ИПР/вакансии команды в этом прототипе не показываем
-// (см. buildTeamContent).
-const TEAM_RELEVANT_MODULES = ["all", "adaptation", "learning"];
+// Все табы процессов, кроме "Вакансии" — у вакансий нет командного среза.
+const TEAM_RELEVANT_MODULES = ["all", "adaptation", "learning", "assessment", "idp"];
 
 function Page() {
   const [activeModule, setActiveModule] = React.useState("all");
@@ -483,13 +483,18 @@ function Page() {
 
         <ModuleTabs active={activeModule} onChange={setActiveModule} />
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {teamContent ? (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <FocusCard title="Важное для меня" rows={personalContent.rows} emptyText={personalContent.emptyText}
+              onAsk={() => askAi(personalAsk)} />
+            <TeamCard rows={teamContent.rows} emptyText={teamContent.emptyText} onAsk={() => askAi(teamAsk)} />
+          </div>
+        ) : (
           <FocusCard title="Важное для меня" rows={personalContent.rows} emptyText={personalContent.emptyText}
             onAsk={() => askAi(personalAsk)} />
-          <ActionsCard prompts={personalPrompts} />
-        </div>
+        )}
 
-        {teamContent && <TeamCard rows={teamContent.rows} emptyText={teamContent.emptyText} onAsk={() => askAi(teamAsk)} />}
+        <ActionsCard prompts={personalPrompts} />
 
         <div className="sk-col sk-gap-3">
           <div className="sk-row" style={{ justifyContent: "space-between" }}>
