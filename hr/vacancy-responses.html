@@ -125,10 +125,11 @@ function ResumeCard({ r }) {
   );
 }
 
-// Карточка отклика — три уровня в шапке вместо одной мешанины: (1) кто это и когда
-// откликнулся, (2) где сейчас работает и какой стаж — блёклым текстом, это контекст, а
-// не факты для звонка, (3) контакты — отдельно справа, единственное здесь, что реально
-// кликабельно (tel:/mailto:), поэтому только они остаются акцентным синим.
+// Карточка отклика — контакты живут в том же левом блоке, что и остальная инфа о
+// кандидате (рядом с должностью/стажем/городом), а не оторваны в отдельную колонку
+// справа — так они читаются как часть одного профиля. Дата отклика, наоборот, не
+// относится к кандидату, а описывает событие — поэтому она одна остаётся в правом
+// углу шапки, на одной строке с именем.
 function ResponseCard({ r }) {
   const fio = r.lastName + " " + r.firstName + " " + r.patronymic;
   return (
@@ -137,23 +138,23 @@ function ResponseCard({ r }) {
         <div className="sk-row sk-gap-3" style={{ alignItems: "flex-start" }}>
           <Avatar name={fio} size={40} />
           <div className="sk-col" style={{ gap: 2, minWidth: 0, flex: 1 }}>
-            <div className="sk-row sk-gap-2" style={{ alignItems: "baseline", flexWrap: "wrap" }}>
+            <div className="sk-row sk-gap-2" style={{ alignItems: "baseline", flexWrap: "wrap", justifyContent: "space-between" }}>
               <div className="sk-label-3">{fio}</div>
-              {r.date && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>· откликнулся {r.date}</div>}
+              {r.date && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", flexShrink: 0 }}>Откликнулся {r.date}</div>}
             </div>
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{r.position} · {r.department}</div>
             <div className="sk-row sk-gap-3 sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 2 }}>
               <span className="sk-row sk-gap-1"><IconBriefcase size={13} />Стаж {r.tenure}</span>
               <span className="sk-row sk-gap-1"><IconMapPin size={13} />{r.city}</span>
             </div>
-          </div>
-          <div className="sk-col sk-gap-1" style={{ alignItems: "flex-end", flexShrink: 0 }}>
-            <a href={"tel:" + r.phone} className="sk-row sk-gap-1" style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-4-regular)", textDecoration: "none" }}>
-              <IconPhone size={13} color="var(--sk-icon-accent)" />{r.phone}
-            </a>
-            <a href={"mailto:" + r.email} className="sk-row sk-gap-1" style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-4-regular)", textDecoration: "none" }}>
-              <IconMail size={13} color="var(--sk-icon-accent)" />{r.email}
-            </a>
+            <div className="sk-col sk-gap-1" style={{ marginTop: 2 }}>
+              <a href={"tel:" + r.phone} className="sk-row sk-gap-1" style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-4-regular)", textDecoration: "none" }}>
+                <IconPhone size={13} color="var(--sk-icon-accent)" />{r.phone}
+              </a>
+              <a href={"mailto:" + r.email} className="sk-row sk-gap-1" style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-4-regular)", textDecoration: "none" }}>
+                <IconMail size={13} color="var(--sk-icon-accent)" />{r.email}
+              </a>
+            </div>
           </div>
         </div>
 
