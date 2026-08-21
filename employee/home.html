@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Главная — Skillaz Start</title>
 <link rel="stylesheet" href="../assets/styles.css" />
+<style>
+/* Инлайновые React-стили не умеют в ::placeholder — плейсхолдер должен читаться как
+   реальный белый текст на градиенте hero, а не блёклый серый по умолчанию браузера. */
+.sk-home-hero-input::placeholder { color: #fff; opacity: 0.85; }
+</style>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
@@ -15,32 +20,18 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Tag, SegmentedControl, Button } = window.SkillazCoreDesignSystem_bf9566;
+const { Card, Tag, Button } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconAiSpark, IconSearch, IconCheck, IconChevronRight, IconGift, IconRocket, IconLayers, IconBookOpen, IconGraduationCap } = Icons;
+const { IconAiSpark, IconSearch, IconCheck, IconChevronRight, IconGift, IconRocket, IconLayers, IconBookOpen, IconGraduationCap, IconUsers } = Icons;
 const D = window.SITE_DATA;
 
-// Режимы "Личный / Командный / Административный" — формулировка из продуктовой спецификации
-// ("персональный, командный и административный режимы", см. Skillaz AI: продуктово-
-// техническая спецификация, п.2 и п.10.1), а не придуманное название. По спеке это НЕ выбор
-// одной из взаимоисключающих ролей — один и тот же человек может одновременно быть
-// сотрудником, руководителем и администратором, и режим должен вычисляться автоматически по
-// правам. Здесь это тумблер, потому что в прототипе нет бэкенда с реальными правами — он
-// просто показывает, как AI-главная выглядит под каждым углом для одного и того же логина.
-// Сайдбар и роль в шапке остаются "Сотрудник" — это не переход в другую роль приложения.
-const MODE_LABELS = { personal: "Личный", team: "Командный", admin: "Административный" };
-const MODE_HERO_SUBTITLE = {
-  personal: "Открою нужный объект, подскажу или выполню действия за вас — скажите, что нужно",
-  team: "Покажу, кому из команды нужно ваше внимание, и помогу с адаптацией сотрудников",
-  admin: "Найду планы без целей, черновики курсов или помогу подготовить оценку",
-};
-// Модули (табы), доступные в каждом режиме — "Вакансии" только у личного взгляда
-// сотрудника, "ИПР" не имеет смысла у HR-админа (это личный план сотрудника).
-const MODE_MODULES = {
-  personal: ["all", "adaptation", "learning", "assessment", "idp", "vacancies"],
-  team: ["all", "adaptation", "learning", "assessment", "idp"],
-  admin: ["all", "adaptation", "learning", "assessment"],
-};
+// По продуктовой спецификации (Skillaz AI: продуктово-техническая спецификация, п.2, п.7.6):
+// "один пользователь может одновременно быть сотрудником, руководителем и администратором.
+// Режимы не выбираются вручную как взаимоисключающие роли: интерфейс показывает только
+// доступные контуры и данные" — поэтому здесь НЕТ переключателя ролей. Вместо этого личные
+// данные сотрудника (buildPersonalContent) и данные его команды как руководителя
+// (buildTeamContent) показаны на странице одновременно, в двух ясно подписанных блоках —
+// см. FocusCard/TeamCard в Page(). Модуль (таб) один общий на оба блока.
 const MODULES = [
   { id: "all", label: "Всё" },
   { id: "adaptation", label: "Адаптация" },
@@ -97,11 +88,14 @@ function askAi(query) {
 // в этом прототипе, а не придумываем новый). Переключатель модулей и быстрые вопросы живут
 // отдельно, ниже (см. ModuleTabs/ActionsCard) — так они визуально ближе к блоку, которым
 // управляют, а не спрятаны внутри градиента далеко от него.
-function AiHero({ subtitle }) {
+const DEFAULT_HOME_QUERY = "Что мне важно успеть сегодня?";
+
+function AiHero() {
   const [value, setValue] = React.useState("");
+  // Кнопка работает сразу, без ввода — если поле пустое, спрашиваем то же самое, что
+  // подсказывает плейсхолдер, чтобы демо можно было показать одним кликом.
   function submit() {
-    if (!value.trim()) return;
-    askAi(value);
+    askAi(value.trim() || DEFAULT_HOME_QUERY);
     setValue("");
   }
   return (
@@ -120,7 +114,7 @@ function AiHero({ subtitle }) {
         <div style={{ minWidth: 0 }}>
           <div style={{ font: "var(--sk-title-5)", color: "#fff" }}>Чем помочь сегодня?</div>
           <div style={{ font: "var(--sk-label-3-regular)", color: "rgba(255,255,255,0.76)", marginTop: 2 }}>
-            {subtitle}
+            Открою нужный объект, подскажу или выполню действия за вас — для вас и для команды
           </div>
         </div>
       </div>
@@ -134,13 +128,12 @@ function AiHero({ subtitle }) {
           <input value={value} onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
             placeholder="Например: что мне важно успеть сегодня?"
+            className="sk-home-hero-input"
             style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: "#fff", font: "400 15px/22px var(--sk-font-ui)" }} />
         </div>
-        <button onClick={submit} disabled={!value.trim()} style={{
+        <button onClick={submit} style={{
           height: 48, padding: "0 22px", borderRadius: "var(--sk-radius-3)", border: "none", flexShrink: 0,
-          background: value.trim() ? "#fff" : "rgba(255,255,255,0.3)",
-          color: value.trim() ? "#171a20" : "rgba(255,255,255,0.65)",
-          font: "var(--sk-label-3)", cursor: value.trim() ? "pointer" : "default",
+          background: "#fff", color: "#171a20", font: "var(--sk-label-3)", cursor: "pointer",
         }}>Спросить</button>
       </div>
     </div>
@@ -149,11 +142,10 @@ function AiHero({ subtitle }) {
 
 // Переключатель модулей — прямо над блоком, который он фильтрует, без своей рамки: активный
 // таб получает акцентную заливку, неактивный — обычный текст с лёгкой подсветкой по ховеру.
-// available — id модулей, доступных в текущем режиме (Личный/Командный/Административный).
-function ModuleTabs({ active, onChange, available }) {
+function ModuleTabs({ active, onChange }) {
   return (
     <div className="sk-row sk-gap-1" style={{ flexWrap: "wrap" }}>
-      {MODULES.filter((m) => available.indexOf(m.id) !== -1).map((m) => {
+      {MODULES.map((m) => {
         const sel = m.id === active;
         return (
           <button key={m.id} onClick={() => onChange(m.id)} className={sel ? "" : "sk-clickable"} style={{
@@ -169,8 +161,8 @@ function ModuleTabs({ active, onChange, available }) {
 }
 
 // href — переход на реальную страницу (план/вакансия/сотрудник); query — для строк без
-// своей страницы (Оценка/ИПР и часть режимов Командный/Административный в этом прототипе)
-// вместо этого открывает AI с готовым вопросом.
+// своей страницы в этом прототипе (Оценка/ИПР и часть строк блока "Команда") вместо этого
+// открывает AI с готовым вопросом.
 function FocusRow({ kind, title, subtitle, tone, href, query, first }) {
   const rowStyle = {
     display: "grid", gridTemplateColumns: "84px minmax(0,1fr) 18px", gap: 12, alignItems: "center",
@@ -232,6 +224,27 @@ function ActionsCard({ prompts }) {
       {prompts.length
         ? <div>{prompts.map((p, i) => <ActionRow key={p} first={i === 0} title={p} onClick={() => askAi(p)} />)}</div>
         : <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)", padding: "6px 2px" }}>Пока нет готовых подсказок для этого раздела.</div>}
+    </Card>
+  );
+}
+
+// Отдельный блок "Команда" — визуально отличается от личного "Что сейчас важно" акцентной
+// полосой слева и иконкой людей, чтобы сразу читалось: это не про самого человека, а про то,
+// что AI подсветил ему как руководителю. Показан всегда рядом с личным блоком, а не по
+// переключателю — см. комментарий про режимы вверху файла.
+function TeamCard({ rows, emptyText, onAsk }) {
+  return (
+    <Card bordered style={{ padding: 20, boxShadow: "inset 3px 0 0 0 var(--sk-accent), inset 0 0 0 1px var(--sk-stroke)" }}>
+      <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", marginBottom: 10 }}>
+        <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+          <IconUsers size={16} color="var(--sk-icon-accent)" />
+          <div className="sk-label-2">Команда: кому нужно ваше внимание</div>
+        </div>
+        <button className="sk-link-btn" style={{ font: "var(--sk-label-4)" }} onClick={onAsk}>Спросить AI</button>
+      </div>
+      {rows.length
+        ? <div>{rows.map((r, i) => <FocusRow key={i} first={i === 0} {...r} />)}</div>
+        : <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)", padding: "6px 2px" }}>{emptyText}</div>}
     </Card>
   );
 }
@@ -379,7 +392,7 @@ function buildPersonalContent(plan, planHref) {
   };
 }
 
-// ---------------- Режим "Командный" — реальные данные D.team (как в manager/team.html) ----------------
+// ---------------- Блок "Команда" — реальные данные D.team (как в manager/team.html) ----------------
 function buildTeamContent() {
   const attention = D.team.filter((m) => m.risks.length > 0 || !!m.action);
   const rows = attention.map((m) => ({
@@ -406,72 +419,43 @@ function buildTeamContent() {
   };
 }
 
-// ---------------- Режим "Административный" — реальные данные D.hrAssignedPlans (как в hr/plans.html) ----------------
-function buildAdminContent() {
-  const attention = D.hrAssignedPlans.filter((p) => !p.goalsPublished || p.overdueCheckpoint || (p.risks && p.risks.length));
-  const rows = attention.map((p) => ({
-    kind: "План", title: p.name,
-    subtitle: !p.goalsPublished ? "Цели ещё не опубликованы" : p.overdueCheckpoint ? "Просрочена контрольная точка" : "Есть риск по плану",
-    tone: "warn",
-    href: "../hr/plan-detail.html?id=" + p.id,
-  }));
-  return {
-    content: {
-      all: { rows: rows.slice(0, 3), emptyText: "Сейчас нет планов, которые требуют внимания." },
-      adaptation: { rows, emptyText: "Сейчас нет планов, которые требуют внимания." },
-      learning: { rows: [{ kind: "Курс", title: "6 черновиков курсов не опубликованы", subtitle: "Изменены на этой неделе", tone: "", query: "Создать черновик курса" }], emptyText: "" },
-      assessment: { rows: [{ kind: "Оценка", title: "Product competencies 360", subtitle: "Запуск 22 августа · требует настройки", tone: "warn", query: "Сгенерировать тест" }], emptyText: "" },
-    },
-    prompts: {
-      all: ["Какие планы у меня в риске?", "Где ещё не опубликованы цели?", "Где просрочены контрольные точки?"],
-      adaptation: ["Какие планы у меня в риске?", "Где ещё не опубликованы цели?", "Где просрочены контрольные точки?"],
-      learning: ["Создать черновик курса"],
-      assessment: ["Сгенерировать тест"],
-    },
-  };
-}
-
 function Page() {
-  const [mode, setMode] = React.useState("personal");
   const [activeModule, setActiveModule] = React.useState("all");
   const plan = D.plans.onboarding;
   const planHref = "plan.html?plan=" + plan.id;
   const courses = planCourses(plan);
 
-  function changeMode(m) {
-    setMode(m);
-    setActiveModule("all");
-  }
+  const personal = buildPersonalContent(plan, planHref);
+  const team = buildTeamContent();
 
-  const BY_MODE = {
-    personal: buildPersonalContent(plan, planHref),
-    team: buildTeamContent(),
-    admin: buildAdminContent(),
-  };
-  const availableModules = MODE_MODULES[mode];
-  const safeModule = availableModules.indexOf(activeModule) !== -1 ? activeModule : "all";
-  const content = BY_MODE[mode].content[safeModule];
-  const prompts = BY_MODE[mode].prompts[safeModule] || [];
-  const defaultAsk = prompts[0] || "Что мне сделать сегодня?";
-  const focusTitle = safeModule === "all" ? "Сегодня и ближайшие сроки" : "Что сейчас важно";
+  const personalContent = personal.content[activeModule];
+  const personalPrompts = personal.prompts[activeModule] || [];
+  const personalAsk = personalPrompts[0] || "Что мне сделать сегодня?";
+  const focusTitle = activeModule === "all" ? "Сегодня и ближайшие сроки" : "Что сейчас важно";
+
+  // "Вакансии" — личный модуль сотрудника, у команды его аналога нет, поэтому для этого
+  // таба блок "Команда" просто не показываем (не выдумываем несуществующий контент).
+  const teamContent = team.content[activeModule];
+  const teamPrompts = team.prompts[activeModule] || [];
+  const teamAsk = teamPrompts[0] || "Кто требует моего внимания и почему?";
 
   return (
     <AppShell role="employee" active="home" base="..">
       <div className="sk-col sk-gap-6">
-        <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-          <div className="sk-title-4">Добрый день, {D.person.firstName}!</div>
-          <SegmentedControl size="s" active={mode} onChange={changeMode}
-            items={Object.keys(MODE_LABELS).map((id) => ({ id, label: MODE_LABELS[id] }))} />
-        </div>
+        <div className="sk-title-4">Добрый день, {D.person.firstName}!</div>
 
-        <AiHero subtitle={MODE_HERO_SUBTITLE[mode]} />
+        <AiHero />
 
-        <ModuleTabs active={safeModule} onChange={setActiveModule} available={availableModules} />
+        <ModuleTabs active={activeModule} onChange={setActiveModule} />
 
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(280px,1fr)", gap: 16 }}>
-          <FocusCard title={focusTitle} rows={content.rows} emptyText={content.emptyText} onAsk={() => askAi(defaultAsk)} />
-          <ActionsCard prompts={prompts} />
+          <FocusCard title={focusTitle} rows={personalContent.rows} emptyText={personalContent.emptyText} onAsk={() => askAi(personalAsk)} />
+          <ActionsCard prompts={personalPrompts} />
         </div>
+
+        {teamContent && (
+          <TeamCard rows={teamContent.rows} emptyText={teamContent.emptyText} onAsk={() => askAi(teamAsk)} />
+        )}
 
         <div className="sk-col sk-gap-3">
           <div className="sk-row" style={{ justifyContent: "space-between" }}>
