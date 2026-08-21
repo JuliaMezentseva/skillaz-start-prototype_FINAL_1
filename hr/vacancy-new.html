@@ -47,11 +47,12 @@ function SkillTagInput({ value, onChange }) {
   }
   return (
     <div className="sk-row sk-gap-2" style={{
-      flexWrap: "wrap", alignItems: "center", minHeight: 48, padding: "8px 10px",
-      borderRadius: "var(--sk-radius-form)", background: "var(--sk-surface-secondary)",
+      flexWrap: "wrap", alignItems: "center", minHeight: 48, padding: "8px 10px", boxSizing: "border-box",
+      borderRadius: "var(--sk-radius-form)", background: "var(--sk-surface-page)",
+      boxShadow: "inset 0 0 0 1px var(--sk-stroke)",
     }}>
       {value.map((s) => (
-        <Tag key={s} size="s" onRemove={() => onChange(value.filter((x) => x !== s))}>{s}</Tag>
+        <Tag key={s} size="s" hue="gray" onRemove={() => onChange(value.filter((x) => x !== s))}>{s}</Tag>
       ))}
       <input value={draft} onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Return" || e.key === ",") { e.preventDefault(); commit(); } }}
@@ -269,7 +270,7 @@ function Page() {
             <div className="sk-col sk-gap-2">
               <div className="sk-label-3">Ключевые навыки</div>
               <SkillTagInput value={form.skills} onChange={set("skills")} />
-              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Показываются тегами в карточке вакансии</div>
+              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>После указания навыка нажмите «Enter»</div>
             </div>
           </div>
 
