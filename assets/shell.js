@@ -1382,16 +1382,6 @@ function AiAssistantWidget({ role }) {
 
   return (
     <React.Fragment>
-      {!open && (
-        <button aria-label="Skillaz AI" onClick={() => setOpen(true)} style={{
-          position: "fixed", right: 24, bottom: 24, width: 56, height: 56, borderRadius: "50%",
-          border: "none", cursor: "pointer", zIndex: 160,
-          background: "linear-gradient(135deg, var(--sk-special), var(--sk-accent))",
-          boxShadow: "var(--sk-shadow-l)", display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <IconAiSpark size={26} color="var(--sk-text-contrast)" />
-        </button>
-      )}
 
       {open && (
         <div style={{
