@@ -89,13 +89,13 @@ function SubscribeBar({ filters, hasActiveFilters, subscriptions, onSubscribe, o
   return (
     <button type="button" disabled={!hasActiveFilters}
       onClick={() => (isOn ? onUnsubscribe(sig) : onSubscribe(sig, filters))}
-      className="sk-row sk-gap-1 sk-clickable" style={{
-        alignItems: "center", flexShrink: 0, height: 24, padding: "0 8px", border: "none",
+      className="sk-row sk-gap-2 sk-clickable" style={{
+        alignItems: "center", flexShrink: 0, height: 32, padding: "0 12px", border: "none",
         borderRadius: 8, background: "var(--sk-surface-secondary)",
-        color: "var(--sk-text-primary)", font: "var(--sk-label-4)", letterSpacing: "0.01em",
+        color: "var(--sk-text-primary)", font: "var(--sk-label-3-regular)", letterSpacing: "0.01em",
         cursor: hasActiveFilters ? "pointer" : "default", opacity: hasActiveFilters ? 1 : 0.6, whiteSpace: "nowrap",
       }} title={hasActiveFilters ? undefined : "Выберите фильтр, чтобы подписаться на уведомления"}>
-      <IconBell size={13} color={isOn ? "var(--sk-icon-accent)" : "var(--sk-icon-secondary)"} />
+      <IconBell size={15} color={isOn ? "var(--sk-icon-accent)" : "var(--sk-icon-secondary)"} />
       {isOn ? "Вы подписаны" : "Подписаться на новые"}
     </button>
   );
@@ -136,12 +136,12 @@ function FiltersSummaryChip({ count, open, onToggle, onReset }) {
       borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
       border: `1.5px solid ${active ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
       background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
-      color: active ? "var(--sk-text-accent)" : "var(--sk-text-primary)",
+      color: "var(--sk-text-primary)",
     }}>
       <IconFilter size={16} />
       Фильтры{active ? " " + count : ""}
       {active && (
-        <span onClick={(e) => { e.stopPropagation(); onReset(); }} style={{ display: "inline-flex", opacity: 0.7 }}>
+        <span onClick={(e) => { e.stopPropagation(); onReset(); }} style={{ display: "inline-flex", color: "var(--sk-icon-secondary)" }}>
           <IconX size={14} />
         </span>
       )}
@@ -181,16 +181,14 @@ function FilterChip({ label, options, value, onChange, searchable }) {
         borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap",
         border: `1.5px solid ${value.length ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
         background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
-        color: value.length ? "var(--sk-text-accent)" : "var(--sk-text-primary)",
+        color: "var(--sk-text-primary)",
       }}>
         {label}
         {valueLabel && <span style={{ color: "var(--sk-text-secondary)" }}>: {valueLabel}</span>}
         {value.length > 1 && <span>{value.length}</span>}
-        {value.length > 0 && (
-          <span onClick={(e) => { e.stopPropagation(); onChange([]); }} style={{ display: "inline-flex", opacity: 0.7 }}>
-            <IconX size={13} />
-          </span>
-        )}
+        <span onClick={(e) => { e.stopPropagation(); onChange([]); }} style={{ display: "inline-flex", color: "var(--sk-icon-secondary)" }}>
+          <IconX size={13} />
+        </span>
       </button>
       {open && (
         <div className="sk-col sk-gap-1" style={{

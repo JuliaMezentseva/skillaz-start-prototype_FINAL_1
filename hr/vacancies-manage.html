@@ -50,16 +50,14 @@ function FilterChip({ label, options, value, onChange, searchable }) {
         borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap",
         border: `1.5px solid ${value.length ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
         background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
-        color: value.length ? "var(--sk-text-accent)" : "var(--sk-text-primary)",
+        color: "var(--sk-text-primary)",
       }}>
         {label}
         {valueLabel && <span style={{ color: "var(--sk-text-secondary)" }}>: {valueLabel}</span>}
         {value.length > 1 && <span>{value.length}</span>}
-        {value.length > 0 && (
-          <span onClick={(e) => { e.stopPropagation(); onChange([]); }} style={{ display: "inline-flex", opacity: 0.7 }}>
-            <IconX size={13} />
-          </span>
-        )}
+        <span onClick={(e) => { e.stopPropagation(); onChange([]); }} style={{ display: "inline-flex", color: "var(--sk-icon-secondary)" }}>
+          <IconX size={13} />
+        </span>
       </button>
       {open && (
         <div className="sk-col sk-gap-1" style={{
@@ -101,12 +99,12 @@ function FiltersSummaryChip({ count, open, onToggle, onReset }) {
       borderRadius: "var(--sk-radius-form)", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
       border: `1.5px solid ${active ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"}`,
       background: "var(--sk-surface-page)", font: "var(--sk-label-3-regular)",
-      color: active ? "var(--sk-text-accent)" : "var(--sk-text-primary)",
+      color: "var(--sk-text-primary)",
     }}>
       <IconFilter size={16} />
       Фильтры{active ? " " + count : ""}
       {active && (
-        <span onClick={(e) => { e.stopPropagation(); onReset(); }} style={{ display: "inline-flex", opacity: 0.7 }}>
+        <span onClick={(e) => { e.stopPropagation(); onReset(); }} style={{ display: "inline-flex", color: "var(--sk-icon-secondary)" }}>
           <IconX size={14} />
         </span>
       )}
@@ -472,7 +470,7 @@ function Page() {
       )}
 
       {pendingToggle && (
-        <Modal open title={pendingToggle.visibleToEmployees ? "Скрыть вакансию с витрины?" : "Опубликовать вакансию на витрине?"}
+        <Modal open title={pendingToggle.visibleToEmployees ? "Скрыть вакансию из витрины?" : "Опубликовать вакансию на витрине?"}
           onClose={() => setPendingToggle(null)} size="s"
           secondary={<Button mode="secondary" onClick={() => setPendingToggle(null)}>Отмена</Button>}
           primary={<Button variant="accent" onClick={() => { togglePublish(pendingToggle); setPendingToggle(null); }}>
@@ -480,7 +478,7 @@ function Page() {
           </Button>}>
           <div>
             {pendingToggle.visibleToEmployees
-              ? <React.Fragment>Вакансия «{pendingToggle.title}» будет скрыта с витрины — сотрудники перестанут её видеть и откликаться на неё.</React.Fragment>
+              ? <React.Fragment>Сотрудники перестанут видеть вакансию «{pendingToggle.title}».</React.Fragment>
               : <React.Fragment>Вакансия «{pendingToggle.title}» станет видна сотрудникам на витрине и будет доступна для откликов.</React.Fragment>}
           </div>
         </Modal>
