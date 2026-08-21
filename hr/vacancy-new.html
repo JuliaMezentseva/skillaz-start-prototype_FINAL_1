@@ -12,6 +12,13 @@
 .sk-rte-body p { margin: 0 0 8px; }
 .sk-rte-body ul, .sk-rte-body ol { margin: 4px 0 8px; padding-left: 22px; }
 .sk-rte-body a { color: var(--sk-text-accent); }
+/* Поля формы подписаны серым (--sk-text-secondary), а не чёрным — так в референсе.
+   Input/Select приходят из ds_bundle.js с чёрным цветом лейбла зашитым инлайн-стилем,
+   переопределить проще точечным CSS здесь, чем менять компонент ДС для всего прототипа. */
+.sk-vacancy-form label > span:first-child,
+.sk-vacancy-form [style*="position: relative"] > span:first-child {
+  color: var(--sk-text-secondary) !important;
+}
 </style>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
@@ -256,7 +263,7 @@ function Page() {
       </div>
 
       <div className="sk-row" style={{ alignItems: "flex-start", gap: 40 }}>
-        <div className="sk-col sk-gap-6" style={{ flex: 1, minWidth: 0, maxWidth: 720 }}>
+        <div className="sk-vacancy-form sk-col sk-gap-6" style={{ flex: 1, minWidth: 0, maxWidth: 720 }}>
 
           <div ref={sectionRefs.basic} data-section="basic" className="sk-col sk-gap-3">
             <div className="sk-label-2">Основное</div>
@@ -268,7 +275,7 @@ function Page() {
               <Input label="Подразделение" required value={form.department} onChange={(e) => set("department")(e.target.value || "")} style={{ flex: 1 }} />
             </div>
             <div className="sk-col sk-gap-2">
-              <div className="sk-label-3">Ключевые навыки</div>
+              <div className="sk-label-3" style={{ color: "var(--sk-text-secondary)" }}>Ключевые навыки</div>
               <SkillTagInput value={form.skills} onChange={set("skills")} />
               <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>После указания навыка нажмите «Enter»</div>
             </div>
@@ -331,7 +338,9 @@ function Page() {
             <div className="sk-col sk-gap-1">
               {SECTIONS.map((s) => (
                 <button key={s.key} type="button" onClick={() => scrollToSection(s.key)} className="sk-clickable" style={{
-                  textAlign: "left", padding: "6px 0", border: "none", background: "none", cursor: "pointer",
+                  textAlign: "left", padding: "6px 10px", margin: "0 -10px", width: "calc(100% + 20px)",
+                  border: "none", cursor: "pointer", borderRadius: "var(--sk-radius-2)",
+                  background: activeSection === s.key ? "var(--sk-accent-secondary)" : "transparent",
                   font: activeSection === s.key ? "var(--sk-label-3)" : "var(--sk-label-3-regular)",
                   color: activeSection === s.key ? "var(--sk-text-accent)" : "var(--sk-text-secondary)",
                 }}>
