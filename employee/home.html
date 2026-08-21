@@ -21,10 +21,10 @@ const { IconAiSpark, IconSearch, IconCheck, IconChevronRight, IconGift, IconRock
 const D = window.SITE_DATA;
 
 // Переключатель модулей ("Все / Адаптация / Обучение / Оценка / ИПР / Вакансии") — идея
-// из референса AI-ассистента, но здесь это просто фильтр того, что показывает единственный
-// блок "Фокус" ниже, и того, какие быстрые вопросы AI предлагает в hero-блоке. "Оценка" и
-// "ИПР" в этом прототипе не реализованы как отдельные разделы (нет своих данных/страниц),
-// поэтому у них честная заглушка "скоро", а не выдуманный контент, ведущий в никуда.
+// из референса AI-ассистента, но здесь это просто фильтр того, что показывают блоки "Что
+// сейчас важно" и "Быстрые действия с AI" ниже. "Оценка" и "ИПР" в этом прототипе не
+// реализованы как отдельные разделы (нет своих данных/страниц), поэтому у них честная
+// заглушка "скоро", а не выдуманный контент, ведущий в никуда.
 const MODULES = [
   { id: "all", label: "Всё" },
   { id: "adaptation", label: "Адаптация" },
@@ -33,9 +33,10 @@ const MODULES = [
   { id: "idp", label: "ИПР" },
   { id: "vacancies", label: "Вакансии" },
 ];
-// Подсказки-чипы под поиском в hero, свои на каждый модуль — про то же самое, что резолвер
-// в shell.js реально понимает (aiEmployeeHomeIntent), поэтому клиент на демо всегда получает
-// содержательный ответ, а не "не нашёл сценария". У "Оценка"/"ИПР" подсказок нет намеренно.
+// Подсказки для блока "Быстрые действия с AI", свои на каждый модуль — про то же самое,
+// что резолвер в shell.js реально понимает (aiEmployeeHomeIntent), поэтому клиент на демо
+// всегда получает содержательный ответ, а не "не нашёл сценария". У "Оценка"/"ИПР"
+// подсказок нет намеренно.
 const MODULE_PROMPTS = {
   all: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Какие вакансии мне подходят?"],
   adaptation: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Что у меня в работе?"],
@@ -87,14 +88,13 @@ function askAi(query) {
   if (window.__skAiOpenAssistant) window.__skAiOpenAssistant(query);
 }
 
-// Единый, визуально главный блок страницы: поиск + модули + подсказки-вопросы живут в
-// одной фирменной "AI"-панели (тот же градиент special→accent, что и у плавающей кнопки
-// AI-ассистента в углу — специально переиспользуем уже существующий "цвет AI" в этом
-// прототипе, а не придумываем новый). Так на странице появляется один явный фокус
-// внимания вместо россыпи одинаковых белых карточек с рамками.
-function AiHero({ activeModule, onModuleChange }) {
+// Визуально главный блок страницы: только бренд + поиск (тот же градиент special→accent,
+// что и у плавающей кнопки AI-ассистента в углу — переиспользуем уже существующий "цвет AI"
+// в этом прототипе, а не придумываем новый). Переключатель модулей и быстрые вопросы живут
+// отдельно, ниже (см. ModuleTabs/ActionsCard) — так они визуально ближе к блоку, которым
+// управляют, а не спрятаны внутри градиента далеко от него.
+function AiHero() {
   const [value, setValue] = React.useState("");
-  const prompts = MODULE_PROMPTS[activeModule] || [];
   function submit() {
     if (!value.trim()) return;
     askAi(value);
@@ -134,35 +134,29 @@ function AiHero({ activeModule, onModuleChange }) {
         </div>
         <button onClick={submit} disabled={!value.trim()} style={{
           height: 48, padding: "0 22px", borderRadius: "var(--sk-radius-3)", border: "none", flexShrink: 0,
-          background: value.trim() ? "#fff" : "rgba(255,255,255,0.3)",
-          color: value.trim() ? "#171a20" : "rgba(255,255,255,0.65)",
-          font: "var(--sk-label-3)", cursor: value.trim() ? "pointer" : "default",
+          background: "#fff", color: "#171a20", font: "var(--sk-label-3)", cursor: "pointer",
         }}>Спросить</button>
       </div>
+    </div>
+  );
+}
 
-      <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
-        {MODULES.map((m) => {
-          const sel = m.id === activeModule;
-          return (
-            <button key={m.id} onClick={() => onModuleChange(m.id)} style={{
-              border: "none", cursor: "pointer", borderRadius: "var(--sk-radius-full)", padding: "7px 14px",
-              font: "var(--sk-label-3)", background: sel ? "#fff" : "rgba(255,255,255,0.14)",
-              color: sel ? "#171a20" : "rgba(255,255,255,0.85)",
-            }}>{m.label}</button>
-          );
-        })}
-      </div>
-
-      {prompts.length > 0 && (
-        <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
-          {prompts.map((p) => (
-            <button key={p} onClick={() => askAi(p)} style={{
-              border: "none", cursor: "pointer", borderRadius: "var(--sk-radius-full)", padding: "6px 12px",
-              font: "var(--sk-label-4)", background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.88)",
-            }}>✦ {p}</button>
-          ))}
-        </div>
-      )}
+// Переключатель модулей — прямо над блоком, который он фильтрует, без своей рамки: активный
+// таб получает акцентную заливку, неактивный — обычный текст с лёгкой подсветкой по ховеру.
+function ModuleTabs({ active, onChange }) {
+  return (
+    <div className="sk-row sk-gap-1" style={{ flexWrap: "wrap" }}>
+      {MODULES.map((m) => {
+        const sel = m.id === active;
+        return (
+          <button key={m.id} onClick={() => onChange(m.id)} className={sel ? "" : "sk-clickable"} style={{
+            border: "none", cursor: "pointer", borderRadius: "var(--sk-radius-full)", padding: "8px 16px",
+            font: sel ? "var(--sk-label-3)" : "var(--sk-label-3-regular)",
+            background: sel ? "var(--sk-accent-secondary)" : "transparent",
+            color: sel ? "var(--sk-text-accent)" : "var(--sk-text-secondary)",
+          }}>{m.label}</button>
+        );
+      })}
     </div>
   );
 }
@@ -183,19 +177,46 @@ function FocusRow({ kind, title, subtitle, tone, href, first }) {
   );
 }
 
-// Один блок "Фокус" вместо двух параллельных карточек ("что важно" + "быстрые действия") —
-// сами быстрые действия уже есть в hero выше как подсказки-чипы, дублировать их здесь
-// отдельной панелью было лишней рамкой без новой информации.
-function FocusCard({ rows, emptyText, moduleLabel }) {
+function FocusCard({ rows, emptyText }) {
   return (
     <Card bordered style={{ padding: 20 }}>
       <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", marginBottom: 10 }}>
-        <div className="sk-label-2">Фокус: {moduleLabel}</div>
+        <div className="sk-label-2">Что сейчас важно</div>
         <Tag size="s" hue="special" icon={<IconAiSpark size={11} />}>AI</Tag>
       </div>
       {rows.length
         ? <div>{rows.map((r, i) => <FocusRow key={i} first={i === 0} {...r} />)}</div>
         : <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)", padding: "6px 2px" }}>{emptyText}</div>}
+    </Card>
+  );
+}
+
+function ActionRow({ title, onClick, first }) {
+  return (
+    <button onClick={onClick} className="sk-clickable" style={{
+      display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
+      border: "none", background: "transparent", padding: "11px 4px", cursor: "pointer",
+      borderTop: first ? "none" : "1px solid var(--sk-stroke-divider)",
+    }}>
+      <span style={{
+        width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
+        background: "var(--sk-special-secondary)", display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <IconAiSpark size={13} color="var(--sk-icon-special)" />
+      </span>
+      <span className="sk-label-3" style={{ flex: 1, minWidth: 0, color: "var(--sk-text-primary)" }}>{title}</span>
+      <IconChevronRight size={14} color="var(--sk-icon-accent)" />
+    </button>
+  );
+}
+
+function ActionsCard({ prompts }) {
+  return (
+    <Card bordered style={{ padding: 20 }}>
+      <div className="sk-label-2" style={{ marginBottom: 6 }}>Быстрые действия с AI</div>
+      {prompts.length
+        ? <div>{prompts.map((p, i) => <ActionRow key={p} first={i === 0} title={p} onClick={() => askAi(p)} />)}</div>
+        : <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)", padding: "6px 2px" }}>Пока нет готовых подсказок для этого раздела.</div>}
     </Card>
   );
 }
@@ -245,7 +266,7 @@ function CourseCard({ title, state, progressPct, meta, href, tile }) {
             </div>
             <div className="sk-row" style={{ justifyContent: "space-between", marginTop: 6 }}>
               <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{progressPct}%</span>
-              <span style={{ font: "var(--sk-label-4)", color: "var(--sk-text-accent)" }}>{state === "done" ? "Открыть" : "Подробнее"} →</span>
+              <span style={{ font: "var(--sk-label-4)", color: state === "done" ? "var(--sk-text-secondary)" : "var(--sk-text-accent)" }}>{state === "done" ? "Продолжить" : "Подробнее"} →</span>
             </div>
           </div>
         </div>
@@ -322,24 +343,29 @@ function Page() {
   };
   const content = MODULE_CONTENT[activeModule];
   const moduleLabel = MODULES.find((m) => m.id === activeModule).label;
+  const prompts = MODULE_PROMPTS[activeModule] || [];
 
   return (
     <AppShell role="employee" active="home" base="..">
       <div className="sk-col sk-gap-6">
-        <div>
-          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Главная</div>
-          <div className="sk-title-4" style={{ marginTop: 4 }}>Добрый день, {D.person.firstName}!</div>
-        </div>
+        <div className="sk-title-4">Добрый день, {D.person.firstName}!</div>
 
-        <AiHero activeModule={activeModule} onModuleChange={setActiveModule} />
+        <AiHero />
 
-        {content.comingSoon
-          ? <ComingSoonPanel label={moduleLabel} />
-          : <FocusCard rows={content.rows} emptyText={content.emptyText} moduleLabel={moduleLabel} />}
+        <ModuleTabs active={activeModule} onChange={setActiveModule} />
+
+        {content.comingSoon ? (
+          <ComingSoonPanel label={moduleLabel} />
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(280px,1fr)", gap: 16 }}>
+            <FocusCard rows={content.rows} emptyText={content.emptyText} />
+            <ActionsCard prompts={prompts} />
+          </div>
+        )}
 
         <div className="sk-col sk-gap-3">
           <div className="sk-row" style={{ justifyContent: "space-between" }}>
-            <div className="sk-title-5">Обучение по плану адаптации</div>
+            <div className="sk-title-5">Продолжить обучение</div>
             <a href={planHref} style={{ font: "var(--sk-label-3)", color: "var(--sk-text-accent)" }}>Открыть план →</a>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
