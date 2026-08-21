@@ -22,7 +22,7 @@
 <script type="text/babel">
 const { Card, Tag, Button } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconAiSpark, IconSearch, IconChevronRight, IconRocket, IconBookOpen, IconGraduationCap, IconUsers, IconImage } = Icons;
+const { IconAiSpark, IconSearch, IconChevronRight, IconRocket, IconBookOpen, IconGraduationCap, IconUsers, IconImage, IconClipboard } = Icons;
 const D = window.SITE_DATA;
 
 // По продуктовой спецификации (Skillaz AI: продуктово-техническая спецификация, п.2, п.7.6):
@@ -256,6 +256,25 @@ function TeamCard({ rows, emptyText }) {
   );
 }
 
+// Третий блок "кому нужно внимание" — для роли HR-администратора (см. верхний комментарий
+// про совмещённые контуры). Фиолетовая полоса + IconClipboard вместо синей + IconUsers у
+// "Моей команды", чтобы два похожих по форме блока не читались как один и тот же список.
+// Строки — реальные D.hrAssignedPlans (как в hr/plans.html), намеренно про других людей, не
+// пересекающихся с "Моей командой", иначе три блока подряд выглядели бы как повтор.
+function AdminCard({ rows, emptyText }) {
+  return (
+    <Card bordered style={{ padding: 20, boxShadow: "inset 3px 0 0 0 var(--sk-special), inset 0 0 0 1px var(--sk-stroke)" }}>
+      <div className="sk-row sk-gap-2" style={{ alignItems: "center", marginBottom: 10 }}>
+        <IconClipboard size={20} color="var(--sk-icon-special)" />
+        <div className="sk-label-2">Задачи администратора</div>
+      </div>
+      {rows.length
+        ? <div>{rows.map((r, i) => <FocusRow key={i} first={i === 0} {...r} />)}</div>
+        : <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)", padding: "6px 2px" }}>{emptyText}</div>}
+    </Card>
+  );
+}
+
 // Цветные заглушки-иллюстрации для карточек обучения вместо фото — сплошная заливка
 // фирменными акцентными цветами (см. присланную палитру) плюс белая иконка по центру.
 const COURSE_TILES = [
@@ -456,6 +475,18 @@ function buildTeamContent() {
   };
 }
 
+// ---------------- Блок "Задачи администратора" — реальные данные D.hrAssignedPlans (как в
+// hr/plans.html) ----------------. Одни и те же 2 строки на всех релевантных табах (в отличие
+// от "Моей команды" контент здесь не зависит от процесса) — риск и решение по ревью, оба про
+// людей, которых не показываем в "Моей команде", чтобы три блока не дублировали друг друга.
+function buildAdminContent() {
+  const rows = [
+    { kind: "Оффер", title: "Артём Волков", subtitle: "Кандидат отказался от оффера — план отменён", tone: "warn", href: "../hr/plan-detail.html?id=ap_artem" },
+    { kind: "Ревью", title: "Тимур Асанов", subtitle: "Итоговое ревью ожидает решения", tone: "", href: "../hr/plan-detail.html?id=ap_review" },
+  ];
+  return { rows, emptyText: "Сейчас нет админ-задач, которые требуют внимания." };
+}
+
 // Все табы процессов, кроме "Вакансии" — у вакансий нет командного среза.
 const TEAM_RELEVANT_MODULES = ["all", "adaptation", "learning", "assessment", "idp"];
 
@@ -467,12 +498,14 @@ function Page() {
 
   const personal = buildPersonalContent(plan, planHref);
   const team = buildTeamContent();
+  const admin = buildAdminContent();
 
   const personalContent = personal.content[activeModule];
   const personalPrompts = personal.prompts[activeModule] || [];
 
   const teamRelevant = TEAM_RELEVANT_MODULES.indexOf(activeModule) !== -1;
   const teamContent = teamRelevant ? team[activeModule] : null;
+  const adminContent = teamRelevant ? admin : null;
 
   return (
     <AppShell role="employee" active="home" base="..">
@@ -491,6 +524,8 @@ function Page() {
         ) : (
           <FocusCard title="Важное для меня" rows={personalContent.rows} emptyText={personalContent.emptyText} />
         )}
+
+        {adminContent && <AdminCard rows={adminContent.rows} emptyText={adminContent.emptyText} />}
 
         <div className="sk-col sk-gap-3">
           <div className="sk-row" style={{ justifyContent: "space-between" }}>
