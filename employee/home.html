@@ -28,12 +28,29 @@ const QUICK_PROMPTS = [
   "Что у меня в работе?",
   "Какие вакансии мне подходят?",
 ];
+function promptActions(list) {
+  return list.map((p) => ({ label: p, query: p }));
+}
+
+// Переключатель модулей ("Все / Адаптация / Обучение / Оценка / ИПР / Вакансии") — как
+// в референсе AI-ассистента, но здесь это просто фильтр того, что показывают "Фокус" и
+// "Рекомендация" ниже; "Оценка" и "ИПР" в этом прототипе не реализованы как отдельные
+// разделы (нет своих данных/страниц), поэтому у них честная заглушка "скоро", а не
+// выдуманный контент, ведущий в никуда.
+const MODULES = [
+  { id: "all", label: "Все" },
+  { id: "adaptation", label: "Адаптация" },
+  { id: "learning", label: "Обучение" },
+  { id: "assessment", label: "Оценка" },
+  { id: "idp", label: "ИПР" },
+  { id: "vacancies", label: "Вакансии" },
+];
 
 // Локальные копии части логики виджета AI из shell.js (aiEmployeePlanUpcomingCheckpoint /
-// aiEmployeePlanActiveSubgoals / aiEmployeePlanUrgentChecklist / aiStripDuePrefix) — та
-// логика приватна для резолвера чата и не экспортирована наружу, а тут она нужна ещё раз,
-// чтобы «Фокус» и рекомендация на самой странице показывали те же реальные данные плана,
-// что и ответы AI в чате. Если модель данных плана изменится — поправить в обоих местах.
+// aiEmployeePlanActiveSubgoals / aiEmployeePlanUrgentChecklist / aiStripDuePrefix /
+// aiVacancyMatchScore) — та логика приватна для резолвера чата и не экспортирована наружу,
+// а тут она нужна ещё раз, чтобы блоки на самой странице показывали те же реальные данные,
+// что и ответы AI в чате. Если модель данных плана/вакансий изменится — поправить в обоих местах.
 function upcomingCheckpoint(plan) {
   const cps = Object.values(plan.checkpoints || {});
   return cps.find((c) => c.status !== "done") || null;
@@ -48,6 +65,23 @@ function urgentChecklist(plan) {
 }
 function stripDuePrefix(label) {
   return (label || "").replace(/^до\s+/i, "");
+}
+function vacancyMatchScore(v, person) {
+  let score = 40;
+  if (v.department === person.department) score += 25;
+  if (v.city === person.city || v.format === "Удалённо") score += 15;
+  const tenureMonths = parseInt(person.tenure, 10) || 0;
+  if (tenureMonths < 12) {
+    if (v.experience === "Без опыта" || v.experience === "От 1 года") score += 15;
+    else if (v.experience === "От 5 лет") score -= 15;
+    else score += 5;
+  } else score += 10;
+  return Math.max(30, Math.min(96, score));
+}
+function topVacancyMatches(n) {
+  const pool = D.vacancies.filter((v) => v.visibleToEmployees !== false && v.status === "open");
+  return pool.map((v) => ({ v, pct: vacancyMatchScore(v, D.person) }))
+    .sort((a, b) => b.pct - a.pct).slice(0, n);
 }
 
 function askAi(query) {
@@ -68,7 +102,7 @@ function AiSearchCard({ dark }) {
             background: dark ? "var(--sk-surface-dark)" : "var(--sk-special-secondary)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <IconAiSpark size={20} color={dark ? "var(--sk-icon-warning, #ffd21f)" : "var(--sk-icon-special)"} />
+            <IconAiSpark size={20} color={dark ? "#ffd21f" : "var(--sk-icon-special)"} />
           </span>
           <div style={{ minWidth: 0 }}>
             <div className="sk-label-2">Чем помочь сегодня?</div>
@@ -98,20 +132,36 @@ function AiSearchCard({ dark }) {
   );
 }
 
+function ModuleTabs({ active, onChange }) {
+  return (
+    <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
+      {MODULES.map((m) => {
+        const sel = m.id === active;
+        return (
+          <button key={m.id} onClick={() => onChange(m.id)} style={{
+            border: "1px solid " + (sel ? "var(--sk-stroke-accent)" : "var(--sk-stroke)"),
+            background: sel ? "var(--sk-accent-secondary)" : "var(--sk-surface-page)",
+            color: sel ? "var(--sk-text-accent)" : "var(--sk-text-secondary)",
+            borderRadius: "var(--sk-radius-full)", padding: "7px 14px", font: "var(--sk-label-3)", cursor: "pointer",
+          }}>{m.label}</button>
+        );
+      })}
+    </div>
+  );
+}
+
 // Компактный вариант: одна самая срочная рекомендация — как в остальном прототипе
 // (ссылка-карточка без вложенных интерактивных элементов, как PlanCard в adaptation.html).
-function RecommendationBanner({ item, planHref }) {
+function RecommendationBanner({ item }) {
   if (!item) {
     return (
       <Card bordered style={{ padding: 16 }}>
-        <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>
-          Срочных задач по плану адаптации сейчас нет — можно спокойно двигаться в своём темпе.
-        </div>
+        <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>Срочных задач сейчас нет — можно спокойно двигаться в своём темпе.</div>
       </Card>
     );
   }
   return (
-    <a href={planHref} style={{ textDecoration: "none" }}>
+    <a href={item.href} style={{ textDecoration: "none" }}>
       <Card bordered className="sk-clickable" style={{ padding: 16, boxShadow: "inset 3px 0 0 0 var(--sk-warning), inset 0 0 0 1px var(--sk-stroke)" }}>
         <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
           <span style={{
@@ -127,11 +177,25 @@ function RecommendationBanner({ item, planHref }) {
             </div>
           </div>
           <span className="sk-row sk-gap-1" style={{ flexShrink: 0, color: "var(--sk-text-accent)", font: "var(--sk-label-3)" }}>
-            Открыть план <IconChevronRight size={15} color="var(--sk-icon-accent)" />
+            {item.actionLabel || "Открыть"} <IconChevronRight size={15} color="var(--sk-icon-accent)" />
           </span>
         </div>
       </Card>
     </a>
+  );
+}
+
+function ComingSoonPanel({ label }) {
+  return (
+    <Card bordered style={{ padding: 16 }}>
+      <div className="sk-row sk-gap-2" style={{ alignItems: "center", marginBottom: 6 }}>
+        <Tag size="s" hue="neutral">Скоро</Tag>
+        <div className="sk-label-2">{label}</div>
+      </div>
+      <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>
+        Раздел ещё не подключён к Skillaz Start — здесь появится сводка и быстрые действия AI, когда модуль будет готов.
+      </div>
+    </Card>
   );
 }
 
@@ -151,13 +215,9 @@ function FocusRow({ kind, title, subtitle, tone, href, first }) {
   );
 }
 
-function ActionRow({ title, onClick, first }) {
-  return (
-    <button onClick={onClick} className="sk-clickable" style={{
-      display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
-      border: "none", background: "transparent", padding: "11px 4px", cursor: "pointer",
-      borderTop: first ? "none" : "1px solid var(--sk-stroke-divider)",
-    }}>
+function ActionRow({ title, onClick, href, first }) {
+  const content = (
+    <React.Fragment>
       <span style={{
         width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
         background: "var(--sk-special-secondary)", display: "flex", alignItems: "center", justifyContent: "center",
@@ -166,8 +226,16 @@ function ActionRow({ title, onClick, first }) {
       </span>
       <span className="sk-label-3" style={{ flex: 1, minWidth: 0, color: "var(--sk-text-primary)" }}>{title}</span>
       <IconChevronRight size={14} color="var(--sk-icon-accent)" />
-    </button>
+    </React.Fragment>
   );
+  const style = {
+    display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", textDecoration: "none",
+    border: "none", background: "transparent", padding: "11px 4px", cursor: "pointer",
+    borderTop: first ? "none" : "1px solid var(--sk-stroke-divider)",
+  };
+  return href
+    ? <a href={href} className="sk-clickable" style={style}>{content}</a>
+    : <button onClick={onClick} className="sk-clickable" style={style}>{content}</button>;
 }
 
 function CourseCard({ title, state, progressPct, meta, href }) {
@@ -233,22 +301,59 @@ const NEWS = [
 
 function Page() {
   const [variant, setVariant] = React.useState("compact");
+  const [activeModule, setActiveModule] = React.useState("all");
   const plan = D.plans.onboarding;
   const planHref = "plan.html?plan=" + plan.id;
 
   const cp = upcomingCheckpoint(plan);
   const subgoals = activeSubgoals(plan);
   const urgent = urgentChecklist(plan);
-  const topItem = urgent[0]
-    ? { title: urgent[0].title, date: urgent[0].date }
-    : (subgoals[0] ? { title: subgoals[0].title, date: stripDuePrefix(subgoals[0].dueLabel) } : null);
-
-  const focusRows = [];
-  urgent.forEach((it) => focusRows.push({ kind: "Шаг", title: it.title, subtitle: it.date ? "Срок " + it.date : "Требует внимания", tone: "warn" }));
-  subgoals.forEach((sg) => focusRows.push({ kind: "Цель", title: sg.title, subtitle: sg.goalTitle + " · " + stripDuePrefix(sg.dueLabel), tone: "" }));
-  if (cp) focusRows.push({ kind: "Точка", title: cp.title, subtitle: (cp.daysLeftLabel ? cp.daysLeftLabel + " · " : "") + cp.dueLabel, tone: "" });
-
   const courses = planCourses(plan);
+  const vacancyMatches = topVacancyMatches(2);
+
+  // "Фокус" по адаптации — те же реальные данные, что покажет AI на запрос
+  // "Что мне сделать сегодня?" (см. aiEmployeeHomeIntent в shell.js).
+  const adaptationRows = [];
+  urgent.forEach((it) => adaptationRows.push({ kind: "Шаг", title: it.title, subtitle: it.date ? "Срок " + it.date : "Требует внимания", tone: "warn", href: planHref }));
+  subgoals.forEach((sg) => adaptationRows.push({ kind: "Цель", title: sg.title, subtitle: sg.goalTitle + " · " + stripDuePrefix(sg.dueLabel), tone: "", href: planHref }));
+  if (cp) adaptationRows.push({ kind: "Точка", title: cp.title, subtitle: (cp.daysLeftLabel ? cp.daysLeftLabel + " · " : "") + cp.dueLabel, tone: "", href: planHref });
+
+  const learningRows = courses.filter((c) => c.state !== "done")
+    .map((c) => ({ kind: "Курс", title: c.title, subtitle: c.meta, tone: "", href: planHref }));
+
+  const vacancyRows = vacancyMatches.map(({ v, pct }) => ({
+    kind: "Вакансия", title: v.title, subtitle: v.city + " · подходит на " + pct + "%", tone: "", href: "vacancy.html?id=" + v.id,
+  }));
+
+  const MODULE_CONTENT = {
+    all: {
+      rows: [...adaptationRows.slice(0, 2), ...vacancyRows.slice(0, 1)],
+      actions: promptActions(QUICK_PROMPTS),
+      emptyText: "Срочных задач сейчас нет — можно спокойно двигаться в своём темпе.",
+    },
+    adaptation: {
+      rows: adaptationRows,
+      actions: promptActions(QUICK_PROMPTS.slice(0, 3)),
+      emptyText: "Срочных задач по плану адаптации сейчас нет.",
+    },
+    learning: {
+      rows: learningRows,
+      actions: [{ label: "Открыть план адаптации", href: planHref }],
+      emptyText: "Все курсы по плану адаптации уже пройдены.",
+    },
+    vacancies: {
+      rows: vacancyRows,
+      actions: promptActions(["Какие вакансии мне подходят?"]).concat([{ label: "Открыть витрину вакансий", href: "vacancies.html" }]),
+      emptyText: "Подходящих открытых вакансий сейчас нет.",
+    },
+    assessment: { comingSoon: true },
+    idp: { comingSoon: true },
+  };
+  const content = MODULE_CONTENT[activeModule];
+
+  const compactItem = content.comingSoon ? null : (content.rows[0]
+    ? { title: content.rows[0].title, date: null, href: content.rows[0].href, actionLabel: activeModule === "vacancies" ? "Открыть вакансию" : "Открыть план" }
+    : null);
 
   return (
     <AppShell role="employee" active="home" base="..">
@@ -270,8 +375,16 @@ function Page() {
 
         <AiSearchCard dark={variant === "ai"} />
 
-        {variant === "compact" ? (
-          <RecommendationBanner item={topItem} planHref={planHref} />
+        <ModuleTabs active={activeModule} onChange={setActiveModule} />
+
+        {content.comingSoon ? (
+          <ComingSoonPanel label={MODULES.find((m) => m.id === activeModule).label} />
+        ) : variant === "compact" ? (
+          compactItem ? <RecommendationBanner item={compactItem} /> : (
+            <Card bordered style={{ padding: 16 }}>
+              <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>{content.emptyText}</div>
+            </Card>
+          )
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.6fr) minmax(280px,1fr)", gap: 16 }}>
             <Card bordered style={{ padding: 16 }}>
@@ -281,15 +394,18 @@ function Page() {
                   onClick={() => askAi("Что мне сделать сегодня?")}>Спросить AI</button>
               </div>
               <div>
-                {focusRows.length
-                  ? focusRows.map((r, i) => <FocusRow key={i} first={i === 0} href={planHref} {...r} />)
-                  : <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", padding: "8px 4px" }}>Срочных задач по плану сейчас нет.</div>}
+                {content.rows.length
+                  ? content.rows.map((r, i) => <FocusRow key={i} first={i === 0} {...r} />)
+                  : <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", padding: "8px 4px" }}>{content.emptyText}</div>}
               </div>
             </Card>
             <Card bordered style={{ padding: 16 }}>
               <div className="sk-label-2" style={{ marginBottom: 4 }}>Быстрые действия с AI</div>
               <div>
-                {QUICK_PROMPTS.map((p, i) => <ActionRow key={p} first={i === 0} title={p} onClick={() => askAi(p)} />)}
+                {content.actions.map((a, i) => (
+                  <ActionRow key={a.label} first={i === 0} title={a.label} href={a.href}
+                    onClick={a.query ? () => askAi(a.query) : undefined} />
+                ))}
               </div>
             </Card>
           </div>
