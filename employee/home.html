@@ -179,8 +179,10 @@ function ModuleTabs({ active, onChange }) {
 // href — переход на реальную страницу (план/вакансия/сотрудник); query — для строк без
 // своей страницы в этом прототипе (Оценка/ИПР и часть строк блока "Команда") вместо этого
 // открывает AI с готовым вопросом. due — если известен реальный срок (не выдуманный), рендерим
-// его тегом ("Осталось 3 дня (до 3 апреля)") вместо обычного серого подзаголовка; риск (tone
-// "warn" без due) выделяется не тегом, а просто красным цветом самого текста описания.
+// его тегом ("Осталось 2 дня") вместо обычного серого подзаголовка; due и subtitle могут
+// сочетаться (тег сверху + серый текст под ним), если у строки есть и срок, и своё описание —
+// иначе subtitle сам по себе как обычный подзаголовок. Риск (tone "warn") красит текст описания,
+// без отдельного тега.
 function FocusRow({ kind, title, subtitle, due, tone, href, query, first }) {
   const rowStyle = {
     display: "grid", gridTemplateColumns: "84px minmax(0,1fr) 18px", gap: 12, alignItems: "center",
@@ -192,10 +194,9 @@ function FocusRow({ kind, title, subtitle, due, tone, href, query, first }) {
       <span style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)" }}>{kind}</span>
       <span style={{ minWidth: 0 }}>
         <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{title}</span>
-        {due
-          ? <Tag size="s" hue="warning" style={{ marginTop: 4, alignSelf: "flex-start" }}>{due}</Tag>
-          : <span style={{
-              display: "block", font: "var(--sk-label-4-regular)", marginTop: 2,
+        {due && <Tag size="s" hue="warning" style={{ marginTop: 7, alignSelf: "flex-start" }}>{due}</Tag>}
+        {subtitle && <span style={{
+              display: "block", font: "var(--sk-label-4-regular)", marginTop: due ? 6 : 2,
               color: tone === "warn" ? "var(--sk-text-negative)" : "var(--sk-text-secondary)",
             }}>{subtitle}</span>}
       </span>
@@ -348,37 +349,45 @@ function buildPersonalContent(plan, planHref) {
     tone: "warn", href: planHref,
   }));
   subgoals.forEach((sg) => adaptationRows.push({ kind: "Цель", title: sg.title, subtitle: sg.goalTitle + " · " + stripDuePrefix(sg.dueLabel), tone: "", href: planHref }));
-  // daysLeftLabel у контрольных точек уже в формате "Осталось N дней" — тег просто добавляет
-  // точную дату рядом в скобках, а не изобретает подсчёт дней заново.
+  // daysLeftLabel у контрольных точек уже в формате "Осталось N дней" — рендерим его тегом;
+  // subtitle (dueLabel) — только запасной вариант на случай, если daysLeftLabel не задан
+  // (иначе получится дублирующая дата и тегом, и текстом под ним).
   if (cp) adaptationRows.push({
     kind: "Точка", title: cp.title,
-    due: cp.daysLeftLabel ? cp.daysLeftLabel + " (" + cp.dueLabel + ")" : undefined,
-    subtitle: cp.dueLabel, tone: "warn", href: planHref,
+    due: cp.daysLeftLabel || undefined,
+    subtitle: cp.daysLeftLabel ? undefined : cp.dueLabel,
+    tone: "warn", href: planHref,
   });
 
   const learningRows = courses.filter((c) => c.state !== "done")
     .map((c) => ({ kind: "Курс", title: c.title, subtitle: c.meta, tone: "", href: planHref }));
 
-  // Два сводных пункта вместо списка конкретных вакансий — на "Важное для меня" это должно
-  // читаться как "загляните туда-то", а не дублировать саму витрину вакансий построчно.
+  // Левая колонка называет процесс, из-за которого вакансия попала в список ("Новое по
+  // подписке" / "Подходящие"), а не тип объекта — сама строка остаётся конкретной вакансией
+  // с её реальным названием, как и у остальных карточек.
+  const bestMatch = vacancyMatches[0];
+  const newestMatch = D.vacancies
+    .filter((v) => v.isNew && v.visibleToEmployees !== false && v.status === "open")
+    .map((v) => ({ v, pct: vacancyMatchScore(v, D.person) }))
+    .sort((a, b) => b.pct - a.pct)[0];
   const vacancyRows = [
-    {
-      kind: "Вакансия", title: "Новое по подписке",
-      subtitle: D.vacancies.filter((v) => v.isNew).length + " новые вакансии по вашим фильтрам",
-      href: "vacancies.html",
+    newestMatch && {
+      kind: "Новое по подписке", title: newestMatch.v.title,
+      subtitle: newestMatch.v.city + " · подходит на " + newestMatch.pct + "%",
+      href: "vacancy.html?id=" + newestMatch.v.id,
     },
-    {
-      kind: "Вакансия", title: "Подходящие",
-      subtitle: vacancyMatches.length + " вакансии подходят вам" + (vacancyMatches[0] ? " · топ " + vacancyMatches[0].pct + "%" : ""),
-      href: "vacancies.html",
+    bestMatch && {
+      kind: "Подходящие", title: bestMatch.v.title,
+      subtitle: bestMatch.v.city + " · подходит на " + bestMatch.pct + "%",
+      href: "vacancy.html?id=" + bestMatch.v.id,
     },
-  ];
+  ].filter(Boolean);
 
   // Иллюстративный пример для "Оценка"/"ИПР" (нет своих страниц в прототипе, см. верхний
   // комментарий) — адаптировано из https://yulia405.github.io/skillaz-ai-assistant-demo/,
   // без href: строка открывает AI с готовым вопросом вместо перехода в никуда.
   const assessmentRows = [
-    { kind: "360", title: "Самооценка Product competencies", subtitle: "12 вопросов · до 20 августа", tone: "warn", query: "Подготовиться к оценке 360" },
+    { kind: "360", title: "Самооценка Product competencies", subtitle: "12 вопросов", due: "Осталось 5 дней", tone: "", query: "Подготовиться к оценке 360" },
     { kind: "Опрос", title: "Пульс команды", subtitle: "5 вопросов · до 25 августа", tone: "", query: "Подготовиться к оценке 360" },
   ];
   const idpRows = [
