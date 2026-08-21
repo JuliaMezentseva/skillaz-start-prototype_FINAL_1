@@ -616,7 +616,6 @@ function Page() {
 function ManagerGoalRow({ goal, plan, highlighted, onOpenGoal, onOpenSubgoal, onOpenMaterials, onDeleteGoal }) {
   const { done, total, pct } = goalProgress(goal);
   const statusVal = deriveGoalStatus(goal);
-  const isDone = statusVal === "done";
   const [stepsOpen, setStepsOpen] = React.useState(false);
   return (
     <div className="sk-col sk-gap-3" onClick={onOpenGoal} style={{
@@ -628,16 +627,12 @@ function ManagerGoalRow({ goal, plan, highlighted, onOpenGoal, onOpenSubgoal, on
       <div className="sk-row sk-gap-3" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1, minWidth: 0 }}>
           <div className="sk-label-2" style={{ color: "var(--sk-text-primary)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{goal.title || "Без названия"}</div>
-          {!isDone && (
-            <React.Fragment>
-              <div className="sk-row sk-gap-2" style={{ alignItems: "center", marginTop: 4 }}>
-                <ProgressBar value={pct} style={{ width: 120 }} hue="positive" />
-                <span className="sk-label-4">{pct}%</span>
-                <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{done} из {total}</span>
-              </div>
-              <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>до {stripDuePrefix(goal.dueLabel) || "срок не задан"}</span>
-            </React.Fragment>
-          )}
+          <div className="sk-row sk-gap-2" style={{ alignItems: "center", marginTop: 4 }}>
+            <ProgressBar value={pct} height={6} style={{ width: 120 }} hue="positive" />
+            <span className="sk-label-3">{pct}%</span>
+            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{done} из {total}</span>
+          </div>
+          <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>до {stripDuePrefix(goal.dueLabel) || "срок не задан"}</span>
         </div>
         <div className="sk-row sk-gap-2" style={{ flexShrink: 0, alignItems: "center" }} onClick={(e) => e.stopPropagation()}>
           {plan.employeeStarted && <StatusTag status={statusVal} size="m" />}

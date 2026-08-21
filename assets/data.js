@@ -655,15 +655,17 @@ window.SITE_DATA = {
     },
     {
       // Второй план в списке — отдельный сотрудник (не Юлия, см. ниже), чтобы не
-      // повторять одно и то же имя в двух карточках подряд. Срок плана истёк, все цели
-      // выполнены — план дожидается финального ревью руководителем; ссылается на
-      // demo-план D.plans.finalReview (клон onboarding, а не сам onboarding — тот
-      // остаётся "живым" планом Юлии в роли "Сотрудник", см. конец файла).
+      // повторять одно и то же имя в двух карточках подряд. Срок плана истёк, план
+      // дожидается финального ревью руководителем; ссылается на demo-план
+      // D.plans.finalReview (клон onboarding, а не сам onboarding — тот остаётся
+      // "живым" планом Юлии в роли "Сотрудник", см. конец файла). Вторая цель там
+      // намеренно выполнена на 50% (не все цели завершены) — прогресс здесь не
+      // хардкодим, а считаем из плана, как и у Алексея, чтобы не расходиться.
       id: "svetlana", name: "Светлана Морозова", position: "Менеджер по продажам",
       department: "Департамент продаж",
       planKind: "Адаптация", planTitle: "Адаптация для новичка: менеджер по продажам",
       dateStart: "01.11.25", dateEnd: "10.03.26", daysLeftLabel: "",
-      progressPct: 100, progressBasis: "по целям", status: "on_review",
+      progressPct: null, progressBasis: "по целям", status: "on_review",
       planId: "finalReview",
       action: { type: "review", label: "Провести итоговую проверку", due: "10 мар" },
       helper: "Дмитрий Волков",
@@ -1999,7 +2001,17 @@ window.SITE_DATA = {
     s.dueLabel = "Этап завершён";
     s.items.forEach((it) => { it.done = true; });
   });
-  finalReviewPlan.goals.forEach((g) => {
+  finalReviewPlan.goals.forEach((g, i) => {
+    // Вторая цель на финальном ревью намеренно выполнена только на 50% (а не 100%,
+    // как остальные) — демонстрирует, что руководитель видит реальный прогресс по
+    // карточкам целей, а не только «всё готово», и что решение по плану можно
+    // принять и при незавершённых целях (см. ReviewDecisionModal: allGoalsDone).
+    if (i === 1) {
+      g.status = "in_progress";
+      g.subgoals = g.subgoals.slice(0, 4);
+      g.subgoals.forEach((sg, j) => { sg.status = j < 2 ? "done" : "not_done"; });
+      return;
+    }
     g.status = "done";
     g.subgoals.forEach((sg) => { sg.status = "done"; });
   });
