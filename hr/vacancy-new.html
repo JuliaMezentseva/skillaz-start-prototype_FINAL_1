@@ -34,6 +34,7 @@ const { Tag, Divider, Avatar, Input, Select, Button, Modal, Snackbar, IconButton
 const { AppShell, Icons } = window.Site;
 const { IconArrowLeft, IconChevronDown, IconLink2 } = Icons;
 const D = window.SITE_DATA;
+const DEPARTMENT_OPTIONS = [...new Set(D.vacancies.map((v) => v.department))].sort();
 
 const SECTIONS = [
   { key: "basic", label: "Основное" },
@@ -206,7 +207,7 @@ function Page() {
   }, []);
 
   const [form, setForm] = React.useState({
-    title: "", direction: D.directions[0], department: "", skills: [],
+    title: "", direction: D.directions[0], department: DEPARTMENT_OPTIONS[0], skills: [],
     responsibilities: "", requirements: "", conditions: "",
     city: D.cities[0], format: D.workFormats[0], employment: D.employmentTypes[0],
     grade: "", experience: D.experienceOptions[0], salaryFrom: "", salaryTo: "",
@@ -233,8 +234,7 @@ function Page() {
     sectionRefs[key].current && sectionRefs[key].current.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const valid = form.title.trim() && form.department.trim() && form.responsibilities.trim() && form.requirements.trim()
-    && form.salaryFrom && form.salaryTo;
+  const valid = form.title.trim() && form.responsibilities.trim() && form.requirements.trim();
 
   function showToast(msg) { setToast(msg); window.setTimeout(() => setToast(null), 2400); }
   function saveDraft() { showToast("Черновик сохранён"); }
@@ -251,19 +251,13 @@ function Page() {
           <IconArrowLeft size={16} />
         </IconButton>
       }>
-      <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-        <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-          <div className="sk-title-4">Новая вакансия</div>
-          <Tag size="s" hue="neutral">Черновик</Tag>
-        </div>
-        <div className="sk-row sk-gap-2">
-          <Button mode="secondary" onClick={saveDraft}>Сохранить черновик</Button>
-          <Button variant="accent" disabled={!valid} onClick={() => setConfirmOpen(true)}>Опубликовать</Button>
-        </div>
-      </div>
-
       <div className="sk-row" style={{ alignItems: "flex-start", gap: 40 }}>
         <div className="sk-vacancy-form sk-col sk-gap-6" style={{ flex: 1, minWidth: 0, maxWidth: 720 }}>
+
+          <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+            <div className="sk-title-4">Новая вакансия</div>
+            <Tag size="s" hue="neutral">Черновик</Tag>
+          </div>
 
           <div ref={sectionRefs.basic} data-section="basic" className="sk-col sk-gap-3">
             <div className="sk-label-2">Основное</div>
@@ -271,8 +265,9 @@ function Page() {
               value={form.title} onChange={(e) => set("title")(e.target.value || "")} />
             <div className="sk-row sk-gap-3">
               <Select label="Направление" value={form.direction} options={D.directions.map((d) => ({ value: d, label: d }))}
-                onChange={set("direction")} style={{ flex: 1 }} />
-              <Input label="Подразделение" required value={form.department} onChange={(e) => set("department")(e.target.value || "")} style={{ flex: 1 }} />
+                onChange={set("direction")} style={{ flex: 1, minWidth: 0 }} />
+              <Select label="Подразделение" value={form.department} options={DEPARTMENT_OPTIONS.map((d) => ({ value: d, label: d }))}
+                onChange={set("department")} style={{ flex: 1, minWidth: 0 }} />
             </div>
             <div className="sk-col sk-gap-2">
               <div className="sk-label-3" style={{ color: "var(--sk-text-secondary)" }}>Ключевые навыки</div>
@@ -288,7 +283,7 @@ function Page() {
             <RichTextEditor label="Обязанности" required
               placeholder="Чем предстоит заниматься на этой позиции"
               value={form.responsibilities} onChange={set("responsibilities")} minHeight={140} />
-            <RichTextEditor label="Требования и навыки" required
+            <RichTextEditor label="Требования" required
               placeholder="Опыт, знания и навыки, которые нужны для этой роли"
               value={form.requirements} onChange={set("requirements")} minHeight={140} />
             <RichTextEditor label="Условия"
@@ -313,8 +308,8 @@ function Page() {
               <div className="sk-row sk-gap-3" style={{ flexWrap: "wrap" }}>
                 <Input label="Грейд" placeholder="Junior / Middle / Senior" value={form.grade} onChange={(e) => set("grade")(e.target.value || "")} style={{ flex: "1 1 160px", minWidth: 0 }} />
                 <Select label="Опыт" value={form.experience} options={D.experienceOptions.map((e) => ({ value: e, label: e }))} onChange={set("experience")} style={{ flex: "1 1 160px", minWidth: 0 }} />
-                <Input label="Оклад от" required type="number" value={form.salaryFrom} onChange={(e) => set("salaryFrom")(e.target.value)} style={{ flex: "1 1 160px", minWidth: 0 }} />
-                <Input label="Оклад до" required type="number" value={form.salaryTo} onChange={(e) => set("salaryTo")(e.target.value)} style={{ flex: "1 1 160px", minWidth: 0 }} />
+                <Input label="Оклад от" type="number" value={form.salaryFrom} onChange={(e) => set("salaryFrom")(e.target.value)} style={{ flex: "1 1 160px", minWidth: 0 }} />
+                <Input label="Оклад до" type="number" value={form.salaryTo} onChange={(e) => set("salaryTo")(e.target.value)} style={{ flex: "1 1 160px", minWidth: 0 }} />
               </div>
             </div>
           </div>
@@ -331,6 +326,10 @@ function Page() {
         </div>
 
         <div style={{ width: 200, flexShrink: 0, position: "sticky", top: 24 }}>
+          <div className="sk-col sk-gap-2" style={{ marginBottom: 20 }}>
+            <Button variant="accent" disabled={!valid} onClick={() => setConfirmOpen(true)} style={{ width: "100%" }}>Опубликовать</Button>
+            <Button mode="secondary" onClick={saveDraft} style={{ width: "100%" }}>Сохранить черновик</Button>
+          </div>
           <div className="sk-col sk-gap-3">
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
               На этой странице
