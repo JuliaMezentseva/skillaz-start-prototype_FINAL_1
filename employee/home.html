@@ -186,9 +186,9 @@ function FocusRow({ kind, title, subtitle, due, riskTag, tone, href, query, firs
     <React.Fragment>
       <span style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)" }}>{kind}</span>
       <span style={{ minWidth: 0 }}>
-        <span className="sk-label-3" style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--sk-text-primary)" }}>
-          {riskTag && <Tag size="s" hue="negative" style={{ flexShrink: 0 }}>риск</Tag>}
+        <span className="sk-label-3" style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--sk-text-primary)" }}>
           {title}
+          {riskTag && <Tag size="s" hue="negative" style={{ flexShrink: 0, background: "var(--sk-negative)", color: "#fff" }}>Есть риск</Tag>}
         </span>
         {due
           ? <Tag size="s" hue="negative" style={{ marginTop: 4, alignSelf: "flex-start" }}>{due}</Tag>
@@ -301,7 +301,7 @@ function CourseCard({ title, state, progressPct, meta, href, tile }) {
             <div style={{ width: progressPct + "%", height: "100%", background: state === "done" ? "var(--sk-positive)" : "var(--sk-accent)" }} />
           </div>
           <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{progressPct}%</span>
+            <span style={{ font: "var(--sk-label-3)", color: "var(--sk-text-primary)" }}>{progressPct}%</span>
             <Button size="s" mode={state === "done" ? "secondary" : "primary"} variant={state === "done" ? "neutral" : "accent"}
               onClick={() => { window.location.href = href; }}>
               {state === "done" ? "Продолжить" : "Начать"}
@@ -349,7 +349,7 @@ function planCourses(plan) {
     id: c.id, title: c.title,
     state: c.done ? "done" : "upcoming",
     progressPct: c.done ? DONE_PROGRESS[doneIndex++ % DONE_PROGRESS.length] : 0,
-    meta: c.done ? "Пройден" : (c.date ? "Начнётся " + c.date : "Ещё не начат"),
+    meta: c.done ? "В процессе" : (c.date ? "Начнётся " + c.date : "Ещё не начат"),
   }));
 }
 
@@ -370,7 +370,7 @@ function buildPersonalContent(plan, planHref) {
   const adaptationRows = [];
   urgent.forEach((it) => adaptationRows.push({
     kind: "Шаг", title: it.title,
-    due: "Скоро дедлайн" + (it.date ? " (" + it.date + ")" : ""),
+    due: "Осталось 3 дня" + (it.date ? " (до " + it.date + ")" : ""),
     tone: "warn", href: planHref,
   }));
   subgoals.forEach((sg) => adaptationRows.push({ kind: "Цель", title: sg.title, subtitle: sg.goalTitle + " · " + stripDuePrefix(sg.dueLabel), tone: "", href: planHref }));
