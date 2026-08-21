@@ -23,7 +23,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Tag, Divider, Avatar, Input, Select, Button, Modal, Snackbar, IconButton, SkActionBar } = window.SkillazCoreDesignSystem_bf9566;
+const { Tag, Divider, Avatar, Input, Select, Button, Modal, Snackbar, IconButton } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
 const { IconArrowLeft, IconChevronDown, IconLink2 } = Icons;
 const D = window.SITE_DATA;
@@ -32,7 +32,7 @@ const SECTIONS = [
   { key: "basic", label: "Основное" },
   { key: "description", label: "Описание" },
   { key: "params", label: "Параметры" },
-  { key: "publish", label: "Публикация и команда" },
+  { key: "publish", label: "Контакт для связи" },
 ];
 
 // Поле навыков — теги с крестиком-удалением (Tag.onRemove уже есть в ДС) плюс
@@ -243,9 +243,15 @@ function Page() {
           <IconArrowLeft size={16} />
         </IconButton>
       }>
-      <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-        <div className="sk-title-4">Новая вакансия</div>
-        <Tag size="s" hue="neutral">Черновик</Tag>
+      <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+          <div className="sk-title-4">Новая вакансия</div>
+          <Tag size="s" hue="neutral">Черновик</Tag>
+        </div>
+        <div className="sk-row sk-gap-2">
+          <Button mode="secondary" onClick={saveDraft}>Сохранить черновик</Button>
+          <Button variant="accent" disabled={!valid} onClick={() => setConfirmOpen(true)}>Опубликовать</Button>
+        </div>
       </div>
 
       <div className="sk-row" style={{ alignItems: "flex-start", gap: 40 }}>
@@ -288,30 +294,28 @@ function Page() {
             <div className="sk-label-2">Параметры</div>
             <div className="sk-col sk-gap-2">
               <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Локация и формат</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-                <Select label="Город" value={form.city} options={D.cities.map((c) => ({ value: c, label: c }))} onChange={set("city")} />
-                <Select label="Формат работы" value={form.format} options={D.workFormats.map((f) => ({ value: f, label: f }))} onChange={set("format")} />
-                <Select label="Тип занятости" value={form.employment} options={D.employmentTypes.map((e) => ({ value: e, label: e }))} onChange={set("employment")} />
+              <div className="sk-row sk-gap-3" style={{ flexWrap: "wrap" }}>
+                <Select label="Город" value={form.city} options={D.cities.map((c) => ({ value: c, label: c }))} onChange={set("city")} style={{ flex: "1 1 160px", minWidth: 0 }} />
+                <Select label="Формат работы" value={form.format} options={D.workFormats.map((f) => ({ value: f, label: f }))} onChange={set("format")} style={{ flex: "1 1 160px", minWidth: 0 }} />
+                <Select label="Тип занятости" value={form.employment} options={D.employmentTypes.map((e) => ({ value: e, label: e }))} onChange={set("employment")} style={{ flex: "1 1 160px", minWidth: 0 }} />
               </div>
             </div>
             <div className="sk-col sk-gap-2">
               <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Уровень и вилка</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-                <Input label="Грейд" placeholder="Junior / Middle / Senior" value={form.grade} onChange={(e) => set("grade")(e.target.value || "")} />
-                <Select label="Опыт" value={form.experience} options={D.experienceOptions.map((e) => ({ value: e, label: e }))} onChange={set("experience")} />
-                <Input label="Оклад от" required type="number" value={form.salaryFrom} onChange={(e) => set("salaryFrom")(e.target.value)} />
-                <Input label="Оклад до" required type="number" value={form.salaryTo} onChange={(e) => set("salaryTo")(e.target.value)} />
+              <div className="sk-row sk-gap-3" style={{ flexWrap: "wrap" }}>
+                <Input label="Грейд" placeholder="Junior / Middle / Senior" value={form.grade} onChange={(e) => set("grade")(e.target.value || "")} style={{ flex: "1 1 160px", minWidth: 0 }} />
+                <Select label="Опыт" value={form.experience} options={D.experienceOptions.map((e) => ({ value: e, label: e }))} onChange={set("experience")} style={{ flex: "1 1 160px", minWidth: 0 }} />
+                <Input label="Оклад от" required type="number" value={form.salaryFrom} onChange={(e) => set("salaryFrom")(e.target.value)} style={{ flex: "1 1 160px", minWidth: 0 }} />
+                <Input label="Оклад до" required type="number" value={form.salaryTo} onChange={(e) => set("salaryTo")(e.target.value)} style={{ flex: "1 1 160px", minWidth: 0 }} />
               </div>
-              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>на руки, до вычета налогов</div>
             </div>
           </div>
 
           <Divider />
 
           <div ref={sectionRefs.publish} data-section="publish" className="sk-col sk-gap-3">
-            <div className="sk-label-2">Публикация и команда</div>
+            <div className="sk-label-2">Контакт для связи</div>
             <div className="sk-col sk-gap-2" style={{ maxWidth: 360 }}>
-              <div className="sk-label-3">Контакт для связи</div>
               <RecruiterPicker value={form.recruiter} options={recruiterOptions} onChange={set("recruiter")} />
             </div>
           </div>
@@ -337,12 +341,6 @@ function Page() {
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 4 }}>Черновик сохраняется автоматически</div>
           </div>
         </div>
-      </div>
-
-      <div style={{ position: "sticky", bottom: 0, zIndex: 10 }}>
-        <SkActionBar
-          secondary={<Button mode="secondary" onClick={saveDraft}>Сохранить черновик</Button>}
-          primary={<Button variant="accent" disabled={!valid} onClick={() => setConfirmOpen(true)}>Опубликовать</Button>} />
       </div>
 
       {confirmOpen && (
