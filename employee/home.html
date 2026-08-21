@@ -475,15 +475,25 @@ function buildTeamContent() {
   };
 }
 
-// ---------------- Блок "Задачи администратора" — реальные данные D.hrAssignedPlans (как в
-// hr/plans.html) ----------------. Одни и те же 2 строки на всех релевантных табах (в отличие
-// от "Моей команды" контент здесь не зависит от процесса) — риск и решение по ревью, оба про
-// людей, которых не показываем в "Моей команде", чтобы три блока не дублировали друг друга.
+// ---------------- Блок "Задачи администратора" — реальные D.vacancies/D.planDrafts (как в
+// hr/vacancy-responses.html и вкладке "Черновики" hr/plans.html) ----------------. Одни и те
+// же 2 строки на всех релевантных табах — recruiting-задача (новые отклики) и незавершённый
+// черновик плана, оба про конкретные объекты, а не про людей из "Моей команды".
 function buildAdminContent() {
+  const respondedVacancy = D.vacancies.find((v) => v.id === "v1");
+  const draft = D.planDrafts[0];
   const rows = [
-    { kind: "Оффер", title: "Артём Волков", subtitle: "Кандидат отказался от оффера — план отменён", tone: "warn", href: "../hr/plan-detail.html?id=ap_artem" },
-    { kind: "Ревью", title: "Тимур Асанов", subtitle: "Итоговое ревью ожидает решения", tone: "", href: "../hr/plan-detail.html?id=ap_review" },
-  ];
+    respondedVacancy && {
+      kind: "Отклики", title: respondedVacancy.title,
+      subtitle: respondedVacancy.responsesCount + " новых отклика",
+      tone: "", href: "../hr/vacancy-responses.html?id=" + respondedVacancy.id,
+    },
+    draft && {
+      kind: "Черновик", title: draft.title,
+      subtitle: "Не опубликован · создан " + draft.createdAt.split(",")[0],
+      tone: "", href: "../hr/plan.html?kind=draft&id=" + draft.id,
+    },
+  ].filter(Boolean);
   return { rows, emptyText: "Сейчас нет админ-задач, которые требуют внимания." };
 }
 
