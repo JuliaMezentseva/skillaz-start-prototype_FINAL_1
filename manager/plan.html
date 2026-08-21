@@ -2383,9 +2383,6 @@ function ReviewDecisionModal({ member, plan, goalsDoneCount, goalsTotal, goalsPc
       primary={<Button variant={copy.variant} mode={copy.mode} disabled={!canConfirm}
         onClick={() => onDecide(verdict, { comment: comment.trim(), newDueDate })}>{copy.confirmLabel}</Button>}>
       <div className="sk-col sk-gap-3">
-        {verdict === "done" && !allGoalsDone && (
-          <Alert hue="warning">В плане есть незавершённые цели — поясните решение в комментарии.</Alert>
-        )}
         <Textarea label="Комментарий" required={commentRequired} helper={commentRequired ? "Обязателен — сотрудник увидит его после решения" : "Необязательно — виден сотруднику"}
           placeholder={verdict === "returned" ? "Что нужно доработать и почему план возвращается" : "Поясните решение сотруднику"}
           rows={3} value={comment} onChange={(e) => setComment(e.target.value || "")} />
