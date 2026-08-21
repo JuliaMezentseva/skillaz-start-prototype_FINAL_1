@@ -205,13 +205,10 @@ function FocusRow({ kind, title, subtitle, due, riskTag, tone, href, query, firs
     : <button onClick={() => askAi(query)} className="sk-clickable" style={rowStyle}>{content}</button>;
 }
 
-function FocusCard({ title, rows, emptyText, onAsk }) {
+function FocusCard({ title, rows, emptyText }) {
   return (
     <Card bordered style={{ padding: 20 }}>
-      <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", marginBottom: 10 }}>
-        <div className="sk-label-2">{title}</div>
-        <button className="sk-link-btn" style={{ font: "var(--sk-label-4)" }} onClick={onAsk}>Показать все</button>
-      </div>
+      <div className="sk-label-2" style={{ marginBottom: 10 }}>{title}</div>
       {rows.length
         ? <div>{rows.map((r, i) => <FocusRow key={i} first={i === 0} {...r} />)}</div>
         : <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)", padding: "6px 2px" }}>{emptyText}</div>}
@@ -226,7 +223,10 @@ function ActionRow({ title, onClick }) {
   return (
     <button onClick={onClick} className="sk-clickable" style={{
       display: "inline-flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
-      border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
+      // Полупрозрачная светло-сиреневая заливка вместо белого фона + серой рамки —
+      // rgba поверх фирменного violet-50 (--sk-special), а не сплошной --sk-special-secondary,
+      // чтобы облачко читалось именно как стеклянно-прозрачное, а не просто светло-лиловое.
+      border: "none", background: "rgba(144, 84, 234, 0.12)",
       borderRadius: "var(--sk-radius-full)", padding: "10px 16px", font: "var(--sk-label-3-regular)",
       color: "var(--sk-text-primary)", cursor: "pointer",
     }}>
@@ -253,15 +253,12 @@ function ActionsCard({ prompts }) {
 // комментарий про режимы вверху файла) только на табах, где у команды есть что показать
 // (см. TEAM_RELEVANT_MODULES в Page()). В левой колонке — не "Сотрудник" у каждой строки
 // (и так понятно, что это люди), а бизнес-процесс, из-за которого человек попал в список.
-function TeamCard({ rows, emptyText, onAsk }) {
+function TeamCard({ rows, emptyText }) {
   return (
     <Card bordered style={{ padding: 20, boxShadow: "inset 3px 0 0 0 var(--sk-accent), inset 0 0 0 1px var(--sk-stroke)" }}>
-      <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", marginBottom: 10 }}>
-        <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-          <IconUsers size={20} color="var(--sk-icon-accent)" />
-          <div className="sk-label-2">Моя команда: кому нужно внимание</div>
-        </div>
-        <button className="sk-link-btn" style={{ font: "var(--sk-label-4)" }} onClick={onAsk}>Показать все</button>
+      <div className="sk-row sk-gap-2" style={{ alignItems: "center", marginBottom: 10 }}>
+        <IconUsers size={20} color="var(--sk-icon-accent)" />
+        <div className="sk-label-2">Моя команда: кому нужно внимание</div>
       </div>
       {rows.length
         ? <div>{rows.map((r, i) => <FocusRow key={i} first={i === 0} {...r} />)}</div>
@@ -442,18 +439,11 @@ function buildTeamContent() {
     rows.find((r) => r.title === "Светлана Морозова"),
   ].filter(Boolean);
   return {
-    content: {
-      all: { rows: allRows, emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
-      adaptation: { rows, emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
-      learning: { rows: [{ kind: "Обучение", title: "Несколько сотрудников близки к сроку обучения", subtitle: "Стоит проверить назначения команды", tone: "", query: "Покажи просроченные действия команды" }], emptyText: "" },
-      assessment: { rows: [{ kind: "Оценка", title: "Дарья Белозёрова", subtitle: "Не прошла самооценку 360 · до 20 августа", tone: "warn", href: "../manager/plan.html?employee=darya" }], emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
-      idp: { rows: [{ kind: "ИПР", title: "Алексей Ковалев", subtitle: "Черновик ИПР ждёт согласования · до 15 сентября", tone: "warn", href: "../manager/plan.html?employee=alexey" }], emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
-    },
-    prompts: {
-      all: ["Кто требует моего внимания и почему?", "Сотрудники с рисками в планах", "Кто ещё не начал план?"],
-      adaptation: ["Кто требует моего внимания и почему?", "Сотрудники с рисками в планах", "Кто ещё не начал план?"],
-      learning: ["Покажи просроченные действия команды"],
-    },
+    all: { rows: allRows, emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
+    adaptation: { rows, emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
+    learning: { rows: [{ kind: "Обучение", title: "Несколько сотрудников близки к сроку обучения", subtitle: "Стоит проверить назначения команды", tone: "", query: "Покажи просроченные действия команды" }], emptyText: "" },
+    assessment: { rows: [{ kind: "Оценка", title: "Дарья Белозёрова", subtitle: "Не прошла самооценку 360 · до 20 августа", tone: "warn", href: "../manager/plan.html?employee=darya" }], emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
+    idp: { rows: [{ kind: "ИПР", title: "Алексей Ковалев", subtitle: "Черновик ИПР ждёт согласования · до 15 сентября", tone: "warn", href: "../manager/plan.html?employee=alexey" }], emptyText: "Сейчас нет сотрудников, которым нужно ваше внимание." },
   };
 }
 
@@ -471,12 +461,9 @@ function Page() {
 
   const personalContent = personal.content[activeModule];
   const personalPrompts = personal.prompts[activeModule] || [];
-  const personalAsk = personalPrompts[0] || "Что мне сделать сегодня?";
 
   const teamRelevant = TEAM_RELEVANT_MODULES.indexOf(activeModule) !== -1;
-  const teamContent = teamRelevant ? team.content[activeModule] : null;
-  const teamPrompts = team.prompts[activeModule] || [];
-  const teamAsk = teamPrompts[0] || "Кто требует моего внимания и почему?";
+  const teamContent = teamRelevant ? team[activeModule] : null;
 
   return (
     <AppShell role="employee" active="home" base="..">
@@ -489,13 +476,11 @@ function Page() {
 
         {teamContent ? (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <FocusCard title="Важное для меня" rows={personalContent.rows} emptyText={personalContent.emptyText}
-              onAsk={() => askAi(personalAsk)} />
-            <TeamCard rows={teamContent.rows} emptyText={teamContent.emptyText} onAsk={() => askAi(teamAsk)} />
+            <FocusCard title="Важное для меня" rows={personalContent.rows} emptyText={personalContent.emptyText} />
+            <TeamCard rows={teamContent.rows} emptyText={teamContent.emptyText} />
           </div>
         ) : (
-          <FocusCard title="Важное для меня" rows={personalContent.rows} emptyText={personalContent.emptyText}
-            onAsk={() => askAi(personalAsk)} />
+          <FocusCard title="Важное для меня" rows={personalContent.rows} emptyText={personalContent.emptyText} />
         )}
 
         <ActionsCard prompts={personalPrompts} />
