@@ -161,8 +161,8 @@ function ModuleTabs({ active, onChange }) {
           <button key={m.id} onClick={() => onChange(m.id)} className={sel ? "" : "sk-clickable"} style={{
             border: "none", cursor: "pointer", borderRadius: "var(--sk-radius-full)", padding: "8px 16px",
             font: sel ? "var(--sk-label-3)" : "var(--sk-label-3-regular)",
-            background: sel ? "var(--sk-accent-secondary)" : "transparent",
-            color: sel ? "var(--sk-text-accent)" : "var(--sk-text-secondary)",
+            background: sel ? "var(--sk-surface-tertiary)" : "transparent",
+            color: sel ? "var(--sk-text-primary)" : "var(--sk-text-secondary)",
           }}>{m.label}</button>
         );
       })}

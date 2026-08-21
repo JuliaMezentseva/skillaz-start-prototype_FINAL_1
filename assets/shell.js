@@ -906,7 +906,8 @@ function aiEmployeePlanIntent(queryRaw) {
   if (q.indexOf("сегодня") !== -1 || q.indexOf("сделать") !== -1) {
     const results = [];
     urgentChecklist.forEach((it) => results.push({
-      id: "item-" + it.id, title: it.title, subtitle: "Базовые действия" + (it.date ? " · " + it.date : ""), warning: "Скоро дедлайн",
+      id: "item-" + it.id, title: it.title, subtitle: "Базовые действия",
+      warning: "Осталось 3 дня" + (it.date ? " (до " + it.date + ")" : ""),
       actions: [{ kind: "query", label: "Открыть", query: "__openItem:" + it.id }],
     }));
     activeSubgoals.forEach((sg) => results.push({
@@ -1072,8 +1073,9 @@ function aiEmployeeHomeIntent(queryRaw) {
   if (q.indexOf("сегодня") !== -1 || q.indexOf("сделать") !== -1) {
     const results = [];
     urgentChecklist.forEach((it) => results.push({
-      id: "item-" + it.id, title: it.title, subtitle: "Базовые действия" + (it.date ? " · " + it.date : ""),
-      warning: "Скоро дедлайн", href: planHref, openLabel: "Открыть план адаптации",
+      id: "item-" + it.id, title: it.title, subtitle: "Базовые действия",
+      warning: "Осталось 3 дня" + (it.date ? " (до " + it.date + ")" : ""),
+      href: planHref, openLabel: "Открыть план адаптации",
     }));
     activeSubgoals.forEach((sg) => results.push({
       id: "sg-" + sg.id, title: sg.title, subtitle: sg.goalTitle + " · " + aiStripDuePrefix(sg.dueLabel),
