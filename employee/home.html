@@ -100,7 +100,7 @@ function withKind(row, kind) {
 // объяснение возможностей ассистента больше нигде на странице не встречается.
 const DEFAULT_HOME_QUERY = "Что мне важно успеть сегодня?";
 
-function AiHero() {
+function AiHero({ prompts }) {
   const [value, setValue] = React.useState("");
   // Кнопка работает сразу, без ввода — если поле пустое, спрашиваем то же самое, что
   // подсказывает плейсхолдер, чтобы демо можно было показать одним кликом.
@@ -146,6 +146,12 @@ function AiHero() {
           background: "#fff", color: "#171a20", font: "var(--sk-label-3)", cursor: "pointer",
         }}>Спросить</button>
       </div>
+
+      {prompts && prompts.length > 0 && (
+        <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
+          {prompts.map((p) => <ActionRow key={p} title={p} onClick={() => askAi(p)} />)}
+        </div>
+      )}
     </div>
   );
 }
@@ -216,34 +222,20 @@ function FocusCard({ title, rows, emptyText }) {
   );
 }
 
-// Круглое облачко-чип в ряд, а не строка списка — тот же визуальный язык, что у
-// подсказок-вопросов внутри самой AI-панели (см. AI_PAGE_CONFIG.chips в shell.js), только
-// pill-формой подчёркиваем, что это блок целиком, а не колонка рядом с "Важное для меня".
+// Круглое облачко-чип — живёт прямо в AiHero под строкой поиска (см. AiHero ниже), белое на
+// фоне градиента, звёздочка фиолетовая — тот же язык, что у подсказок внутри самой AI-панели
+// (см. AI_PAGE_CONFIG.chips в shell.js).
 function ActionRow({ title, onClick }) {
   return (
     <button onClick={onClick} className="sk-clickable" style={{
       display: "inline-flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
-      // Полупрозрачная светло-сиреневая заливка вместо белого фона + серой рамки —
-      // rgba поверх фирменного violet-50 (--sk-special), а не сплошной --sk-special-secondary,
-      // чтобы облачко читалось именно как стеклянно-прозрачное, а не просто светло-лиловое.
-      border: "none", background: "rgba(144, 84, 234, 0.12)",
+      border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
       borderRadius: "var(--sk-radius-full)", padding: "10px 16px", font: "var(--sk-label-3-regular)",
       color: "var(--sk-text-primary)", cursor: "pointer",
     }}>
       <IconAiSpark size={14} color="var(--sk-icon-special)" style={{ flexShrink: 0 }} />
       {title}
     </button>
-  );
-}
-
-function ActionsCard({ prompts }) {
-  return (
-    <Card bordered style={{ padding: 20 }}>
-      <div className="sk-label-2" style={{ marginBottom: 10 }}>Быстрые действия с AI</div>
-      {prompts.length
-        ? <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>{prompts.map((p) => <ActionRow key={p} title={p} onClick={() => askAi(p)} />)}</div>
-        : <div className="sk-muted" style={{ font: "var(--sk-label-3-regular)", padding: "6px 2px" }}>Пока нет готовых подсказок для этого раздела.</div>}
-    </Card>
   );
 }
 
@@ -472,7 +464,7 @@ function Page() {
       <div className="sk-col sk-gap-6">
         <div className="sk-title-4">Добрый день, {D.person.firstName}!</div>
 
-        <AiHero />
+        <AiHero prompts={personalPrompts} />
 
         <ModuleTabs active={activeModule} onChange={setActiveModule} />
 
@@ -484,8 +476,6 @@ function Page() {
         ) : (
           <FocusCard title="Важное для меня" rows={personalContent.rows} emptyText={personalContent.emptyText} />
         )}
-
-        <ActionsCard prompts={personalPrompts} />
 
         <div className="sk-col sk-gap-3">
           <div className="sk-row" style={{ justifyContent: "space-between" }}>
