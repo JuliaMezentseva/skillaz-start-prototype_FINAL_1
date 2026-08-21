@@ -372,7 +372,7 @@ function Page() {
       </div>
     ) },
     ...OPTIONAL_COLUMNS.filter((c) => visibleOptionalCols.includes(c.key)).map((c) => optionalColumnDefs[c.key]),
-    { key: "direction", title: "Направление", render: (v) => <Tag size="s" hue="neutral">{v.direction}</Tag> },
+    { key: "direction", title: "Направление", render: (v) => <span style={{ font: "var(--sk-label-3-regular)" }}>{v.direction}</span> },
     { key: "status", title: "Статус найма", render: (v) => <Tag size="s" hue={v.status === "open" ? "positive" : "neutral"}>{v.status === "open" ? "Идёт поиск" : "Закрыта"}</Tag> },
     { key: "date", title: <SortableHeader label="Дата публикации" sortKey="date" />, render: (v) => (
       <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{v.createdAt === "сегодня" ? "Сегодня" : (v.postedDate || "—")}</span>
@@ -381,7 +381,7 @@ function Page() {
       v.responsesCount > 0 ? (
         <a href={"vacancy-responses.html?id=" + v.id} onClick={(e) => e.stopPropagation()} className="sk-row sk-gap-1"
           style={{ alignItems: "center", textDecoration: "none", whiteSpace: "nowrap" }}>
-          <span style={{ color: "var(--sk-text-primary)", font: "var(--sk-label-3)" }}>{v.responsesCount}</span>
+          <span style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-3)" }}>{v.responsesCount}</span>
           <span className="sk-row sk-gap-1" style={{ alignItems: "center", color: "var(--sk-text-accent)", font: "var(--sk-label-4-regular)", whiteSpace: "nowrap", flexShrink: 0 }}>
             · Перейти<IconChevronRight size={14} color="var(--sk-icon-accent)" />
           </span>
