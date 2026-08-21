@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Главная — Skillaz Start</title>
 <link rel="stylesheet" href="../assets/styles.css" />
+<style>
+/* Инлайновые React-стили не умеют в ::placeholder — плейсхолдер должен читаться как
+   реальный белый текст на градиенте hero, а не блёклый серый по умолчанию браузера. */
+.sk-home-hero-input::placeholder { color: #fff; opacity: 0.85; }
+</style>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
@@ -85,12 +90,10 @@ function withKind(row, kind) {
   return row ? { ...row, kind } : row;
 }
 
-// Визуально главный блок страницы, но в тихом варианте — светлая лавандовая заливка
-// (--sk-special-secondary) вместо яркого градиента: читается как "ещё одна панель", а не
-// рекламный баннер, и не спорит по яркости с цветными плитками курсов ниже. Фиолетовый —
-// уже сложившийся в этом прототипе "цвет AI" (Tag hue="special", кружок в ActionRow), только
-// без градиента. Переключатель модулей живёт отдельно, ниже (см. ModuleTabs) — так он
-// визуально ближе к блокам, которыми управляет.
+// Визуально главный блок страницы: градиент special→accent — тот же, что и у плавающей
+// кнопки AI-ассистента в других частях прототипа, уже сложившийся здесь "цвет AI".
+// Переключатель модулей живёт отдельно, ниже (см. ModuleTabs) — так он визуально ближе к
+// блокам, которыми управляет, а не спрятан внутри градиента далеко от них.
 // Подпись — статичное описание того, что умеет ассистент, а не саммари текущих дел: то, что
 // сейчас важно, и так видно на расстоянии одного скролла в карточках ниже (Что сейчас важно /
 // Моя команда) — повторять это в hero было бы дублированием без новой информации, а вот
@@ -108,19 +111,19 @@ function AiHero() {
   return (
     <div style={{
       borderRadius: "var(--sk-radius-5)", padding: 28,
-      background: "var(--sk-special-secondary)", boxShadow: "inset 0 0 0 1px var(--sk-stroke-special)",
-      display: "flex", flexDirection: "column", gap: 18,
+      background: "linear-gradient(135deg, var(--sk-special), var(--sk-accent))",
+      boxShadow: "var(--sk-shadow-m)", display: "flex", flexDirection: "column", gap: 18,
     }}>
       <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
         <span style={{
           width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
-          background: "var(--sk-special)", display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center",
         }}>
-          <IconAiSpark size={22} color="#fff" />
+          <IconAiSpark size={22} color="#FFC804" />
         </span>
         <div style={{ minWidth: 0 }}>
-          <div style={{ font: "var(--sk-title-5)", color: "var(--sk-text-primary)" }}>Чем помочь сегодня?</div>
-          <div style={{ font: "var(--sk-label-3-regular)", color: "var(--sk-text-secondary)", marginTop: 2 }}>
+          <div style={{ font: "var(--sk-title-5)", color: "#fff" }}>Чем помочь сегодня?</div>
+          <div style={{ font: "var(--sk-label-3-regular)", color: "rgba(255,255,255,0.76)", marginTop: 2 }}>
             Открою нужный объект, подскажу или выполню действия за вас — для вас и для команды
           </div>
         </div>
@@ -129,18 +132,18 @@ function AiHero() {
       <div className="sk-row sk-gap-2">
         <div style={{
           flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10, height: 48,
-          padding: "0 16px", borderRadius: "var(--sk-radius-3)", background: "var(--sk-surface-page)",
-          boxShadow: "inset 0 0 0 1px var(--sk-stroke)",
+          padding: "0 16px", borderRadius: "var(--sk-radius-3)", background: "rgba(255,255,255,0.16)",
         }}>
-          <IconSearch size={18} color="var(--sk-icon-secondary)" />
+          <IconSearch size={18} color="rgba(255,255,255,0.7)" />
           <input value={value} onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") submit(); }}
             placeholder="Например: что мне важно успеть сегодня?"
-            style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: "var(--sk-text-primary)", font: "400 15px/22px var(--sk-font-ui)" }} />
+            className="sk-home-hero-input"
+            style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: "#fff", font: "400 15px/22px var(--sk-font-ui)" }} />
         </div>
         <button onClick={submit} style={{
           height: 48, padding: "0 22px", borderRadius: "var(--sk-radius-3)", border: "none", flexShrink: 0,
-          background: "var(--sk-special)", color: "#fff", font: "var(--sk-label-3)", cursor: "pointer",
+          background: "#fff", color: "#171a20", font: "var(--sk-label-3)", cursor: "pointer",
         }}>Спросить</button>
       </div>
     </div>
