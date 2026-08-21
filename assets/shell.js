@@ -969,6 +969,17 @@ function aiEmployeeHomeIntent(queryRaw) {
       })),
     };
   }
+  if (q.indexOf("курс") !== -1 || q.indexOf("обучен") !== -1) {
+    const courseItems = plan.stages.flatMap((s) => s.items.filter((i) => i.kind === "course"));
+    if (!courseItems.length) return { text: "В плане адаптации пока нет курсов.", results: [] };
+    return {
+      text: "Вот курсы из вашего плана адаптации:",
+      results: courseItems.map((c) => ({
+        id: c.id, title: c.title, subtitle: c.done ? "Пройден" : (c.date ? "Начнётся " + c.date : "Ещё не начат"),
+        href: planHref, openLabel: "Открыть план адаптации",
+      })),
+    };
+  }
   if (q.indexOf("сегодня") !== -1 || q.indexOf("сделать") !== -1) {
     const results = [];
     urgentChecklist.forEach((it) => results.push({
@@ -1008,7 +1019,7 @@ function aiPageKey() {
 }
 const AI_PAGE_CONFIG = {
   "employee-home": {
-    chips: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Что у меня в работе?", "Какие вакансии мне подходят?"],
+    chips: ["Что мне сделать сегодня?", "Подготовиться к контрольной точке", "Какие курсы у меня есть?", "Какие вакансии мне подходят?"],
     resolve: aiEmployeeHomeIntent,
   },
   "hr-plans": {
