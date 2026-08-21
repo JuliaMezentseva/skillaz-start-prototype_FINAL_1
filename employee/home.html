@@ -98,14 +98,12 @@ function withKind(row, kind) {
 // сейчас важно, и так видно на расстоянии одного скролла в карточках ниже (Что сейчас важно /
 // Моя команда) — повторять это в hero было бы дублированием без новой информации, а вот
 // объяснение возможностей ассистента больше нигде на странице не встречается.
-const DEFAULT_HOME_QUERY = "Что мне важно успеть сегодня?";
-
 function AiHero({ prompts }) {
   const [value, setValue] = React.useState("");
-  // Кнопка работает сразу, без ввода — если поле пустое, спрашиваем то же самое, что
-  // подсказывает плейсхолдер, чтобы демо можно было показать одним кликом.
+  const canSubmit = value.trim().length > 0;
   function submit() {
-    askAi(value.trim() || DEFAULT_HOME_QUERY);
+    if (!canSubmit) return;
+    askAi(value.trim());
     setValue("");
   }
   return (
@@ -141,9 +139,11 @@ function AiHero({ prompts }) {
             className="sk-home-hero-input"
             style={{ flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: "#fff", font: "400 15px/22px var(--sk-font-ui)" }} />
         </div>
-        <button onClick={submit} style={{
+        <button onClick={submit} disabled={!canSubmit} style={{
           height: 48, padding: "0 22px", borderRadius: "var(--sk-radius-3)", border: "none", flexShrink: 0,
-          background: "#fff", color: "#171a20", font: "var(--sk-label-3)", cursor: "pointer",
+          background: canSubmit ? "#fff" : "rgba(255,255,255,0.3)",
+          color: canSubmit ? "#171a20" : "rgba(255,255,255,0.6)",
+          font: "var(--sk-label-3)", cursor: canSubmit ? "pointer" : "default",
         }}>Спросить</button>
       </div>
 
@@ -228,12 +228,12 @@ function FocusCard({ title, rows, emptyText }) {
 function ActionRow({ title, onClick }) {
   return (
     <button onClick={onClick} className="sk-clickable" style={{
-      display: "inline-flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
-      border: "1px solid var(--sk-stroke)", background: "var(--sk-surface-page)",
-      borderRadius: "var(--sk-radius-full)", padding: "10px 16px", font: "var(--sk-label-3-regular)",
+      display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+      border: "1px solid rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.82)",
+      borderRadius: "var(--sk-radius-full)", padding: "6px 12px", font: "var(--sk-label-4-regular)",
       color: "var(--sk-text-primary)", cursor: "pointer",
     }}>
-      <IconAiSpark size={14} color="var(--sk-icon-special)" style={{ flexShrink: 0 }} />
+      <IconAiSpark size={12} color="var(--sk-icon-special)" style={{ flexShrink: 0 }} />
       {title}
     </button>
   );
@@ -364,9 +364,20 @@ function buildPersonalContent(plan, planHref) {
   const learningRows = courses.filter((c) => c.state !== "done")
     .map((c) => ({ kind: "Курс", title: c.title, subtitle: c.meta, tone: "", href: planHref }));
 
-  const vacancyRows = vacancyMatches.map(({ v, pct }) => ({
-    kind: "Вакансия", title: v.title, subtitle: v.city + " · подходит на " + pct + "%", tone: "", href: "vacancy.html?id=" + v.id,
-  }));
+  // Два сводных пункта вместо списка конкретных вакансий — на "Важное для меня" это должно
+  // читаться как "загляните туда-то", а не дублировать саму витрину вакансий построчно.
+  const vacancyRows = [
+    {
+      kind: "Вакансия", title: "Новое по подписке",
+      subtitle: D.vacancies.filter((v) => v.isNew).length + " новые вакансии по вашим фильтрам",
+      href: "vacancies.html",
+    },
+    {
+      kind: "Вакансия", title: "Подходящие",
+      subtitle: vacancyMatches.length + " вакансии подходят вам" + (vacancyMatches[0] ? " · топ " + vacancyMatches[0].pct + "%" : ""),
+      href: "vacancies.html",
+    },
+  ];
 
   // Иллюстративный пример для "Оценка"/"ИПР" (нет своих страниц в прототипе, см. верхний
   // комментарий) — адаптировано из https://yulia405.github.io/skillaz-ai-assistant-demo/,

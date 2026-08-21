@@ -122,7 +122,7 @@ window.SITE_DATA = {
             { id: "e6", kind: "course", title: "Вводный инструктаж по охране труда и технике безопасности", date: "7 марта", done: true },
             { id: "e7", kind: "article", title: "Внутренний трудовой распорядок и правила офиса", date: "8 марта", duration: "8 м.", done: false },
             { id: "e8", kind: "article", title: "Кодекс деловой этики", date: "9 марта", duration: "12 м.", done: false },
-            { id: "e9", kind: "task", title: "Пройти тест на знание регламента информационной безопасности", date: "10 марта", duration: "15 м.", done: false, highlight: "warning" },
+            { id: "e9", kind: "task", title: "Пройти тест на знание регламента ИБ", date: "10 марта", duration: "15 м.", done: false, highlight: "warning" },
           ],
         },
         {
