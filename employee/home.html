@@ -266,7 +266,7 @@ const COURSE_TILES = [
 // Кнопка внизу — настоящая Button из ДС (не просто текст со стрелкой): "Продолжить"
 // вторичная для уже начатых/пройденных курсов, "Начать" акцентная для ещё не начатых.
 // Сама кнопка ведёт на план так же, как и клик по названию — своей страницы у курса нет.
-function CourseCard({ title, state, progressPct, meta, href, tile }) {
+function CourseCard({ title, state, progressPct, href, tile }) {
   const Icon = tile.Icon;
   return (
     <Card bordered padding={0} style={{ overflow: "hidden", display: "flex", flexDirection: "column", height: "100%" }}>
@@ -277,7 +277,6 @@ function CourseCard({ title, state, progressPct, meta, href, tile }) {
         <a href={href} style={{ textDecoration: "none" }}>
           <div className="sk-label-2" style={{ color: "var(--sk-text-primary)" }}>{title}</div>
         </a>
-        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{meta}</div>
         <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ height: 5, borderRadius: 4, background: "var(--sk-surface-secondary)", overflow: "hidden" }}>
             <div style={{ width: progressPct + "%", height: "100%", background: state === "done" ? "var(--sk-positive)" : "var(--sk-accent)" }} />
