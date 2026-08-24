@@ -69,28 +69,58 @@ function filtersSignature(filters) {
 }
 
 // Подписка на уведомления по текущим фильтрам: компактная пилюля-кнопка (в духе job
-// alert на hh.ru/LinkedIn), сидит в одном ряду с "Найдено вакансий" справа. Клик сохраняет
-// снимок filters как отдельную подписку — если подписок несколько, они показаны бирками
-// ниже, каждую можно снять по отдельности. Без тогла — сам клик по пилюле переключает
-// подписку, второй клик снимает её же (см. правки по референсу из ДС).
+// alert на hh.ru/LinkedIn), сидит в одном ряду с "Найдено вакансий" справа. Клик по
+// выключенной пилюле сразу подписывает; клик по включённой ("Вы подписаны") не отписывает
+// сразу, а открывает попап с перечнем фильтров подписки и кнопкой "Отписаться" — так
+// видно, по каким именно условиям сейчас действует подписка, прежде чем её снять.
 function SubscribeBar({ filters, hasActiveFilters, subscriptions, onSubscribe, onUnsubscribe }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
   const sig = filtersSignature(filters);
   const isOn = hasActiveFilters && subscriptions.some((s) => s.sig === sig);
+  const activeValues = Object.keys(FILTER_LABELS).flatMap((k) => filters[k]);
+
   const btn = (
     <button type="button" disabled={!hasActiveFilters}
-      onClick={() => (isOn ? onUnsubscribe(sig) : onSubscribe(sig, filters))}
+      onClick={() => (isOn ? setOpen((o) => !o) : onSubscribe(sig, filters))}
       className="sk-row sk-gap-2 sk-clickable" style={{
         alignItems: "center", flexShrink: 0, height: 32, padding: "0 12px", border: "none",
         borderRadius: 8, background: "var(--sk-surface-secondary)",
         color: "var(--graphite-graphite-35)", font: "var(--sk-label-3-regular)", letterSpacing: "0.01em",
         cursor: hasActiveFilters ? "pointer" : "default", opacity: hasActiveFilters ? 1 : 0.6, whiteSpace: "nowrap",
       }}>
-      <IconBell size={15} color={isOn ? "var(--sk-icon-accent)" : "var(--sk-icon-secondary)"} />
+      <IconBell size={15} color="var(--sk-icon-secondary)" />
       {isOn ? "Вы подписаны" : "Подписаться на новые"}
     </button>
   );
-  if (hasActiveFilters) return btn;
-  return <Tooltip content="Выберите фильтр, чтобы подписаться на уведомления о новых вакансиях">{btn}</Tooltip>;
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      {hasActiveFilters ? btn : <Tooltip content="Выберите фильтр, чтобы подписаться на уведомления о новых вакансиях">{btn}</Tooltip>}
+      {open && isOn && (
+        <div className="sk-col sk-gap-3" style={{
+          position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 50, width: 280,
+          background: "var(--sk-surface-page)", borderRadius: "var(--sk-radius-3)", boxShadow: "var(--sk-shadow-m)", padding: 16,
+        }}>
+          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Подписка активна по фильтрам:</div>
+          <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
+            {activeValues.map((v, i) => <Tag key={i} hue="neutral">{v}</Tag>)}
+          </div>
+          <button type="button" onClick={() => { onUnsubscribe(sig); setOpen(false); }} className="sk-clickable" style={{
+            height: 44, borderRadius: "var(--sk-radius-form)", border: "1.5px solid var(--sk-stroke)",
+            background: "var(--sk-surface-page)", font: "600 14px/20px var(--sk-font-ui)", color: "var(--sk-text-primary)", cursor: "pointer",
+          }}>Отписаться</button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function SubscriptionsList({ subscriptions, onUnsubscribe }) {
