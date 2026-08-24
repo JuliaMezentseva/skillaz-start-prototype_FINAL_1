@@ -433,7 +433,7 @@ function Page() {
         <FiltersSummaryChip count={activeFilterCount} open={filtersOpen} onToggle={() => setFiltersOpen((o) => !o)} onReset={() => setFilters(emptyFilters)} />
         <div className="sk-row sk-gap-2" style={{ marginLeft: "auto", alignItems: "center" }}>
           <SegmentedControl
-            items={[{ id: "open", label: "Идёт найм" }, { id: "closed", label: "Закрытые" }]}
+            items={[{ id: "open", label: "Идёт поиск" }, { id: "closed", label: "Закрытые" }]}
             active={showClosed ? "closed" : "open"}
             onChange={(id) => setShowClosed(id === "closed")} />
           <ColumnsPicker visible={visibleOptionalCols} onApply={setVisibleOptionalCols} />
