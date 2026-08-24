@@ -352,7 +352,7 @@ function Page() {
   // чтобы таблица не разрасталась вширь у всех сразу, а админ сам решал, что ему нужно.
   const optionalColumnDefs = {
     source: { key: "source", title: "Источник", render: (v) => (
-      <Tag size="s" hue={v.source === "manual" ? "accent" : "neutral"}>{v.source === "manual" ? "Создана вручную" : "АТС"}</Tag>
+      <Tag size="s" hue={v.source === "manual" ? "accent" : "neutral"}>{v.source === "manual" ? "Вручную" : "ATS"}</Tag>
     ) },
     department: { key: "department", title: <SortableHeader label="Подразделение" sortKey="department" />, render: (v) => <span className="sk-label-3-regular">{v.department}</span> },
     city: { key: "city", title: <SortableHeader label="Регион" sortKey="city" />, render: (v) => <span className="sk-label-3-regular">{v.city}</span> },
@@ -447,7 +447,7 @@ function Page() {
           <FilterChip label="Регион" options={toOptions(cityOptions)} value={filters.cities} onChange={(v) => setFilters((f) => ({ ...f, cities: v }))} />
           <FilterChip label="Формат работы" options={toOptions(D.workFormats)} value={filters.formats} onChange={(v) => setFilters((f) => ({ ...f, formats: v }))} />
           <FilterChip label="Тип занятости" options={toOptions(D.employmentTypes)} value={filters.employments} onChange={(v) => setFilters((f) => ({ ...f, employments: v }))} />
-          <FilterChip label="Источник" options={[{ value: "ats", label: "АТС" }, { value: "manual", label: "Создана вручную" }]} value={filters.sources} onChange={(v) => setFilters((f) => ({ ...f, sources: v }))} />
+          <FilterChip label="Источник" options={[{ value: "ats", label: "ATS" }, { value: "manual", label: "Вручную" }]} value={filters.sources} onChange={(v) => setFilters((f) => ({ ...f, sources: v }))} />
           <FilterChip label="Видимость в витрине" options={[{ value: "visible", label: "Видна" }, { value: "hidden", label: "Скрыта" }]} value={filters.visibilities} onChange={(v) => setFilters((f) => ({ ...f, visibilities: v }))} />
         </div>
       )}
