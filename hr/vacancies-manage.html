@@ -375,7 +375,7 @@ function Page() {
     { key: "direction", title: "Направление", render: (v) => <span style={{ font: "var(--sk-label-3-regular)" }}>{v.direction}</span> },
     { key: "status", title: "Статус найма", render: (v) => <Tag size="s" hue={v.status === "open" ? "positive" : "neutral"}>{v.status === "open" ? "Идёт поиск" : "Закрыта"}</Tag> },
     { key: "date", title: <SortableHeader label="Дата публикации" sortKey="date" />, render: (v) => (
-      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{v.createdAt === "сегодня" ? "Сегодня" : (v.postedDate || "—")}</span>
+      <span className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>{v.createdAt === "сегодня" ? "Сегодня" : (v.postedDate || "—")}</span>
     ) },
     { key: "responses", title: <SortableHeader label="Отклики" sortKey="responses" />, render: (v) => (
       v.responsesCount > 0 ? (
