@@ -264,15 +264,7 @@ function ApplyModal({ vacancy, initialLetter, onClose, onSubmitted }) {
         </div>
 
         <div className="sk-col sk-gap-2">
-          <div style={{ position: "relative" }}>
-            <Textarea label="Мотивационное письмо" helper="Необязательно, но повышает шансы"
-              placeholder="Расскажите, почему вам интересна эта роль…" value={letter}
-              onChange={(e) => setLetter((e.target.value || "").slice(0, 800))} rows={3} />
-            <span style={{
-              position: "absolute", right: 12, bottom: 36, pointerEvents: "none",
-              font: "var(--sk-label-4-regular)", color: "var(--sk-text-tertiary)",
-            }}>{letter.length}/800</span>
-          </div>
+          <div className="sk-label-3">Мотивационное письмо</div>
           {remainingPrompts.length > 0 && (
             <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
               {remainingPrompts.map((pr) => (
@@ -287,6 +279,15 @@ function ApplyModal({ vacancy, initialLetter, onClose, onSubmitted }) {
               ))}
             </div>
           )}
+          <div style={{ position: "relative" }}>
+            <Textarea helper="Необязательно, но повышает шансы"
+              placeholder="Расскажите, почему вам интересна эта роль…" value={letter}
+              onChange={(e) => setLetter((e.target.value || "").slice(0, 800))} rows={3} />
+            <span style={{
+              position: "absolute", right: 12, bottom: 36, pointerEvents: "none",
+              font: "var(--sk-label-4-regular)", color: "var(--sk-text-tertiary)",
+            }}>{letter.length}/800</span>
+          </div>
         </div>
 
         <div className="sk-col sk-gap-2">
