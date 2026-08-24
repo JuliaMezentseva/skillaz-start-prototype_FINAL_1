@@ -17,7 +17,7 @@
 <script type="text/babel">
 const { Card, Tag, TextList, Divider, Modal, Input, Textarea, Select, Button, IconButton, Avatar, Snackbar, Alert } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, StatusTag, Icons } = window.Site;
-const { IconArrowLeft, IconMail, IconPhone, IconUpload, IconFileText, IconTarget, IconCheck, IconGift, IconLayers, IconPlusSm, IconUser } = Icons;
+const { IconArrowLeft, IconMail, IconPhone, IconUpload, IconFileText, IconTarget, IconCheck, IconGift, IconLayers, IconUser } = Icons;
 const D = window.SITE_DATA;
 
 const RELATION_OPTIONS = [
@@ -264,20 +264,6 @@ function ApplyModal({ vacancy, initialLetter, onClose, onSubmitted }) {
         </div>
 
         <div className="sk-col sk-gap-2">
-          {remainingPrompts.length > 0 && (
-            <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
-              {remainingPrompts.map((pr) => (
-                <button key={pr} type="button" onClick={() => insertPrompt(pr)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 4, border: "1px solid var(--sk-stroke)",
-                    background: "var(--sk-surface-page)", borderRadius: "var(--sk-radius-full)", padding: "4px 10px 4px 8px",
-                    font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)", cursor: "pointer",
-                  }}>
-                  <IconPlusSm size={12} />{pr}
-                </button>
-              ))}
-            </div>
-          )}
           <div style={{ position: "relative" }}>
             <Textarea label="Мотивационное письмо" helper="Необязательно, но повышает шансы"
               placeholder="Расскажите, почему вам интересна эта роль…" value={letter}
@@ -287,6 +273,20 @@ function ApplyModal({ vacancy, initialLetter, onClose, onSubmitted }) {
               font: "var(--sk-label-4-regular)", color: "var(--sk-text-tertiary)",
             }}>{letter.length}/800</span>
           </div>
+          {remainingPrompts.length > 0 && (
+            <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
+              {remainingPrompts.map((pr) => (
+                <button key={pr} type="button" onClick={() => insertPrompt(pr)}
+                  style={{
+                    border: "none", background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-full)",
+                    padding: "8px 14px", font: "var(--sk-label-3-regular)", color: "var(--sk-text-primary)",
+                    cursor: "pointer", textAlign: "left",
+                  }}>
+                  {pr}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="sk-col sk-gap-2">
