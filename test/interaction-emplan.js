@@ -39,9 +39,9 @@ const target = path.resolve(__dirname, "..", "employee", "plan.html");
     const w = loadPage(target, "plan=onboarding");
     await tick(150);
 
-    // 0. Переключиться на вкладку "План адаптации" — цели теперь скрыты за сегмент-контролом
-    const maxTab = [...w.document.querySelectorAll("span")].find(el => el.textContent.includes("План адаптации"));
-    console.log("Found 'План адаптации' tab:", !!maxTab ? "PASS" : "FAIL");
+    // 0. Переключиться на вкладку "Цели адаптации" — цели теперь скрыты за сегмент-контролом
+    const maxTab = [...w.document.querySelectorAll("span")].find(el => el.textContent.includes("Цели адаптации"));
+    console.log("Found 'Цели адаптации' tab:", !!maxTab ? "PASS" : "FAIL");
     maxTab.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
     await tick(80);
 
@@ -79,7 +79,7 @@ const target = path.resolve(__dirname, "..", "employee", "plan.html");
     console.log("Checkbox toggled without crash:", "PASS");
 
     // 4. Клик по карточке цели (не по подцели) открывает дровер цели с деталями
-    const maxTab2 = [...w.document.querySelectorAll("span")].find(el => el.textContent.includes("План адаптации"));
+    const maxTab2 = [...w.document.querySelectorAll("span")].find(el => el.textContent.includes("Цели адаптации"));
     maxTab2.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
     await tick(80);
     const goalCardTitle = [...w.document.querySelectorAll(".sk-title-5")].find(el => el.textContent.trim() === "Освоить полный цикл продажи и закрывать сделки без наставника");

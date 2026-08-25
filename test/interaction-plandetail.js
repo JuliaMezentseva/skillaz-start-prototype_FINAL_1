@@ -35,8 +35,8 @@ const w = loadPage(target, "id=ap_darya");
 setTimeout(() => {
   console.log("Tab order (first tab must be 'Мои задачи'):", w.document.body.textContent.includes("Мои задачи") ? "PASS" : "FAIL");
   const idxTasks = w.document.body.textContent.indexOf("Мои задачи");
-  const idxPlan = w.document.body.textContent.indexOf("План адаптации");
-  console.log("'Мои задачи' appears before 'План адаптации':", idxTasks < idxPlan && idxTasks !== -1 ? "PASS" : "FAIL");
+  const idxPlan = w.document.body.textContent.indexOf("Цели адаптации");
+  console.log("'Мои задачи' appears before 'Цели адаптации':", idxTasks < idxPlan && idxTasks !== -1 ? "PASS" : "FAIL");
   console.log("Default status is 'В процессе' (2/3 done, not all):", w.document.body.textContent.includes("В процессе") ? "PASS" : "FAIL");
 
   // клик по чекбоксу третьей (незавершённой) задачи -> должно стать "Завершено"
@@ -47,8 +47,8 @@ setTimeout(() => {
   setTimeout(() => {
     console.log("After completing last required task, status 'Завершено':", w.document.body.textContent.includes("Завершено") ? "PASS" : "FAIL");
 
-    // переключение на таб "План адаптации"
-    const planTabEl = [...w.document.querySelectorAll("span")].find(el => el.textContent.trim() === "План адаптации");
+    // переключение на таб "Цели адаптации"
+    const planTabEl = [...w.document.querySelectorAll("span")].find(el => el.textContent.trim() === "Цели адаптации");
     planTabEl.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
     setTimeout(() => {
       console.log("Plan tab shows checklist heading:", w.document.body.textContent.includes("Чек-лист") ? "PASS" : "FAIL");

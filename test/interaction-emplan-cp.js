@@ -33,9 +33,9 @@ function loadPage(htmlPath, query) {
 const target = path.resolve(__dirname, "..", "employee", "plan.html");
 const w = loadPage(target, "plan=onboarding");
 setTimeout(() => {
-  // Переключиться на вкладку "План адаптации" — блок КТ виден только на ней (showCheckpoints={tab === "max"})
-  const maxTab = [...w.document.querySelectorAll("span")].find((el) => el.textContent.includes("План адаптации"));
-  console.log("Found 'План адаптации' tab:", !!maxTab ? "PASS" : "FAIL");
+  // Переключиться на вкладку "Цели адаптации" — блок КТ виден только на ней (showCheckpoints={tab === "max"})
+  const maxTab = [...w.document.querySelectorAll("span")].find((el) => el.textContent.includes("Цели адаптации"));
+  console.log("Found 'Цели адаптации' tab:", !!maxTab ? "PASS" : "FAIL");
   maxTab.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
 setTimeout(() => {
   // Открыть контрольную точку cp1 (dateLabel "31 марта", pending, первая незавершённая — значит текущая и кликабельная)

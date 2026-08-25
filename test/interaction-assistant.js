@@ -33,9 +33,9 @@ function loadPage(htmlPath, query) {
 const target = path.resolve(__dirname, "..", "assistant", "plan.html");
 const w = loadPage(target, "employee=yulia2");
 setTimeout(() => {
-  // Переключиться на вкладку "План адаптации" — по умолчанию открыта "Базовые действия"
-  const maxTab = [...w.document.querySelectorAll("span")].find(el => el.textContent.includes("План адаптации"));
-  console.log("Found 'План адаптации' tab:", !!maxTab ? "PASS" : "FAIL");
+  // Переключиться на вкладку "Цели адаптации" — по умолчанию открыта "Базовые действия"
+  const maxTab = [...w.document.querySelectorAll("span")].find(el => el.textContent.includes("Цели адаптации"));
+  console.log("Found 'Цели адаптации' tab:", !!maxTab ? "PASS" : "FAIL");
   maxTab.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
 setTimeout(() => {
   // Открыть подцель g2s3 "Проанализировать 3 компании из подборки" (reviewer = Дмитрий Волков, статус pending_review)

@@ -879,7 +879,7 @@ function aiEmployeePlanIntent(queryRaw) {
   }
 
   if (q.indexOf("работе") !== -1 || q.indexOf("текущ") !== -1) {
-    if (!activeSubgoals.length) return { text: "Сейчас нет шагов, взятых в работу — загляните во вкладку «План адаптации» и возьмите очередной шаг.", results: [] };
+    if (!activeSubgoals.length) return { text: "Сейчас нет шагов, взятых в работу — загляните во вкладку «Цели адаптации» и возьмите очередной шаг.", results: [] };
     return {
       text: "Вот что у вас сейчас в работе:",
       results: activeSubgoals.map((sg) => ({

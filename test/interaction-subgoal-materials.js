@@ -39,9 +39,9 @@ const target = path.resolve(__dirname, "..", "employee", "plan.html");
     const w = loadPage(target, "plan=onboarding");
     await tick(150);
 
-    // Переключаемся на вкладку "План адаптации" (цели)
-    const maxTab = [...w.document.querySelectorAll("span")].find(el => el.textContent.trim().startsWith("План адаптации"));
-    console.log("Вкладка 'План адаптации' найдена (переименование прошло):", !!maxTab ? "PASS" : "FAIL");
+    // Переключаемся на вкладку "Цели адаптации" (цели)
+    const maxTab = [...w.document.querySelectorAll("span")].find(el => el.textContent.trim().startsWith("Цели адаптации"));
+    console.log("Вкладка 'Цели адаптации' найдена (переименование прошло):", !!maxTab ? "PASS" : "FAIL");
     maxTab.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
     await tick(80);
 

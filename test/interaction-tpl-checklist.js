@@ -47,7 +47,7 @@ const target = path.resolve(__dirname, "..", "hr", "template.html");
     const w = loadPage(target, "tpl=tpl_sales");
     await tick(150);
     let body = w.document.body.textContent;
-    console.log("Goals section is default:", body.includes("План адаптации") ? "PASS" : "FAIL");
+    console.log("Goals section is default:", body.includes("Цели адаптации") ? "PASS" : "FAIL");
     console.log("Toggle label updated:", body.includes("Включить план адаптации с целями") ? "PASS" : "FAIL");
     console.log("Checkpoints hidden while goals disabled:", !body.includes("Контрольные точки") ? "PASS" : "FAIL");
 
@@ -65,10 +65,10 @@ const target = path.resolve(__dirname, "..", "hr", "template.html");
     console.log("Checklist stub shown:", body.includes("Базового минимума") ? "PASS" : "FAIL");
     console.log("Checklist stub has no CRUD controls:", !w.document.body.innerHTML.includes("Добавить контрольную точку") ? "PASS" : "FAIL");
 
-    // Возвращаемся в "План адаптации" и включаем тумблер — по умолчанию открыт таб "Цели",
+    // Возвращаемся в "Цели адаптации" и включаем тумблер — по умолчанию открыт таб "Цели",
     // переключаемся на таб "Контрольные точки", чтобы увидеть пустую заглушку (симметричную
     // заглушке блока "Цели") и кнопку добавления первой КТ.
-    const goalsNav = findNavItem(w, "План адаптации");
+    const goalsNav = findNavItem(w, "Цели адаптации");
     goalsNav.dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
     await tick(50);
     const switchEl = w.document.querySelector('[role="switch"]');
