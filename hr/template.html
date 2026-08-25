@@ -15,13 +15,13 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { Card, Switch, Input, Textarea, Select, Checkbox, SegmentedControl, Tabs, Tooltip, Divider, Button, IconButton, Modal, Drawer, Alert } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, Icons } = window.Site;
+const { Card, Switch, Input, Textarea, Select, Checkbox, SegmentedControl, Tabs, Tooltip, Divider, Button, IconButton, Modal, Drawer, Alert, Tag, Avatar, Snackbar } = window.SkillazCoreDesignSystem_bf9566;
+const { AppShell, Icons, personPhoto } = window.Site;
 const {
   IconInfo, IconTarget, IconCheck, IconClipboard, IconSettings,
   IconHelpCircle, IconTrash, IconArrowLeft, IconClock, IconFileText, IconLink2, IconGraduationCap, IconMessageCircle,
   IconPlusSm, IconEdit, IconLayers, IconBookOpen, IconCalendar, IconSearch, IconX,
-  IconFilter, IconChevronDown, IconChevronRight,
+  IconFilter, IconChevronDown, IconChevronRight, IconUsers, IconFlag, IconAlertCircle, IconMapPin,
 } = Icons;
 
 // Склонение "шаг/шага/шагов" — для строки карточки цели в каталоге (см. GoalCatalogPickerModal).
@@ -69,7 +69,7 @@ const TEMPLATE_SECTIONS = [
 
 // Кликабельны только разделы, отрисованные в этой итерации — остальные пункты навигации
 // показывают заглушку NotBuiltSection (см. Флоу_HRАдмина_настройка_шаблона).
-const BUILT_SECTIONS = ["goals", "checklist"];
+const BUILT_SECTIONS = ["description", "goals", "checklist", "tasks"];
 
 const TEMPLATE_STATUS = {
   active: { label: "Активный", hue: "positive" },
@@ -531,8 +531,10 @@ function StepAssessmentPicker({ templateId, setTemplateId }) {
 // и чекбоксами. Источник списка — общий каталог материалов шаблона (у шаблона нет чек-листа
 // назначенного плана с конкретными задачами, поэтому список берётся из отдельного каталога,
 // а не из plan.stages, как у руководителя). ----------------
-const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", file: "Файл", link: "Ссылка" };
-const ELEMENT_ICON = { article: IconFileText, task: IconClipboard, course: IconGraduationCap, file: IconFileText, link: IconLink2 };
+const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", file: "Файл", link: "Ссылка", survey: "Опрос" };
+const ELEMENT_ICON = { article: IconFileText, task: IconClipboard, course: IconGraduationCap, file: IconFileText, link: IconLink2, survey: IconMessageCircle };
+// Порядок типов элемента чек-листа в селекте создания — "Задача" первой, т.к. только у неё есть поле "Исполнитель" (см. ТЗ "Доработки прототипа_Задачи и Роли").
+const CHECKLIST_ITEM_TYPES = ["task", "survey", "article", "course", "file", "link"];
 
 function TemplateMaterialsPicker({ materials, onAdd, onRemove }) {
   const D = window.SITE_DATA;
@@ -1033,21 +1035,510 @@ function GoalsSettingsCard({ template, enabled, owner, deadlineDays, reviewRequi
   );
 }
 
-// ---------------- Раздел "Чек-лист" — в этой итерации заглушка: настройка состава
-// чек-листа Базового минимума вне скоупа текущей итерации (см. Флоу_HRАдмина_настройка_шаблона). ----------------
-function ChecklistSection() {
+// ============================================================================
+// Участники плана, Описание, Чек-лист и Задачи — по ТЗ "Доработки прототипа_Задачи и Роли".
+// Ключевая идея: template.tasks — один плоский массив, а не два независимых списка для
+// чек-листа и вкладки "Задачи". stageId != null значит "показывается внутри этапа чек-листа
+// и во вкладке Задачи", stageId === null — "задача вне этапа, только во вкладке Задачи".
+// Редактирование в любом месте меняет один и тот же объект — синхронизация не нужна.
+// ============================================================================
+
+function roleLabel(p) {
+  const D = window.SITE_DATA;
+  const catalog = p.kind === "system" ? D.systemRoles : D.businessRolesCatalog;
+  const found = (catalog || []).find((r) => r.id === p.roleId);
+  return found ? found.label : p.roleId;
+}
+function roleSource(p) {
+  if (p.kind !== "system") return "Назначается при создании индивидуального плана";
+  const D = window.SITE_DATA;
+  const found = (D.systemRoles || []).find((r) => r.id === p.roleId);
+  return found ? found.source : "";
+}
+
+// ---------------- Строка участника плана — системная или бизнес-роль, в двух режимах:
+// "Шаблон" (роль без человека) и "После назначения" (превью п.4 ТЗ — роль, разрешённая
+// в конкретного человека через template.participants[].demoPerson; если demoPerson нет,
+// показывается состояние "участник не назначен", см. п.12 обязательных состояний). ----------------
+function ParticipantRow({ p, taskCount, assignedMode, onEdit, onDelete, onAssign }) {
+  const resolved = p.demoPerson || null;
+  return (
+    <div className="sk-row sk-gap-3" style={{
+      alignItems: "center", padding: "12px 14px", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)",
+      background: "var(--sk-surface-page)",
+    }}>
+      {assignedMode ? (
+        resolved ? (
+          <Avatar src={personPhoto(resolved.name)} name={resolved.name} size={32} />
+        ) : (
+          <span style={{
+            width: 32, height: 32, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "var(--sk-negative-secondary)", color: "var(--sk-icon-negative)",
+          }}><IconAlertCircle size={16} /></span>
+        )
+      ) : (
+        <span style={{
+          width: 32, height: 32, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+          background: p.kind === "system" ? "var(--sk-accent-secondary)" : "var(--sk-special-secondary)",
+          color: p.kind === "system" ? "var(--sk-text-accent)" : "var(--text-text-special)",
+        }}><IconUsers size={15} /></span>
+      )}
+
+      <div className="sk-col sk-gap-1" style={{ flex: 1, minWidth: 0 }}>
+        <div className="sk-row sk-gap-2" style={{ alignItems: "center", flexWrap: "wrap" }}>
+          <span className="sk-label-3">{roleLabel(p)}</span>
+          <Tag size="s" hue={p.kind === "system" ? "accent" : "special"}>{p.kind === "system" ? "Системная" : "Бизнес-роль"}</Tag>
+          {p.isPrimary && <Tag size="s" hue="positive" icon={<IconFlag size={12} />}>Основной</Tag>}
+          {p.required && <Tag size="s" hue="neutral">Обязательна</Tag>}
+        </div>
+        {assignedMode ? (
+          resolved ? (
+            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{resolved.name} · {resolved.position}</span>
+          ) : (
+            <span className="sk-label-4" style={{ color: "var(--sk-text-negative)" }}>Участник не назначен — выберите вручную</span>
+          )
+        ) : (
+          <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{roleSource(p)}</span>
+        )}
+      </div>
+
+      {assignedMode ? (
+        !resolved && <Button size="s" variant="accent" onClick={onAssign}>Назначить</Button>
+      ) : (
+        <React.Fragment>
+          <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>Задач: {taskCount}</span>
+          <Button size="s" mode="tertiary" onClick={onEdit}><IconEdit size={15} /></Button>
+          <Button size="s" mode="tertiary" onClick={onDelete}><IconTrash size={15} /></Button>
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+
+function AddParticipantModal({ existingRoleIds, onClose, onAdd }) {
+  const D = window.SITE_DATA;
+  const [kind, setKind] = React.useState("system");
+  const [roleId, setRoleId] = React.useState("");
+  const [required, setRequired] = React.useState(true);
+
+  const options = kind === "system"
+    ? (D.systemRoles || []).filter((r) => !existingRoleIds.system.includes(r.id))
+    : (D.businessRolesCatalog || []).filter((r) => !existingRoleIds.business.includes(r.id));
+
+  return (
+    <Modal open title="Добавить участника" onClose={onClose} size="s"
+      secondary={<Button mode="secondary" onClick={onClose}>Отменить</Button>}
+      primary={<Button variant="accent" disabled={!roleId} onClick={() => onAdd({ kind, roleId, required })}>Добавить</Button>}>
+      <div className="sk-col sk-gap-4">
+        <SegmentedControl size="m"
+          items={[{ id: "system", label: "Системная роль" }, { id: "business", label: "Бизнес-роль" }]}
+          active={kind} onChange={(v) => { setKind(v); setRoleId(""); }} />
+
+        {kind === "system" ? (
+          <div className="sk-col sk-gap-2">
+            <Select label="Роль" placeholder="Выберите роль" value={roleId}
+              options={options.map((r) => ({ value: r.id, label: r.label }))} onChange={setRoleId} />
+            {roleId && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
+              {(D.systemRoles.find((r) => r.id === roleId) || {}).source}
+            </span>}
+          </div>
+        ) : (
+          <Select label="Роль из справочника" placeholder="Выберите бизнес-роль" value={roleId}
+            options={options.map((r) => ({ value: r.id, label: r.label }))} onChange={setRoleId} />
+        )}
+
+        <div className="sk-row sk-gap-3 sk-clickable" onClick={() => setRequired((r) => !r)}>
+          <Checkbox checked={required} onChange={() => setRequired((r) => !r)} />
+          <div className="sk-col sk-gap-1">
+            <span className="sk-label-4">Обязательная роль</span>
+            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Без назначенного участника план не может быть выдан сотруднику</span>
+          </div>
+        </div>
+
+        {!options.length && <Alert hue="neutral">Все роли этого типа уже добавлены в шаблон.</Alert>}
+      </div>
+    </Modal>
+  );
+}
+
+function EditParticipantModal({ p, onClose, onSave }) {
+  const [required, setRequired] = React.useState(p.required);
+  const [isPrimary, setIsPrimary] = React.useState(!!p.isPrimary);
+  return (
+    <Modal open title={roleLabel(p)} onClose={onClose} size="s"
+      secondary={<Button mode="secondary" onClick={onClose}>Отменить</Button>}
+      primary={<Button variant="accent" onClick={() => onSave({ required, isPrimary })}>Сохранить</Button>}>
+      <div className="sk-col sk-gap-3">
+        <div className="sk-row sk-gap-3 sk-clickable" onClick={() => setRequired((r) => !r)}>
+          <Checkbox checked={required} onChange={() => setRequired((r) => !r)} />
+          <span className="sk-label-4">Обязательная роль</span>
+        </div>
+        {p.kind === "system" && (
+          <div className="sk-row sk-gap-3 sk-clickable" onClick={() => setIsPrimary((v) => !v)}>
+            <Checkbox checked={isPrimary} onChange={() => setIsPrimary((v) => !v)} />
+            <div className="sk-col sk-gap-1">
+              <span className="sk-label-4">Основной руководитель</span>
+              <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Приоритетный для согласований, уведомлений и действий по плану</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+function DeleteParticipantBlockedModal({ p, count, onClose }) {
+  return (
+    <Modal open title="Нельзя удалить роль" onClose={onClose} size="s"
+      primary={<Button variant="accent" onClick={onClose}>Понятно</Button>}>
+      <span className="sk-label-3-regular">
+        На роль «{roleLabel(p)}» назначено задач: {count}. Сначала переназначьте их другой роли или удалите, потом можно будет удалить роль.
+      </span>
+    </Modal>
+  );
+}
+
+function ParticipantsBlock({ participants, tasks, assignedMode, onToggleMode, onAdd, onEdit, onDelete, onAssign }) {
+  const [addModal, setAddModal] = React.useState(false);
+  const [editTarget, setEditTarget] = React.useState(null);
+  const [deleteBlocked, setDeleteBlocked] = React.useState(null);
+
+  const existingRoleIds = {
+    system: participants.filter((p) => p.kind === "system").map((p) => p.roleId),
+    business: participants.filter((p) => p.kind === "business").map((p) => p.roleId),
+  };
+  function taskCount(p) { return tasks.filter((t) => t.assigneeParticipantId === p.id).length; }
+  function handleDelete(p) {
+    const count = taskCount(p);
+    if (count > 0) { setDeleteBlocked({ p, count }); return; }
+    onDelete(p.id);
+  }
+
   return (
     <Card bordered>
-      <div className="sk-col sk-gap-2" style={{ alignItems: "center", textAlign: "center", padding: "32px 16px" }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--sk-surface-secondary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <IconCheck size={18} color="var(--sk-icon-secondary)" />
+      <div className="sk-col sk-gap-3">
+        <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div className="sk-col sk-gap-1">
+            <div className="sk-title-5">Участники плана</div>
+            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
+              {assignedMode ? "Так это будет выглядеть после назначения шаблона сотруднику" : "Роли, которым можно назначать задачи в этом шаблоне"}
+            </span>
+          </div>
+          <SegmentedControl size="s"
+            items={[{ id: "template", label: "Шаблон" }, { id: "assigned", label: "После назначения" }]}
+            active={assignedMode ? "assigned" : "template"} onChange={(v) => onToggleMode(v === "assigned")} />
         </div>
-        <div className="sk-label-2">Чек-лист шаблона</div>
-        <div className="sk-muted" style={{ maxWidth: 380 }}>
-          Здесь будет чек-лист для Базового минимума — обязательный порог входа в роль: доступы, культура, комплаенс. Настройка состава чек-листа не входит в текущую итерацию прототипа.
+
+        {participants.length === 0 ? (
+          <div className="sk-col sk-gap-3" style={{ alignItems: "center", textAlign: "center", padding: "24px 16px", background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-3)" }}>
+            <span className="sk-label-3">Участники ещё не добавлены</span>
+            <span className="sk-muted" style={{ maxWidth: 380, font: "var(--sk-label-4-regular)" }}>
+              Добавьте системные роли (руководитель, HRBP…) и бизнес-роли (наставник, бадди…), которым можно будет назначать задачи в чек-листе и во вкладке «Задачи»
+            </span>
+            <Button variant="accent" icon={<IconPlusSm size={16} />} onClick={() => setAddModal(true)}>Добавить участника</Button>
+          </div>
+        ) : (
+          <React.Fragment>
+            {!assignedMode && (
+              <Alert hue="accent" style={{ background: "var(--sk-surface-secondary)" }}>
+                Если участников-руководителей несколько, отметьте одного основным — он приоритетный для согласований, уведомлений и действий по плану.
+              </Alert>
+            )}
+            <div className="sk-col sk-gap-2">
+              {participants.map((p) => (
+                <ParticipantRow key={p.id} p={p} assignedMode={assignedMode} taskCount={taskCount(p)}
+                  onEdit={() => setEditTarget(p)} onDelete={() => handleDelete(p)} onAssign={() => onAssign(p)} />
+              ))}
+            </div>
+            {!assignedMode && (
+              <Button mode="secondary" size="s" icon={<IconPlusSm size={16} />} style={{ alignSelf: "flex-start" }} onClick={() => setAddModal(true)}>
+                Добавить участника
+              </Button>
+            )}
+          </React.Fragment>
+        )}
+      </div>
+
+      {addModal && (
+        <AddParticipantModal existingRoleIds={existingRoleIds} onClose={() => setAddModal(false)}
+          onAdd={(form) => { onAdd(form); setAddModal(false); }} />
+      )}
+      {editTarget && (
+        <EditParticipantModal p={editTarget} onClose={() => setEditTarget(null)}
+          onSave={(patch) => { onEdit(editTarget.id, patch); setEditTarget(null); }} />
+      )}
+      {deleteBlocked && <DeleteParticipantBlockedModal {...deleteBlocked} onClose={() => setDeleteBlocked(null)} />}
+    </Card>
+  );
+}
+
+// ---------------- Вкладка "Описание" — основные данные шаблона + блок "Участники плана". ----------------
+const LOCATION_TYPE_OPTIONS = [
+  { value: "office", label: "Офис" },
+  { value: "remote", label: "Удалённо" },
+  { value: "hybrid", label: "Гибрид" },
+];
+
+function MetaField({ label, value }) {
+  if (!value) return null;
+  return (
+    <div className="sk-col sk-gap-1" style={{ minWidth: 140 }}>
+      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{label}</span>
+      <span className="sk-label-4">{value}</span>
+    </div>
+  );
+}
+
+function DescriptionSection({ template, name, description, durationDays, locationType, location,
+  onNameChange, onDescriptionChange, onDurationChange, onLocationTypeChange, onLocationChange,
+  participants, tasks, assignedPreview, onToggleAssignedPreview, onAddParticipant, onEditParticipant, onDeleteParticipant, onAssignPerson }) {
+  return (
+    <div className="sk-col sk-gap-4" style={{ padding: "20px 24px" }}>
+      <Card bordered>
+        <div className="sk-col sk-gap-4">
+          <div className="sk-title-5">Основные данные шаблона</div>
+          <Input label="Название" required value={name} onChange={(e) => onNameChange(e.target.value || "")} />
+          <Textarea label="Описание" rows={3} value={description} onChange={(e) => onDescriptionChange(e.target.value || "")} />
+          <div className="sk-row sk-gap-3">
+            <div className="sk-col sk-gap-1" style={{ flex: 1 }}>
+              <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Тип плана</span>
+              <span className="sk-label-3">{template.planType}</span>
+            </div>
+            <Input label="Продолжительность (дней)" type="number" min={1} value={durationDays} style={{ flex: 1 }}
+              onChange={(e) => onDurationChange(Math.max(1, Number(e.target.value) || 1))} />
+          </div>
+          <div className="sk-row sk-gap-3">
+            <Select label="Тип рабочей локации" value={locationType} options={LOCATION_TYPE_OPTIONS} onChange={onLocationTypeChange} style={{ flex: 1 }} />
+            <Input label="Локация / адрес" value={location} onChange={(e) => onLocationChange(e.target.value || "")} style={{ flex: 2 }}
+              icon={<IconMapPin size={16} />} />
+          </div>
+          <Divider />
+          <div className="sk-row sk-gap-4" style={{ flexWrap: "wrap" }}>
+            <MetaField label="Категория" value={template.category} />
+            <MetaField label="Подразделение" value={template.department} />
+            <MetaField label="Функция" value={template.function} />
+            <MetaField label="Компания" value={template.company} />
+            <MetaField label="Автор" value={template.author} />
+            <MetaField label="Создан" value={template.createdAt} />
+          </div>
+        </div>
+      </Card>
+
+      <ParticipantsBlock participants={participants} tasks={tasks} assignedMode={assignedPreview}
+        onToggleMode={onToggleAssignedPreview} onAdd={onAddParticipant} onEdit={onEditParticipant}
+        onDelete={onDeleteParticipant} onAssign={onAssignPerson} />
+    </div>
+  );
+}
+
+// ---------------- Вкладка "Чек-лист" — этапы + элементы; у типа "Задача" появляется поле
+// "Исполнитель" со списком, собранным из участников плана (роль, не добавленная в
+// «Участники плана», физически не может попасть в список — источник данных сам ограничивает выбор). ----------------
+function ChecklistItemFormModal({ participants, onClose, onCreate }) {
+  const [type, setType] = React.useState("task");
+  const [title, setTitle] = React.useState("");
+  const [assignee, setAssignee] = React.useState("employee");
+  const [required, setRequired] = React.useState(true);
+  const [dueDays, setDueDays] = React.useState(7);
+
+  const assigneeOptions = [
+    { value: "employee", label: "Адаптируемый сотрудник" },
+    ...participants.map((p) => ({ value: p.id, label: roleLabel(p) })),
+  ];
+
+  function submit() {
+    onCreate({
+      type, title, required, dueDays,
+      assigneeParticipantId: type === "task" && assignee !== "employee" ? assignee : null,
+    });
+  }
+
+  return (
+    <Modal open title="Новый элемент чек-листа" onClose={onClose} size="s"
+      secondary={<Button mode="secondary" onClick={onClose}>Отменить</Button>}
+      primary={<Button variant="accent" disabled={!title.trim()} onClick={submit}>Добавить</Button>}>
+      <div className="sk-col sk-gap-3">
+        <Select label="Тип элемента" value={type}
+          options={CHECKLIST_ITEM_TYPES.map((id) => ({ value: id, label: ELEMENT_LABEL[id] }))} onChange={setType} />
+        <Input label="Название" required value={title} onChange={(e) => setTitle(e.target.value || "")} />
+        {type === "task" && (
+          <Select label="Исполнитель" value={assignee} options={assigneeOptions} onChange={setAssignee}
+            helper={participants.length ? "Можно выбрать только роль, добавленную в «Участники плана»" : "В шаблоне пока нет ролей — можно назначить только на сотрудника"} />
+        )}
+        <div className="sk-row sk-gap-3">
+          <Input label="Срок (дней от начала плана)" required type="number" min={1} value={dueDays} style={{ flex: 1 }}
+            onChange={(e) => setDueDays(Math.max(1, Number(e.target.value) || 1))} />
+          <div className="sk-row sk-gap-3 sk-clickable" style={{ flex: 1, alignItems: "center" }} onClick={() => setRequired((r) => !r)}>
+            <Checkbox checked={required} onChange={() => setRequired((r) => !r)} />
+            <span className="sk-label-4">Обязательный</span>
+          </div>
         </div>
       </div>
+    </Modal>
+  );
+}
+
+function ChecklistItemRow({ t, participants, onDelete }) {
+  const assignee = t.assigneeParticipantId ? participants.find((p) => p.id === t.assigneeParticipantId) : null;
+  const Icon = ELEMENT_ICON[t.type] || IconFileText;
+  return (
+    <div className="sk-row sk-gap-2" style={{
+      alignItems: "center", padding: "10px 12px", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)",
+      background: "var(--sk-surface-page)", flexWrap: "wrap",
+    }}>
+      <Icon size={16} color="var(--sk-icon-secondary)" />
+      <span className="sk-label-4" style={{ flex: 1, minWidth: 120 }}>{t.title}</span>
+      {t.type === "task" && (
+        <Tag size="s" hue={assignee ? "accent" : "special"}>{assignee ? roleLabel(assignee) : "Сотрудник"}</Tag>
+      )}
+      {t.required && <Tag size="s" hue="neutral">Обязательна</Tag>}
+      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{dueDayLabel(t.dueDays)}</span>
+      <Tag size="s" hue="positive">Связана с этапом</Tag>
+      <Button size="s" mode="tertiary" onClick={onDelete}><IconTrash size={15} /></Button>
+    </div>
+  );
+}
+
+function ChecklistStageCard({ stage, tasks, participants, onAddTask, onDeleteTask }) {
+  const [formOpen, setFormOpen] = React.useState(false);
+  const stageTasks = tasks.filter((t) => t.stageId === stage.id);
+  return (
+    <Card bordered>
+      <div className="sk-col sk-gap-3">
+        <div className="sk-title-5">{stage.title}</div>
+        <div className="sk-col sk-gap-2">
+          {stageTasks.map((t) => <ChecklistItemRow key={t.id} t={t} participants={participants} onDelete={() => onDeleteTask(t.id)} />)}
+          {!stageTasks.length && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>В этапе пока нет элементов</span>}
+        </div>
+        <Button size="s" mode="secondary" icon={<IconPlusSm size={16} />} style={{ alignSelf: "flex-start" }} onClick={() => setFormOpen(true)}>Добавить элемент</Button>
+      </div>
+      {formOpen && (
+        <ChecklistItemFormModal participants={participants} onClose={() => setFormOpen(false)}
+          onCreate={(form) => { onAddTask({ ...form, stageId: stage.id }); setFormOpen(false); }} />
+      )}
     </Card>
+  );
+}
+
+function ChecklistSectionReal({ stages, tasks, participants, onAddStage, onAddTask, onDeleteTask }) {
+  const [newStageOpen, setNewStageOpen] = React.useState(false);
+  const [newStageTitle, setNewStageTitle] = React.useState("");
+  return (
+    <div className="sk-col sk-gap-3" style={{ padding: "20px 24px" }}>
+      {!stages.length && (
+        <Card>
+          <div className="sk-col sk-gap-2" style={{ alignItems: "center", textAlign: "center", padding: "24px 16px" }}>
+            <div className="sk-label-2">В шаблоне пока нет этапов</div>
+            <div className="sk-muted" style={{ maxWidth: 380 }}>Разбейте чек-лист на этапы (например, «Первая неделя», «Первый месяц») и добавляйте в них элементы</div>
+          </div>
+        </Card>
+      )}
+      {stages.map((s) => (
+        <ChecklistStageCard key={s.id} stage={s} tasks={tasks} participants={participants}
+          onAddTask={onAddTask} onDeleteTask={onDeleteTask} />
+      ))}
+      {newStageOpen ? (
+        <Card bordered>
+          <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+            <Input placeholder="Название этапа" value={newStageTitle} style={{ flex: 1 }} onChange={(e) => setNewStageTitle(e.target.value || "")} />
+            <Button variant="accent" size="s" disabled={!newStageTitle.trim()}
+              onClick={() => { onAddStage(newStageTitle.trim()); setNewStageTitle(""); setNewStageOpen(false); }}>Добавить</Button>
+            <Button mode="secondary" size="s" onClick={() => setNewStageOpen(false)}>Отменить</Button>
+          </div>
+        </Card>
+      ) : (
+        <Button mode="secondary" size="s" icon={<IconPlusSm size={16} />} style={{ alignSelf: "flex-start" }} onClick={() => setNewStageOpen(true)}>Добавить этап</Button>
+      )}
+    </div>
+  );
+}
+
+// ---------------- Вкладка "Задачи" — динамические блоки по ролям, добавленным в
+// «Участники плана»; блок не создаётся для роли, которой нет в шаблоне. Задача — та же
+// сущность, что и элемент чек-листа (см. комментарий вверху секции): здесь просто другой срез. ----------------
+function StandaloneTaskModal({ target, onClose, onCreate }) {
+  const [title, setTitle] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [dueDays, setDueDays] = React.useState(14);
+  const [required, setRequired] = React.useState(true);
+  return (
+    <Modal open title={"Добавить задачу" + (target && target.label ? " · " + target.label : "")} onClose={onClose} size="s"
+      secondary={<Button mode="secondary" onClick={onClose}>Отменить</Button>}
+      primary={<Button variant="accent" disabled={!title.trim()} onClick={() => onCreate({ title, description, dueDays, required })}>Добавить</Button>}>
+      <div className="sk-col sk-gap-3">
+        <Input label="Название" required value={title} onChange={(e) => setTitle(e.target.value || "")} />
+        <Textarea label="Описание" rows={2} value={description} onChange={(e) => setDescription(e.target.value || "")} />
+        <Input label="Срок (дней от начала плана)" required type="number" min={1} value={dueDays}
+          onChange={(e) => setDueDays(Math.max(1, Number(e.target.value) || 1))} />
+        <div className="sk-row sk-gap-3 sk-clickable" onClick={() => setRequired((r) => !r)}>
+          <Checkbox checked={required} onChange={() => setRequired((r) => !r)} />
+          <span className="sk-label-4">Обязательная</span>
+        </div>
+        <Alert hue="neutral">Задача вне этапа — не связана с чек-листом{target && target.label ? ". Исполнитель: " + target.label : ""}</Alert>
+      </div>
+    </Modal>
+  );
+}
+
+function TaskGroupCard({ label, list, onAdd, onDelete }) {
+  return (
+    <Card bordered>
+      <div className="sk-col sk-gap-2">
+        <div className="sk-row sk-gap-2" style={{ alignItems: "center", justifyContent: "space-between" }}>
+          <span className="sk-label-2">{label}</span>
+          <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Задач: {list.length}</span>
+            <Button size="s" mode="tertiary" icon={<IconPlusSm size={15} />} onClick={onAdd}>Добавить</Button>
+          </div>
+        </div>
+        {list.length ? list.map((t) => (
+          <div key={t.id} className="sk-row sk-gap-2" style={{ alignItems: "center", padding: "10px 12px", background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-2)", flexWrap: "wrap" }}>
+            <span className="sk-label-4" style={{ flex: 1, minWidth: 120 }}>{t.title}</span>
+            {t.stageTitle ? <Tag size="s" hue="positive">Этап: {t.stageTitle}</Tag> : <Tag size="s" hue="neutral">Вне этапа</Tag>}
+            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{dueDayLabel(t.dueDays)}</span>
+            <Button size="s" mode="tertiary" onClick={() => onDelete(t.id)}><IconTrash size={15} /></Button>
+          </div>
+        )) : <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Пока нет задач</span>}
+      </div>
+    </Card>
+  );
+}
+
+function TasksSectionReal({ tasks, participants, stages, onAddTask, onDeleteTask }) {
+  const [modalFor, setModalFor] = React.useState(null); // null | { assigneeParticipantId, label }
+
+  function stageTitleOf(t) { return t.stageId ? ((stages.find((s) => s.id === t.stageId) || {}).title || null) : null; }
+  const withStageTitle = (list) => list.map((t) => ({ ...t, stageTitle: stageTitleOf(t) }));
+
+  const employeeTasks = withStageTitle(tasks.filter((t) => !t.assigneeParticipantId));
+  const groups = participants.map((p) => ({ p, list: withStageTitle(tasks.filter((t) => t.assigneeParticipantId === p.id)) }));
+
+  return (
+    <div className="sk-col sk-gap-3" style={{ padding: "20px 24px" }}>
+      <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Блоки формируются динамически по ролям, добавленным в «Участники плана»</span>
+        <Button size="s" variant="accent" icon={<IconPlusSm size={16} />} onClick={() => setModalFor({ assigneeParticipantId: null, label: "Адаптируемый сотрудник" })}>
+          Добавить задачу
+        </Button>
+      </div>
+
+      {!participants.length && <Alert hue="neutral">Добавьте участников плана на вкладке «Описание», чтобы назначать им задачи</Alert>}
+
+      <TaskGroupCard label="Адаптируемый сотрудник" list={employeeTasks}
+        onAdd={() => setModalFor({ assigneeParticipantId: null, label: "Адаптируемый сотрудник" })} onDelete={onDeleteTask} />
+      {groups.map(({ p, list }) => (
+        <TaskGroupCard key={p.id} label={roleLabel(p)} list={list}
+          onAdd={() => setModalFor({ assigneeParticipantId: p.id, label: roleLabel(p) })} onDelete={onDeleteTask} />
+      ))}
+
+      {modalFor && (
+        <StandaloneTaskModal target={modalFor} onClose={() => setModalFor(null)}
+          onCreate={(form) => {
+            onAddTask({ ...form, type: "task", stageId: null, assigneeParticipantId: modalFor.assigneeParticipantId });
+            setModalFor(null);
+          }} />
+      )}
+    </div>
   );
 }
 
@@ -1064,6 +1555,22 @@ function Page() {
   const [goals, setGoals] = React.useState(baseTemplate.goals || []);
   const [checkpoints, setCheckpoints] = React.useState(baseTemplate.checkpoints || []);
   const [deleteConfirm, setDeleteConfirm] = React.useState(false);
+
+  // ---- Описание: основные поля шаблона ----
+  const [name, setName] = React.useState(baseTemplate.name);
+  const [description, setDescription] = React.useState(baseTemplate.description);
+  const [durationDays, setDurationDays] = React.useState(baseTemplate.durationDays);
+  const [locationType, setLocationType] = React.useState(baseTemplate.locationType || "office");
+  const [location, setLocation] = React.useState(baseTemplate.location || "");
+
+  // ---- Участники плана, чек-лист (этапы) и задачи (ТЗ "Доработки прототипа_Задачи и Роли") ----
+  const [participants, setParticipants] = React.useState(baseTemplate.participants || []);
+  const [checklistStages, setChecklistStages] = React.useState(baseTemplate.checklistStages || []);
+  const [tasks, setTasks] = React.useState(baseTemplate.tasks || []);
+  const [assignedPreview, setAssignedPreview] = React.useState(false);
+  const [toast, setToast] = React.useState(null);
+
+  function showToast(msg) { setToast(msg); window.setTimeout(() => setToast(null), 2200); }
 
   function addGoal(draft) {
     setGoals((list) => [...list, { id: "tgoal" + Date.now(), ...draft }]);
@@ -1085,7 +1592,38 @@ function Page() {
     setCheckpoints((list) => list.filter((c) => c.id !== id));
   }
 
-  const template = { ...baseTemplate, goalsEnabled: enabled, goalsOwner: owner, goalsDeadlineDays: deadlineDays,
+  // ---- Участники плана ----
+  function addParticipant(form) {
+    const isPrimary = form.kind === "system" && !participants.some((p) => p.kind === "system" && p.isPrimary);
+    setParticipants((list) => [...list, { id: "p" + Date.now(), ...form, isPrimary }]);
+    showToast("Участник добавлен");
+  }
+  function editParticipant(id, patch) {
+    setParticipants((list) => list.map((p) => {
+      if (p.id === id) return { ...p, ...patch };
+      if (patch.isPrimary && p.kind === "system") return { ...p, isPrimary: false };
+      return p;
+    }));
+  }
+  function deleteParticipant(id) {
+    setParticipants((list) => list.filter((p) => p.id !== id));
+    showToast("Участник удалён");
+  }
+
+  // ---- Чек-лист / Задачи — общий плоский список: stageId === null значит "вне этапа" ----
+  function addTask(form) {
+    setTasks((list) => [...list, { id: "tt" + Date.now(), ...form }]);
+    showToast(form.stageId ? "Элемент добавлен в этап" : "Задача добавлена");
+  }
+  function deleteTask(id) {
+    setTasks((list) => list.filter((t) => t.id !== id));
+  }
+  function addStage(title) {
+    setChecklistStages((list) => [...list, { id: "cs" + Date.now(), title }]);
+  }
+
+  const template = { ...baseTemplate, name, description, durationDays, locationType, location,
+    goalsEnabled: enabled, goalsOwner: owner, goalsDeadlineDays: deadlineDays,
     goalsReviewRequired: reviewRequired, goalsReviewDeadlineDays: reviewDeadlineDays, goals };
 
   return (
@@ -1100,7 +1638,15 @@ function Page() {
         <PlanSectionsNav section={section} onChange={setSection} template={template} onDeleteTemplate={() => setDeleteConfirm(true)} />
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          {section === "goals" ? (
+          {section === "description" ? (
+            <DescriptionSection template={template} name={name} description={description} durationDays={durationDays}
+              locationType={locationType} location={location}
+              onNameChange={setName} onDescriptionChange={setDescription} onDurationChange={setDurationDays}
+              onLocationTypeChange={setLocationType} onLocationChange={setLocation}
+              participants={participants} tasks={tasks} assignedPreview={assignedPreview} onToggleAssignedPreview={setAssignedPreview}
+              onAddParticipant={addParticipant} onEditParticipant={editParticipant} onDeleteParticipant={deleteParticipant}
+              onAssignPerson={(p) => showToast("В реальном экране здесь откроется выбор сотрудника для роли «" + roleLabel(p) + "»")} />
+          ) : section === "goals" ? (
             <GoalsSettingsCard template={template} enabled={enabled} owner={owner}
               deadlineDays={deadlineDays} reviewRequired={reviewRequired} reviewDeadlineDays={reviewDeadlineDays}
               goals={goals} checkpoints={checkpoints}
@@ -1115,7 +1661,11 @@ function Page() {
               onAddGoal={addGoal} onUpdateGoal={updateGoal} onDeleteGoal={deleteGoal}
               onAddCheckpoint={addCheckpoint} onEditCheckpoint={editCheckpoint} onDeleteCheckpoint={deleteCheckpoint} />
           ) : section === "checklist" ? (
-            <ChecklistSection />
+            <ChecklistSectionReal stages={checklistStages} tasks={tasks} participants={participants}
+              onAddStage={addStage} onAddTask={addTask} onDeleteTask={deleteTask} />
+          ) : section === "tasks" ? (
+            <TasksSectionReal tasks={tasks} participants={participants} stages={checklistStages}
+              onAddTask={addTask} onDeleteTask={deleteTask} />
           ) : (
             <NotBuiltSection label={TEMPLATE_SECTIONS.find((s) => s.id === section).label} />
           )}
@@ -1131,6 +1681,12 @@ function Page() {
             <div className="sk-muted">Уже назначенные по этому шаблону индивидуальные планы не изменятся — шаблон живёт независимо от них.</div>
           </div>
         </Modal>
+      )}
+
+      {toast && (
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100 }}>
+          <Snackbar>{toast}</Snackbar>
+        </div>
       )}
     </AppShell>
   );

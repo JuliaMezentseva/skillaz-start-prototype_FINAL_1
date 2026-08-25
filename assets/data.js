@@ -71,6 +71,25 @@ window.SITE_DATA = {
     telegram: "t.me/hrrr",
     email: "y.stepanova@skillaz.com",
   },
+
+  // ---------------- Роли шаблона плана адаптации (ТЗ "Доработки прототипа_Задачи и Роли") ----------------
+  // Системные роли — фиксированный список, не справочник: пользователь определяется автоматически
+  // по данным адаптируемого (руководитель, HRBP...), а не выбирается Админом из списка людей.
+  systemRoles: [
+    { id: "manager", label: "Прямой руководитель", source: "Определяется автоматически — прямой руководитель адаптируемого" },
+    { id: "func_manager", label: "Функциональный руководитель", source: "Определяется автоматически — функциональный руководитель адаптируемого" },
+    { id: "hrbp", label: "HRBP", source: "Определяется автоматически — HRBP по подразделению" },
+    { id: "pel", label: "PEL", source: "Определяется автоматически — PEL по подразделению" },
+  ],
+  // Бизнес-роли — справочник клиента (как goalCatalog/assessmentTemplates): Админ выбирает роль
+  // из справочника, а конкретный пользователь назначается позже, при создании индивидуального плана.
+  businessRolesCatalog: [
+    { id: "mentor", label: "Наставник" },
+    { id: "buddy", label: "Бадди" },
+    { id: "trainer", label: "Тренер" },
+    { id: "curator", label: "Куратор" },
+    { id: "product_trainer", label: "Тренер по продукту" },
+  ],
   info: {
     hours: "ПН–ПТ, 09:00–18:00 по МСК",
     address: "БЦ «Сильвер Сити», Серебряническая наб. 29, офис 1234",
@@ -1074,6 +1093,8 @@ window.SITE_DATA = {
       updatedAt: "20.01.26, 09:10",
       savedAtLabel: "Сохранено в 12:44",
       usageCount: 24,
+      locationType: "office", // office | remote | hybrid
+      location: "БЦ «Сильвер Сити», Серебряническая наб. 29, офис 1234",
       goalsEnabled: false,
       goalsOwner: "manager",
       goalsDeadlineDays: 7,
@@ -1082,6 +1103,26 @@ window.SITE_DATA = {
       goals: [],
       stats: { tasks: 12, files: 3, links: 4, courses: 2, surveys: 1 },
       checkpoints: [],
+      // ---------------- Участники плана + чек-лист/задачи (ТЗ "Доработки прототипа_Задачи и Роли") ----------------
+      // demoPerson/demoUnresolved — только для превью "После назначения" в редакторе шаблона: у роли
+      // "Тренер" сознательно нет demoPerson, чтобы показать состояние "участник не назначен" (п.12 ТЗ).
+      participants: [
+        { id: "p1", kind: "system", roleId: "manager", required: true, isPrimary: true, demoPerson: { name: "Анна Козлова", position: "Руководитель продукта" } },
+        { id: "p2", kind: "system", roleId: "hrbp", required: true, isPrimary: false, demoPerson: { name: "Юлия Степанова", position: "HR BP" } },
+        { id: "p3", kind: "business", roleId: "mentor", required: true, demoPerson: { name: "Дмитрий Волков", position: "Senior frontend" } },
+        { id: "p4", kind: "business", roleId: "trainer", required: false },
+      ],
+      checklistStages: [
+        { id: "cs1", title: "Первая неделя" },
+        { id: "cs2", title: "Первый месяц" },
+      ],
+      // tasks — единая сущность и для чек-листа, и для вкладки "Задачи": stageId != null значит,
+      // что задача привязана к этапу чек-листа и показывается там же (см. ТЗ п.2-3).
+      tasks: [
+        { id: "tt1", type: "task", title: "Еженедельный One to One с новым сотрудником", stageId: "cs1", assigneeParticipantId: "p1", dueDays: 7, required: true },
+        { id: "tt2", type: "survey", title: "Опрос: как прошло обучение", stageId: "cs1", assigneeParticipantId: "p3", dueDays: 7, required: true },
+        { id: "tt3", type: "task", title: "Настроить доступы в CRM", stageId: null, assigneeParticipantId: "p2", dueDays: 3, required: true },
+      ],
     },
     {
       id: "tpl_frontend",
