@@ -17,7 +17,7 @@
 <script type="text/babel">
 const { Card, Tag, TextList, Divider, Modal, Input, Textarea, Select, Button, IconButton, Avatar, Snackbar, Alert } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconArrowLeft, IconMail, IconPhone, IconUpload, IconFileText, IconTarget, IconCheck, IconGift, IconLayers, IconPlusSm, IconSparklesSolid, IconChevronRight, IconUser } = Icons;
+const { IconArrowLeft, IconMail, IconPhone, IconUpload, IconFileText, IconTarget, IconCheck, IconGift, IconLayers, IconPlusSm, IconSparklesSolid, IconUser } = Icons;
 const D = window.SITE_DATA;
 
 const RELATION_OPTIONS = [
@@ -104,7 +104,6 @@ function CandidateRow({ e, index, isFirst, onOpenOne }) {
         <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.position}</div>
       </div>
       {e.matchPercent != null && <MatchTag percent={e.matchPercent} compact />}
-      <IconChevronRight size={14} color="var(--sk-icon-secondary)" style={{ flexShrink: 0 }} />
     </button>
   );
 }
@@ -128,7 +127,7 @@ function MatchingCandidatesCard({ employees, onOpenOne }) {
         </div>
         {aiRows.length > 0 && (
           <div className="sk-col">
-            <div className="sk-label-4" style={{ color: "var(--sk-text-secondary)", padding: "6px 0" }}>По всей компании</div>
+            <div className="sk-label-4" style={{ color: "var(--sk-text-secondary)", padding: "6px 0" }}>По компании</div>
             {aiRows.map(({ e, i }, idx) => (
               <CandidateRow key={i} e={e} index={i} isFirst={idx === 0} onOpenOne={onOpenOne} />
             ))}
