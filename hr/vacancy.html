@@ -56,7 +56,7 @@ function MatchTag({ percent, compact }) {
 // списке кандидатов, рядом с AI-процентом (если он тоже есть), а не отдельным списком.
 function ReserveTag() {
   return (
-    <Tag size="s" hue="info" style={{ flexShrink: 0 }}>
+    <Tag size="s" hue="info" style={{ flexShrink: 0, alignSelf: "flex-start" }}>
       Резервист
     </Tag>
   );
