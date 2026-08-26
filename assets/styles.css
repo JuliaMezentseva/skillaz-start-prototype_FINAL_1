@@ -61,6 +61,10 @@ a { color: inherit; text-decoration: none; }
 }
 .sk-check-row:hover { background: var(--sk-hover-nav); }
 .sk-check-row.is-locked { cursor: not-allowed; opacity: 0.55; }
+/* Строка внутри ещё не начатого этапа: её видно и можно прочитать, но отметить нельзя —
+   поэтому без подсветки по наведению, чтобы не выглядела кликабельной (см. StageBlock). */
+.sk-check-row.is-static { cursor: default; }
+.sk-check-row.is-static:hover { background: transparent; }
 
 /* stage header */
 .sk-stage-header {

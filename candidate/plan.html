@@ -72,7 +72,7 @@ function StageBlock({ stage, index, onOpenItem }) {
       {open && (
         <div className="sk-col sk-gap-1" style={{ padding: "4px 8px 8px" }}>
           {stage.items.map((item) => (
-            <div key={item.id} className="sk-check-row" style={{ cursor: locked ? "default" : "pointer" }}
+            <div key={item.id} className={"sk-check-row" + (locked ? " is-static" : "")}
               onClick={locked ? undefined : () => onOpenItem(item)}>
               <div style={{ paddingTop: 2 }} onClick={(e) => e.stopPropagation()}>
                 <Checkbox checked={!!item.done} disabled={locked} onChange={() => onOpenItem(item, true)} />

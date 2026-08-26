@@ -163,7 +163,7 @@ function StageBlock({ stage, index, onOpenItem, onOpenCheckpoint }) {
       {open && (
         <div className="sk-col sk-gap-1" style={{ padding: "4px 8px 8px" }}>
           {stage.items.map((item) => item.kind === "checkpoint" ? (
-            <div key={item.id} className="sk-check-row" style={{ cursor: locked ? "default" : "pointer" }}
+            <div key={item.id} className={"sk-check-row" + (locked ? " is-static" : "")}
               onClick={locked ? undefined : () => onOpenCheckpoint(item.checkpointId)}>
               <span style={{ paddingTop: 2, color: "var(--sk-icon-accent)" }}><IconTarget size={16} /></span>
               <div className="sk-col" style={{ flex: 1, gap: 2 }}>
@@ -172,7 +172,7 @@ function StageBlock({ stage, index, onOpenItem, onOpenCheckpoint }) {
               </div>
             </div>
           ) : (
-            <div key={item.id} className="sk-check-row" style={{ cursor: locked ? "default" : "pointer" }}
+            <div key={item.id} className={"sk-check-row" + (locked ? " is-static" : "")}
               onClick={locked ? undefined : () => onOpenItem(item)}>
               <div style={{ paddingTop: 2 }} onClick={(e) => e.stopPropagation()}>
                 <Checkbox checked={!!item.done} disabled={locked} onChange={() => onOpenItem(item, true)} />
