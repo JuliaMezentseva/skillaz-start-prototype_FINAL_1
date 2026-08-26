@@ -539,7 +539,7 @@ function AssignedTable() {
     ),
     progress: (p) => (
       <div className="sk-col sk-gap-1" style={{ minWidth: 170 }}>
-        <div className="sk-row sk-gap-2"><span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", width: 46 }}>Чек-лист</span><ProgressBar value={p.checklistProgress} style={{ flex: 1 }} hue="accent" /><span className="sk-label-4" style={{ width: 32, textAlign: "right" }}>{p.checklistProgress}%</span></div>
+        <div className="sk-row sk-gap-2"><span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", width: 46 }}>Маршрут</span><ProgressBar value={p.checklistProgress} style={{ flex: 1 }} hue="accent" /><span className="sk-label-4" style={{ width: 32, textAlign: "right" }}>{p.checklistProgress}%</span></div>
         {p.goalsProgress !== null && (
           <div className="sk-row sk-gap-2"><span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", width: 46 }}>Цели</span><ProgressBar value={p.goalsProgress} style={{ flex: 1 }} hue="positive" /><span className="sk-label-4" style={{ width: 32, textAlign: "right" }}>{p.goalsProgress}%</span></div>
         )}

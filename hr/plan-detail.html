@@ -25,7 +25,7 @@ const {
 const D = window.SITE_DATA;
 const templatesById = Object.fromEntries(D.templates.map((t) => [t.id, t]));
 
-const MIN_TAB_NOTE = "Этот чек-лист — формальный порог входа сотрудника в роль: доступы, культура и регламенты компании. Он одинаков для всех на этой позиции и не требует чьего-либо подтверждения.";
+const MIN_TAB_NOTE = "Этот маршрут — формальный порог входа сотрудника в роль: доступы, культура и регламенты компании. Он одинаков для всех на этой позиции и не требует чьего-либо подтверждения.";
 const MAX_TAB_NOTE = "Персональный план сотрудника на результат в роли. Цели ставит руководитель, подцели проверяются им же, а прогресс сверяется на контрольных точках.";
 
 function recordFromUrl() {
@@ -147,7 +147,7 @@ function PlanTab({ record, view }) {
     return (
       <Card bordered>
         <div className="sk-col sk-gap-3">
-          <div className="sk-title-5">Чек-лист {record.checklistProgress}%</div>
+          <div className="sk-title-5">Маршрут {record.checklistProgress}%</div>
           <ProgressBar value={record.checklistProgress} hue="accent" height={6} />
           <div className="sk-muted">Детальный состав чек-листа и целей для этого плана — вне текущей итерации прототипа (нет связанного объекта плана).</div>
         </div>
@@ -168,7 +168,7 @@ function PlanTab({ record, view }) {
           <Alert hue="neutral" style={{ background: "var(--sk-surface-page)", boxShadow: "inset 0 0 0 1px var(--sk-stroke)" }}>{MIN_TAB_NOTE}</Alert>
           <Card bordered>
             <div className="sk-col sk-gap-4">
-              <div className="sk-title-5">Чек-лист {doneChecklist} из {totalChecklist.length}</div>
+              <div className="sk-title-5">Маршрут {doneChecklist} из {totalChecklist.length}</div>
               {plan.stages.map((s, i) => <ChecklistReadStage key={s.id} stage={s} index={i + 1} />)}
             </div>
           </Card>
@@ -318,7 +318,7 @@ function Page() {
 
   const tabItems = [
     { id: "tasks", label: "Мои задачи", count: tasks.filter((t) => t.done).length + "/" + tasks.length },
-    { id: "min", label: <span className="sk-row sk-gap-1"><IconClipboard size={16} />Базовые действия</span> },
+    { id: "min", label: <span className="sk-row sk-gap-1"><IconClipboard size={16} />Маршрут</span> },
     ...(plan0 && plan0.hasGoals ? [{ id: "max", label: <span className="sk-row sk-gap-1"><IconTarget size={16} />Цели адаптации {goalsPct0}%</span> }] : []),
     { id: "chat", label: "Чат" },
     { id: "faq", label: "FAQ" },

@@ -365,7 +365,7 @@ function Page() {
   const cpModalIsUpcoming = cpModal != null && cpFirstPendingIndex >= 0 && cpOrderIds.indexOf(cpModal) > cpFirstPendingIndex;
 
   const tabItems = [
-    { id: "min", label: <span className="sk-row sk-gap-1"><IconClipboard size={16} />Базовые действия</span> },
+    { id: "min", label: <span className="sk-row sk-gap-1"><IconClipboard size={16} />Маршрут</span> },
     ...(plan.hasGoals ? [{ id: "max", label: <span className="sk-row sk-gap-1"><IconTarget size={16} />Цели адаптации {goalsPct}%</span> }] : []),
     { id: "chat", label: <span className="sk-row sk-gap-1"><IconMessageCircle size={16} />Чат</span> },
     { id: "faq", label: <span className="sk-row sk-gap-1"><IconHelpCircle size={16} />FAQ</span> },
@@ -2324,8 +2324,8 @@ function ManagerCheckpointDrawer({ checkpoint, viewerName, employee, canEdit, is
 
 // ---------------- Финальное ревью плана ----------------
 // Компактная сводка + решение руководителя. Сами цели/подцели и контрольные точки
-// руководитель при необходимости раскрывает прямо на странице плана (вкладки "План
-// адаптации"/"Базовые действия", карточка контрольных точек в RightPanel) — они уже
+// руководитель при необходимости раскрывает прямо на странице плана (вкладки "Цели
+// адаптации"/"Маршрут", карточка контрольных точек в RightPanel) — они уже
 // доступны для просмотра в режиме "только чтение", т.к. план опубликован и запущен
 // (goalsPublished/employeeStarted = true). Здесь — только сводные цифры и вердикт.
 const REVIEW_INSTRUCTION = "Ознакомьтесь с результатами выполнения целей сотрудником. Если целевой результат не достигнут — вы можете направить план сотруднику на доработку для актуализации статусов или отметить его как неуспешный.";
@@ -2368,7 +2368,7 @@ function ReviewDecisionModal({ member, plan, goalsDoneCount, goalsTotal, goalsPc
           <Alert hue="neutral" style={{ background: "var(--sk-surface-secondary)" }}>{REVIEW_INSTRUCTION}</Alert>
           <div className="sk-row sk-gap-3" style={{ flexWrap: "wrap" }}>
             <ReviewStat label="Цели" value={goalsDoneCount + " из " + goalsTotal + " (" + goalsPct + "%)"} />
-            <ReviewStat label="Базовые действия" value={checklistPct + "%"} />
+            <ReviewStat label="Маршрут" value={checklistPct + "%"} />
             {cpTotal > 0 && <ReviewStat label="Контрольные точки" value={cpDoneCount + " из " + cpTotal} />}
           </div>
         </div>

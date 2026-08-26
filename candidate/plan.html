@@ -34,7 +34,7 @@ const {
 const D = window.SITE_DATA;
 
 const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", survey: "Опрос", file: "Файл", link: "Ссылка", checkpoint: "Контрольная точка" };
-const MIN_TAB_NOTE = "Этот чек-лист поможет вам подготовиться к первому дню — получить доступы, собрать документы и познакомиться с компанией. Просто отмечайте пункты по мере прохождения.";
+const MIN_TAB_NOTE = "Этот маршрут поможет вам подготовиться к первому дню — получить доступы, собрать документы и познакомиться с компанией. Просто отмечайте пункты по мере прохождения.";
 
 // ---------------- Чек-лист этапов (идентично employee/plan.html) ----------------
 function StageBlock({ stage, index, onOpenItem }) {
@@ -251,7 +251,7 @@ function Page() {
 
   // Только Минимум / Чат / FAQ — у кандидата нет "Цели адаптации" (plan.hasGoals === false).
   const tabItems = [
-    { id: "min", label: <span className="sk-row sk-gap-1"><IconClipboard size={16} />Базовые действия</span> },
+    { id: "min", label: <span className="sk-row sk-gap-1"><IconClipboard size={16} />Маршрут</span> },
     { id: "chat", label: <span className="sk-row sk-gap-1"><IconMessageCircle size={16} />Чат</span> },
     { id: "faq", label: <span className="sk-row sk-gap-1"><IconHelpCircle size={16} />FAQ</span> },
   ];
@@ -266,7 +266,7 @@ function Page() {
           {tab === "min" && (
             <React.Fragment>
               <Alert hue="neutral" style={{ background: "var(--sk-surface-page)", boxShadow: "inset 0 0 0 1px var(--sk-stroke)" }}>{MIN_TAB_NOTE}</Alert>
-              <div className="sk-title-5">Чек-лист {doneChecklist} из {totalChecklist.length}</div>
+              <div className="sk-title-5">Маршрут {doneChecklist} из {totalChecklist.length}</div>
               <div className="sk-col sk-gap-4">
                 {plan.stages.map((s, i) => (
                   <StageBlock key={s.id} stage={s} index={i + 1}
