@@ -107,7 +107,7 @@ function MatchingCandidatesCard({ employees, onOpenOne, onCompareAll }) {
                 <div className="sk-label-4" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}</div>
                 <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.position}</div>
               </div>
-              <MatchTag percent={e.matchPercent} compact />
+              <CandidateTag e={e} compact />
               <IconChevronRight size={14} color="var(--sk-icon-secondary)" style={{ flexShrink: 0 }} />
             </button>
           ))}
