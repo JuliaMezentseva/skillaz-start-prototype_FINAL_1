@@ -1102,7 +1102,7 @@ window.SITE_DATA = {
       savedAtLabel: "Сохранено в 10:15",
       usageCount: 2,
       goalsEnabled: true,
-      goalsOwner: "manager",
+      goalsOwner: "hr",
       goalsDeadlineDays: 14,
       goalsReviewRequired: false,
       goalsReviewDeadlineDays: 7,

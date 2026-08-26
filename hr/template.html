@@ -61,7 +61,7 @@ function IconGoalRing({ size = 16, color = "currentColor" }) {
 const TEMPLATE_SECTIONS = [
   { id: "description", label: "Описание", icon: IconInfo },
   { id: "goals", label: "Цели адаптации", icon: IconTarget },
-  { id: "checklist", label: "Чек-лист", icon: IconCheck },
+  { id: "checklist", label: "Маршрут", icon: IconCheck },
   { id: "tasks", label: "Задачи", icon: IconClipboard },
   { id: "faq", label: "FAQ", icon: IconMessageCircle },
   { id: "settings", label: "Настройки", icon: IconSettings },
@@ -816,7 +816,7 @@ function GoalsSection({ owner, deadlineDays, reviewRequired, reviewDeadlineDays,
               </Card>
             ) : (
               <div className="sk-col sk-gap-3">
-                <div className="sk-row sk-gap-2">
+                <div className="sk-row sk-gap-2" style={{ justifyContent: "flex-end" }}>
                   <Button variant="accent" size="s" icon={<IconPlusSm size={16} />} onClick={() => setMethodModal(true)}>Добавить цель</Button>
                 </div>
 
