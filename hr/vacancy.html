@@ -52,9 +52,10 @@ function MatchTag({ percent, compact }) {
 }
 
 // Кандидат из кадрового резерва (заранее отобран HR/руководителем под роль или как
-// высокопотенциальный сотрудник) — в отличие от AI-подбора, у него нет процента
-// совпадения, поэтому отдельный тег вместо MatchTag; hue="info" держит его визуально
-// не спутываемым с фиолетовым AI-тегом.
+// высокопотенциальный сотрудник) — отдельный тег от MatchTag, чтобы сам факт
+// "уже в резерве" не терялся среди процентов; hue="info" держит его визуально
+// не спутываемым с фиолетовым AI-тегом. У резервиста может параллельно быть
+// и AI-процент (matchPercent) — тогда оба тега показываются рядом.
 function ReserveTag({ targetRole, compact }) {
   return (
     <Tag size="s" hue="info" icon={<IconTarget size={12} />} style={{ flexShrink: 0 }}>
@@ -64,9 +65,15 @@ function ReserveTag({ targetRole, compact }) {
 }
 
 function CandidateTag({ e, compact }) {
-  return e.source === "reserve"
-    ? <ReserveTag targetRole={e.targetRole} compact={compact} />
-    : <MatchTag percent={e.matchPercent} compact={compact} />;
+  if (e.source === "reserve") {
+    return (
+      <div className="sk-row sk-gap-1" style={{ flexShrink: 0 }}>
+        <ReserveTag targetRole={e.targetRole} compact={compact} />
+        {e.matchPercent != null && <MatchTag percent={e.matchPercent} compact={compact} />}
+      </div>
+    );
+  }
+  return <MatchTag percent={e.matchPercent} compact={compact} />;
 }
 
 function CandidateDetail({ e }) {
@@ -89,7 +96,7 @@ function CandidateDetail({ e }) {
 // список (аватар, имя, должность, процент), шеврон справа — стандартный в этой ДС знак
 // "клик открывает детали" (см. Cell). Клик по строке открывает карточку конкретного
 // кандидата с причинами подбора; ссылка внизу сразу открывает сравнение всех кандидатов рядом.
-function MatchingCandidatesCard({ employees, onOpenOne, onCompareAll }) {
+function MatchingCandidatesCard({ employees, onOpenOne }) {
   return (
     <Card bordered>
       <div className="sk-col sk-gap-1">
@@ -112,11 +119,6 @@ function MatchingCandidatesCard({ employees, onOpenOne, onCompareAll }) {
             </button>
           ))}
         </div>
-        {employees.length > 1 && (
-          <button type="button" onClick={onCompareAll} className="sk-link-btn sk-label-4" style={{ color: "var(--sk-text-accent)", textAlign: "left", marginTop: 4 }}>
-            Сравнить кандидатов
-          </button>
-        )}
       </div>
     </Card>
   );
@@ -127,7 +129,6 @@ function Page() {
   const closed = vacancy.status === "closed";
   const matches = vacancy.matchingEmployees || [];
   const [openCandidate, setOpenCandidate] = React.useState(null);
-  const [compareOpen, setCompareOpen] = React.useState(false);
   const [responses, setResponses] = React.useState(D.myResponses);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [recommendOpen, setRecommendOpen] = React.useState(false);
@@ -250,7 +251,7 @@ function Page() {
 
         <div className="sk-col sk-gap-5" style={{ width: 300, flexShrink: 0 }}>
           {matches.length > 0 && (
-            <MatchingCandidatesCard employees={matches} onOpenOne={setOpenCandidate} onCompareAll={() => setCompareOpen(true)} />
+            <MatchingCandidatesCard employees={matches} onOpenOne={setOpenCandidate} />
           )}
 
           <Card bordered>
@@ -293,22 +294,8 @@ function Page() {
 
       {openCandidate != null && (
         <Modal open title={matches[openCandidate].name} onClose={() => setOpenCandidate(null)} size="m"
-          secondary={<Button mode="secondary" onClick={() => setOpenCandidate(null)}>Закрыть</Button>}
-          primary={matches.length > 1 && (
-            <Button mode="secondary" onClick={() => { setOpenCandidate(null); setCompareOpen(true); }}>Сравнить с другими</Button>
-          )}>
+          secondary={<Button mode="secondary" onClick={() => setOpenCandidate(null)}>Закрыть</Button>}>
           <CandidateDetail e={matches[openCandidate]} />
-        </Modal>
-      )}
-
-      {compareOpen && (
-        <Modal open title="Сравнение кандидатов" onClose={() => setCompareOpen(false)} size="l"
-          secondary={<Button mode="secondary" onClick={() => setCompareOpen(false)}>Закрыть</Button>}>
-          <div className="sk-row sk-gap-4" style={{ alignItems: "flex-start" }}>
-            {matches.map((e, i) => (
-              <div key={i} style={{ flex: 1, minWidth: 0 }}><CandidateDetail e={e} /></div>
-            ))}
-          </div>
         </Modal>
       )}
 
