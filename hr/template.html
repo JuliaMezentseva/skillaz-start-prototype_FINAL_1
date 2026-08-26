@@ -1315,7 +1315,7 @@ function ChecklistItemRow({ t, participants, onDelete }) {
       {t.type === "task" && (
         <Tag size="s" hue={assignee ? "accent" : "special"}>{assignee ? roleLabel(assignee) : "Сотрудник"}</Tag>
       )}
-      {t.required && <Tag size="s" hue="neutral">Обязательна</Tag>}
+      {t.required && <Tag size="s" hue="neutral">Обязательный</Tag>}
       <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{dueDayLabel(t.dueDays)}</span>
       <Tag size="s" hue="positive">Связана с этапом</Tag>
       <Button size="s" mode="tertiary" onClick={onDelete}><IconTrash size={15} /></Button>
