@@ -24,7 +24,7 @@ const {
   IconArrowLeft, IconCheck, IconLock, IconClock, IconFileText, IconLink2, IconMessageCircle,
   IconHelpCircle, IconTarget, IconMapPin, IconPhone, IconMail, IconSend,
   IconChevronUp, IconChevronDown, IconChevronRight, IconX, IconAlertCircle, IconTrash, IconSearch, IconFilter, IconClipboard, IconPlusSm,
-  IconEdit, IconLayers, IconSparkles, IconBookOpen, IconMic, IconImage, IconPaperclip, IconRepeat, IconBriefcase,
+  IconEdit, IconLayers, IconSparkles, IconMic, IconImage, IconPaperclip, IconRepeat, IconBriefcase,
 } = Icons;
 const D = window.SITE_DATA;
 function stripDuePrefix(label) {
@@ -137,13 +137,6 @@ function deriveGoalStatus(goal) {
   if (active.every(sg => sg.status === "done")) return "done";
   return "in_progress";
 }
-function findChecklistItem(plan, id) {
-  for (const s of plan.stages) {
-    const it = s.items.find(i => i.id === id);
-    if (it) return { item: it, stage: s };
-  }
-  return null;
-}
 // Описание не требуем — ни у цели, ни у шага: в формах создания оно необязательное
 // поле (без required, в отличие от названия/срока/проверяющего), так что цель из
 // каталога или быстро добавленный шаг не должны блокировать публикацию из-за него.
@@ -172,7 +165,6 @@ function Page() {
   const [subgoalMethodModal, setSubgoalMethodModal] = React.useState(null); // { context: "draft" } | { context: "goal", goalId } — выбор способа добавления шага
   const [subgoalModal, setSubgoalModal] = React.useState(null); // { context: "draft" } | { context: "goal", goalId }
   const [subgoalDrawer, setSubgoalDrawer] = React.useState(null); // { goalId, subgoalId }
-  const [checklistPicker, setChecklistPicker] = React.useState(null); // { goalId, subgoalId }
   const [publishConfirm, setPublishConfirm] = React.useState(false);
   const [returnModal, setReturnModal] = React.useState(null); // { goalId, subgoalId }
   const [deleteGoal, setDeleteGoal] = React.useState(null);
@@ -200,7 +192,7 @@ function Page() {
     const subgoals = (draft.subgoals || []).map((sg, i) => ({
       id: "sg" + Date.now() + "_" + i, title: sg.title, description: sg.description,
       dueLabel: fmtDate(sg.dueDate), reviewer: sg.reviewer, status: "not_started",
-      checklistRefs: sg.checklistRefs || [], comments: [], assessmentChecklist: sg.assessmentChecklist || null, assessmentHistory: [],
+      comments: [], assessmentChecklist: sg.assessmentChecklist || null, assessmentHistory: [],
     }));
     setPlan(prev => ({ ...prev, goals: [...prev.goals, {
       id, title: draft.title, description: draft.description, dueLabel: fmtDate(draft.dueDate),
@@ -215,7 +207,7 @@ function Page() {
     const id = addGoal({
       title: draft.title, description: draft.description, dueDate: draft.dueDate,
       subgoals: draft.steps.filter(s => s.trim()).map(s => ({
-        title: s.trim(), description: "", dueDate: draft.dueDate, reviewer: D.manager.name, checklistRefs: [],
+        title: s.trim(), description: "", dueDate: draft.dueDate, reviewer: D.manager.name,
       })),
     });
     setHighlightGoalId(id);
@@ -234,7 +226,7 @@ function Page() {
     setPlan(prev => ({ ...prev, goals: prev.goals.map(g => g.id !== goalId ? g : {
       ...g, subgoals: [...g.subgoals, {
         id, title: draft.title, description: draft.description, dueLabel: fmtDate(draft.dueDate),
-        reviewer: draft.reviewer, status: "not_started", checklistRefs: draft.checklistRefs || [], comments: [],
+        reviewer: draft.reviewer, status: "not_started", comments: [],
         assessmentChecklist: draft.assessmentChecklist || null, assessmentHistory: [],
       }],
     }) }));
@@ -251,14 +243,6 @@ function Page() {
     }) }));
     setDeleteSubgoal(null);
     showToast("Подцель удалена");
-  }
-  function toggleChecklistRef(goalId, subgoalId, itemId) {
-    setPlan(prev => ({ ...prev, goals: prev.goals.map(g => g.id !== goalId ? g : {
-      ...g, subgoals: g.subgoals.map(sg => sg.id !== subgoalId ? sg : {
-        ...sg, checklistRefs: (sg.checklistRefs || []).includes(itemId)
-          ? sg.checklistRefs.filter(x => x !== itemId) : [...(sg.checklistRefs || []), itemId],
-      }),
-    }) }));
   }
   function addComment(goalId, subgoalId, text) {
     setPlan(prev => ({ ...prev, goals: prev.goals.map(g => g.id !== goalId ? g : {
@@ -426,7 +410,6 @@ function Page() {
                       <ManagerGoalRow key={g.id} goal={g} plan={plan} highlighted={g.id === highlightGoalId}
                         onOpenGoal={() => setGoalDrawer({ mode: "edit", goalId: g.id })}
                         onOpenSubgoal={(sgId) => setSubgoalDrawer({ goalId: g.id, subgoalId: sgId })}
-                        onOpenMaterials={(sgId) => setChecklistPicker({ goalId: g.id, subgoalId: sgId })}
                         onDeleteGoal={() => setDeleteGoal(g.id)} />
                     ))}
                   </div>
@@ -485,12 +468,11 @@ function Page() {
           onCreate={() => { addGoal(newGoalDraft); setGoalDrawer(null); showToast("Цель создана"); }} />
       )}
       {goalDrawer && goalDrawer.mode === "edit" && activeGoal && (
-        <GoalDrawer goal={activeGoal} plan={plan} editable={!plan.goalsPublished}
+        <GoalDrawer goal={activeGoal} editable={!plan.goalsPublished}
           onClose={() => setGoalDrawer(null)}
           onChange={(patch) => updateGoal(activeGoal.id, patch)}
           onAddSubgoal={() => setSubgoalMethodModal({ context: "goal", goalId: activeGoal.id })}
           onOpenSubgoal={(sgId) => { setGoalDrawer(null); setSubgoalDrawer({ goalId: activeGoal.id, subgoalId: sgId }); }}
-          onOpenMaterials={(sgId) => setChecklistPicker({ goalId: activeGoal.id, subgoalId: sgId })}
           onDeleteSubgoal={(sgId) => setDeleteSubgoal({ goalId: activeGoal.id, subgoalId: sgId })} />
       )}
 
@@ -506,7 +488,7 @@ function Page() {
 
       {/* ---- Модалка создания/редактирования подцели ---- */}
       {subgoalModal && (
-        <SubgoalCreateModal plan={plan}
+        <SubgoalCreateModal
           initial={subgoalModal.editIndex != null ? newGoalDraft.subgoals[subgoalModal.editIndex] : null}
           onClose={() => setSubgoalModal(null)}
           onCreate={(draft) => {
@@ -528,20 +510,11 @@ function Page() {
         <SubgoalDrawer plan={plan} goal={activeSubgoalGoal} subgoal={activeSubgoal}
           onClose={() => setSubgoalDrawer(null)}
           onChange={(patch) => updateSubgoal(subgoalDrawer.goalId, subgoalDrawer.subgoalId, patch)}
-          onOpenChecklistPicker={() => setChecklistPicker({ goalId: subgoalDrawer.goalId, subgoalId: subgoalDrawer.subgoalId })}
-          onUnlinkChecklist={(itemId) => toggleChecklistRef(subgoalDrawer.goalId, subgoalDrawer.subgoalId, itemId)}
           onAddComment={(text) => addComment(subgoalDrawer.goalId, subgoalDrawer.subgoalId, text)}
           onConfirm={() => confirmSubgoal(subgoalDrawer.goalId, subgoalDrawer.subgoalId)}
           onReturn={() => setReturnModal(subgoalDrawer)}
           onNotDone={() => markNotDone(subgoalDrawer.goalId, subgoalDrawer.subgoalId)}
           onAssessmentDecision={(decision, payload) => submitAssessmentDecision(subgoalDrawer.goalId, subgoalDrawer.subgoalId, decision, payload)} />
-      )}
-
-      {checklistPicker && (
-        <ChecklistPickerModal plan={plan}
-          selected={(plan.goals.find(g => g.id === checklistPicker.goalId).subgoals.find(s => s.id === checklistPicker.subgoalId).checklistRefs) || []}
-          onToggle={(itemId) => toggleChecklistRef(checklistPicker.goalId, checklistPicker.subgoalId, itemId)}
-          onClose={() => setChecklistPicker(null)} />
       )}
 
       {publishConfirm && (
@@ -613,7 +586,7 @@ function Page() {
 // ---------------- Строка цели в основном списке ----------------
 // Карточки целей изначально свёрнуты — виден только заголовок, статус и прогресс, без
 // списка шагов; шаги открываются по клику на шеврон (тот же паттерн, что у сотрудника).
-function ManagerGoalRow({ goal, plan, highlighted, onOpenGoal, onOpenSubgoal, onOpenMaterials, onDeleteGoal }) {
+function ManagerGoalRow({ goal, plan, highlighted, onOpenGoal, onOpenSubgoal, onDeleteGoal }) {
   const { pct } = goalProgress(goal);
   const statusVal = deriveGoalStatus(goal);
   const [stepsOpen, setStepsOpen] = React.useState(false);
@@ -645,7 +618,7 @@ function ManagerGoalRow({ goal, plan, highlighted, onOpenGoal, onOpenSubgoal, on
       </div>
       {stepsOpen && (
         <div className="sk-col sk-gap-3" style={{ marginTop: 4 }} onClick={(e) => e.stopPropagation()}>
-          {goal.subgoals.map((sg, i) => <ManagerSubgoalRow key={sg.id} subgoal={sg} index={i} goalDueLabel={goal.dueLabel} plan={plan} onOpen={() => onOpenSubgoal(sg.id)} onOpenMaterials={() => onOpenMaterials(sg.id)} />)}
+          {goal.subgoals.map((sg, i) => <ManagerSubgoalRow key={sg.id} subgoal={sg} index={i} goalDueLabel={goal.dueLabel} onOpen={() => onOpenSubgoal(sg.id)} />)}
           {!goal.subgoals.length && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Подцели ещё не добавлены</div>}
         </div>
       )}
@@ -653,31 +626,10 @@ function ManagerGoalRow({ goal, plan, highlighted, onOpenGoal, onOpenSubgoal, on
   );
 }
 
-// ---------------- Индикатор "Полезные материалы" у шага цели (3 состояния) ----------------
-// published: цель опубликована — пилюля не показывается вовсе (материалы больше нельзя менять).
-// count > 0: материалы уже привязаны — некликабельный индикатор с count, без иконки добавления.
-// иначе: материалов ещё нет — кликабельная пилюля-приглашение добавить (иконка книги вместо "+").
-function MaterialsBadge({ count, published, onClick }) {
-  if (published) return null;
-  const hasItems = count > 0;
-  return (
-    <span className={"sk-row sk-gap-1" + (hasItems ? "" : " sk-clickable")}
-      onClick={hasItems ? undefined : (e) => { e.stopPropagation(); onClick(); }} style={{
-      height: 26, padding: "0 10px 0 6px", borderRadius: "var(--sk-radius-full)",
-      background: hasItems ? "var(--sk-surface-secondary)" : "var(--sk-accent-secondary)",
-      color: hasItems ? "var(--sk-text-secondary)" : "var(--sk-text-accent)",
-      font: "var(--sk-label-4)", whiteSpace: "nowrap",
-    }}>
-      <IconBookOpen size={15} />{hasItems ? "Полезные материалы: " + count : "Добавить материалы"}
-    </span>
-  );
-}
-
-function ManagerSubgoalRow({ subgoal, index, goalDueLabel, plan, onOpen, onOpenMaterials }) {
+function ManagerSubgoalRow({ subgoal, index, goalDueLabel, onOpen }) {
   const isDone = subgoal.status === "done";
   const badge = NUMBER_BADGE.not_started;
   const statusIcon = STATUS_ICON[subgoal.status];
-  const matCount = (subgoal.checklistRefs || []).length;
   const ownDue = stripDuePrefix(subgoal.dueLabel);
   const showOwnDue = !isDone && ownDue && ownDue !== stripDuePrefix(goalDueLabel);
   return (
@@ -703,7 +655,6 @@ function ManagerSubgoalRow({ subgoal, index, goalDueLabel, plan, onOpen, onOpenM
             <statusIcon.icon size={11} color="var(--sk-text-contrast)" />
           </span>
         )}
-        <MaterialsBadge count={matCount} published={plan.goalsPublished} onClick={onOpenMaterials} />
       </div>
     </div>
   );
@@ -1045,7 +996,6 @@ function goalDraftFromCatalog(goal, plan) {
       description: sg.description || "",
       dueDate: minDate(addDays(start, sg.dueDays || goal.dueDays || 30), dueDate),
       reviewer: sg.reviewer === "Наставник" && D.assistants.length ? D.assistants[0].name : D.manager.name,
-      checklistRefs: [],
       assessmentChecklist: null,
     })),
   };
@@ -1393,7 +1343,7 @@ function GoalCreateDrawer({ draft, setDraft, fromCatalog, onClose, onCreate, onA
 }
 
 // ---------------- Дровер: цель (просмотр / редактирование) ----------------
-function GoalDrawer({ goal, plan, editable, onClose, onChange, onAddSubgoal, onOpenSubgoal, onOpenMaterials, onDeleteSubgoal }) {
+function GoalDrawer({ goal, editable, onClose, onChange, onAddSubgoal, onOpenSubgoal, onDeleteSubgoal }) {
   const { done, total, pct } = goalProgress(goal);
   return (
     <Drawer open title={editable ? "Цель адаптации" : null} onClose={onClose} size="s">
@@ -1448,7 +1398,6 @@ function GoalDrawer({ goal, plan, editable, onClose, onChange, onAddSubgoal, onO
                       <statusIcon.icon size={11} color="var(--sk-text-contrast)" />
                     </span>
                   )}
-                  <MaterialsBadge count={(sg.checklistRefs || []).length} published={plan.goalsPublished} onClick={() => onOpenMaterials(sg.id)} />
                   {editable && <button className="sk-link-btn" onClick={() => onDeleteSubgoal(sg.id)}><IconTrash size={15} color="var(--sk-icon-secondary)" /></button>}
                 </div>
               </div>
@@ -1462,62 +1411,6 @@ function GoalDrawer({ goal, plan, editable, onClose, onChange, onAddSubgoal, onO
 }
 
 // ---------------- Модалка: создание подцели ----------------
-// ---------------- Выбор полезных материалов прямо из формы шага — тот же список
-// элементов чек-листа, что и ChecklistPickerModal, но встроен в форму, чтобы не
-// заставлять руководителя сначала создать шаг, а материалы добавлять вторым заходом. ----------------
-function StepMaterialsPicker({ plan, selected, onToggle }) {
-  const [open, setOpen] = React.useState(false);
-  const [q, setQ] = React.useState("");
-  const allItems = plan.stages.flatMap(s => s.items.filter(i => i.kind !== "checkpoint").map(i => ({ item: i, stage: s })));
-  const list = q.trim() ? allItems.filter(x => x.item.title.toLowerCase().includes(q.trim().toLowerCase())) : allItems;
-  const selectedItems = selected.map(id => allItems.find(x => x.item.id === id)).filter(Boolean);
-
-  return (
-    <div className="sk-col sk-gap-2">
-      <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>Полезные материалы</span>
-      {selectedItems.length ? (
-        <div className="sk-col sk-gap-2">
-          {selectedItems.map(({ item, stage }) => (
-            <div key={item.id} className="sk-row" style={{ justifyContent: "space-between", padding: 10, background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-2)" }}>
-              <div className="sk-col sk-gap-1">
-                <div className="sk-label-4">{item.title}</div>
-                <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]} · Этап «{stage.title}»</div>
-              </div>
-              <button className="sk-link-btn" onClick={() => onToggle(item.id)}><IconX size={15} color="var(--sk-icon-secondary)" /></button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Материалы помогут сотруднику разобраться, что нужно сделать</span>
-      )}
-      <button className="sk-link-btn sk-label-3-regular" onClick={() => setOpen(true)}
-        style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)" }}>
-        <span className="sk-row sk-gap-1"><IconPlusSm size={16} />Добавить</span>
-      </button>
-
-      {open && (
-        <Modal open title="Полезные материалы" onClose={() => setOpen(false)} size="m"
-          secondary={<Button mode="secondary" onClick={() => setOpen(false)}>Отменить</Button>}
-          primary={<Button onClick={() => setOpen(false)}>Готово</Button>}
-          options={<Input icon={<IconSearch size={18} />} placeholder="Поиск по названию" value={q} onChange={(e) => setQ(e.target.value || "")} />}>
-          <div className="sk-col sk-gap-1 sk-modal-scroll">
-            {list.map(({ item, stage }) => (
-              <div key={item.id} className="sk-row sk-gap-3 sk-clickable" style={{ padding: "10px 4px" }} onClick={() => onToggle(item.id)}>
-                <Checkbox checked={selected.includes(item.id)} onChange={() => onToggle(item.id)} />
-                <div className="sk-col sk-gap-1" style={{ flex: 1 }}>
-                  <div className="sk-label-3-regular">{item.title}</div>
-                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]} · Этап «{stage.title}»</div>
-                </div>
-              </div>
-            ))}
-            {!list.length && <div className="sk-muted" style={{ padding: "16px 0", textAlign: "center" }}>Ничего не нашлось</div>}
-          </div>
-        </Modal>
-      )}
-    </div>
-  );
-}
-
 // ---------------- Выбор способа проверки шага — обязательное решение при создании:
 // либо привязать готовый оценочный лист (критерии, по которым будет приниматься
 // решение), либо оставить без него — тогда проверяющий просто выставит итог
@@ -1555,12 +1448,11 @@ function StepAssessmentPicker({ templateId, setTemplateId }) {
   );
 }
 
-function SubgoalCreateModal({ plan, initial, onClose, onCreate }) {
+function SubgoalCreateModal({ initial, onClose, onCreate }) {
   const [title, setTitle] = React.useState(initial ? initial.title : "");
   const [description, setDescription] = React.useState(initial ? initial.description : "");
   const [dueDate, setDueDate] = React.useState(initial ? initial.dueDate : new Date(2026, 0, 20));
   const [reviewer, setReviewer] = React.useState(initial ? initial.reviewer : D.manager.name);
-  const [checklistRefs, setChecklistRefs] = React.useState(initial ? (initial.checklistRefs || []) : []);
   // Шаблон оценочного листа не хранится в шаге напрямую (см. handleCreate ниже) — при
   // редактировании ищем его обратно по названию, это лучшее, что можно сделать без id.
   const initialTemplateId = (initial && initial.assessmentChecklist)
@@ -1568,10 +1460,6 @@ function SubgoalCreateModal({ plan, initial, onClose, onCreate }) {
     : null;
   const [templateId, setTemplateId] = React.useState(initialTemplateId);
   const canCreate = title.trim().length > 0;
-
-  function toggleMaterial(itemId) {
-    setChecklistRefs(prev => prev.includes(itemId) ? prev.filter(x => x !== itemId) : [...prev, itemId]);
-  }
 
   function handleCreate() {
     const template = templateId ? (D.assessmentTemplates || []).find(t => t.id === templateId) : null;
@@ -1581,7 +1469,7 @@ function SubgoalCreateModal({ plan, initial, onClose, onCreate }) {
       title: template.title, hint: template.hint,
       criteria: template.criteria.map(c => ({ id: c.id, label: c.label })),
     } : null;
-    onCreate({ title, description, dueDate, reviewer, checklistRefs, assessmentChecklist });
+    onCreate({ title, description, dueDate, reviewer, assessmentChecklist });
   }
 
   return (
@@ -1597,7 +1485,6 @@ function SubgoalCreateModal({ plan, initial, onClose, onCreate }) {
           <DatePicker label="Дата завершения" required value={dueDate} onChange={setDueDate} style={{ flex: 1 }} />
           <Select label="Проверяющий" value={reviewer} options={REVIEWER_OPTIONS} onChange={setReviewer} style={{ flex: 1 }} />
         </div>
-        <StepMaterialsPicker plan={plan} selected={checklistRefs} onToggle={toggleMaterial} />
         <Divider />
         <div className="sk-col sk-gap-3">
           <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>Проверка выполнения шага</span>
@@ -1837,7 +1724,7 @@ function CommentsPanel({ comments, comment, setComment, onAdd, disabled }) {
   );
 }
 
-function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklistPicker, onUnlinkChecklist, onAddComment, onConfirm, onReturn, onNotDone, onAssessmentDecision }) {
+function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onAddComment, onConfirm, onReturn, onNotDone, onAssessmentDecision }) {
   const [comment, setComment] = React.useState("");
   const [drawerTab, setDrawerTab] = React.useState("comments");
   const editable = !plan.employeeStarted;
@@ -1850,7 +1737,6 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
   // целиком (см. ReviewDecisionModal), даже если какой-то шаг формально ещё "на проверке".
   const isReview = plan.employeeStarted && plan.status !== "on_review" && subgoal.status === "pending_review" && isDefaultReviewer;
   const canMarkNotDone = plan.employeeStarted && plan.status !== "on_review" && subgoal.status === "pending_review";
-  const links = (subgoal.checklistRefs || []).map(id => findChecklistItem(plan, id)).filter(Boolean);
   // Оценочный лист — если он есть у подцели, решение (подтвердить/вернуть/не выполнена)
   // принимается только через него: сначала заполняем критерии, затем сразу решение —
   // и то, и другое в одной модалке (AssessmentModal), не в самом дровере. Сам лист (шаблон
@@ -1944,34 +1830,6 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
           </React.Fragment>
         )}
 
-        <CollapsibleSection title={<span>Полезные материалы{links.length ? <span style={{ color: "var(--sk-text-secondary)" }}>{" " + links.length}</span> : ""}</span>} defaultOpen={false}>
-          <div className="sk-col sk-gap-2" style={{ padding: 12, background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-3)" }}>
-            {!links.length && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Добавьте вспомогательные материалы для выполнения этого шага</div>}
-            {links.map(({ item, stage }) => {
-              const Icon = ELEMENT_ICON[item.kind] || IconFileText;
-              return (
-                <div key={item.id} className="sk-row sk-gap-3" style={{ alignItems: "flex-start", padding: 10, background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-2)" }}>
-                  <div style={{ paddingTop: 2 }}><Checkbox checked={!!item.done} disabled /></div>
-                  <div className="sk-col sk-gap-1" style={{ flex: 1, minWidth: 0 }}>
-                    <div className="sk-label-4" style={{ color: item.done ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{item.title}</div>
-                    <div className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
-                      <Icon size={13} color="var(--sk-icon-secondary)" style={{ flexShrink: 0 }} />
-                      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]}</span>
-                    </div>
-                  </div>
-                  {editable && <button className="sk-link-btn" onClick={() => onUnlinkChecklist(item.id)}><IconX size={15} color="var(--sk-icon-secondary)" /></button>}
-                </div>
-              );
-            })}
-            {editable && (
-              <button className="sk-link-btn sk-label-3-regular" onClick={onOpenChecklistPicker}
-                style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)" }}>
-                <span className="sk-row sk-gap-1"><IconPlusSm size={16} />Добавить</span>
-              </button>
-            )}
-          </div>
-        </CollapsibleSection>
-
         <DrawerTabs items={drawerTabItems} active={drawerTab} onChange={setDrawerTab} />
         {drawerTab === "comments" && (
           <CommentsPanel comments={subgoal.comments} comment={comment} setComment={setComment} onAdd={onAddComment} disabled={false} />
@@ -2003,32 +1861,6 @@ function ReturnCommentModal({ onClose, onSubmit }) {
       primary={<Button disabled={!canSubmit} onClick={() => onSubmit(comment.trim())}>Вернуть в работу</Button>}>
       <Textarea label="Комментарий" required helper="Обязателен — объясните сотруднику, что нужно доработать"
         rows={3} value={comment} onChange={(e) => setComment(e.target.value || "")} />
-    </Modal>
-  );
-}
-
-// ---------------- Модалка: привязка чек-листа ----------------
-function ChecklistPickerModal({ plan, selected, onToggle, onClose }) {
-  const [q, setQ] = React.useState("");
-  const allItems = plan.stages.flatMap(s => s.items.filter(i => i.kind !== "checkpoint").map(i => ({ item: i, stage: s })));
-  const list = q.trim() ? allItems.filter(x => x.item.title.toLowerCase().includes(q.trim().toLowerCase())) : allItems;
-  return (
-    <Modal open title="Полезные материалы" onClose={onClose} size="m"
-      secondary={<Button mode="secondary" onClick={onClose}>Отменить</Button>}
-      primary={<Button onClick={onClose}>Готово</Button>}
-      options={<Input icon={<IconSearch size={18} />} placeholder="Поиск по названию" value={q} onChange={(e) => setQ(e.target.value || "")} />}>
-      <div className="sk-col sk-gap-1 sk-modal-scroll">
-        {list.map(({ item, stage }) => (
-          <div key={item.id} className="sk-row sk-gap-3 sk-clickable" style={{ padding: "10px 4px" }} onClick={() => onToggle(item.id)}>
-            <Checkbox checked={selected.includes(item.id)} onChange={() => onToggle(item.id)} />
-            <div className="sk-col sk-gap-1" style={{ flex: 1 }}>
-              <div className="sk-label-3-regular">{item.title}</div>
-              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]} · Этап «{stage.title}»</div>
-            </div>
-          </div>
-        ))}
-        {!list.length && <div className="sk-muted" style={{ padding: "16px 0", textAlign: "center" }}>Ничего не нашлось</div>}
-      </div>
     </Modal>
   );
 }
