@@ -46,9 +46,9 @@ function StageBlock({ stage, index, onOpenItem }) {
     <div className="sk-col sk-gap-2" style={{
       borderRadius: "var(--sk-radius-3)", overflow: "hidden",
       border: current ? "1.5px solid var(--sk-stroke-accent)" : "1px solid var(--sk-stroke)",
-      opacity: locked ? 0.65 : 1,
+      opacity: locked && !open ? 0.65 : 1,
     }}>
-      <div className={locked ? "sk-row" : "sk-row sk-clickable"} onClick={() => !locked && setOpen((o) => !o)}
+      <div className="sk-row sk-clickable" onClick={() => setOpen((o) => !o)}
         style={{
           justifyContent: "space-between", padding: "10px 12px",
           background: completed ? "var(--sk-positive-secondary)" : current ? "var(--sk-accent-secondary)" : "var(--sk-surface-secondary)",
@@ -66,15 +66,16 @@ function StageBlock({ stage, index, onOpenItem }) {
           {completed && <span className="sk-label-4" style={{ color: "var(--sk-text-positive)" }}>Завершён</span>}
           {current && <span className="sk-label-4" style={{ color: "var(--sk-text-accent)" }}>{stage.dueLabel}</span>}
           {locked && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{stage.dueLabel}</span>}
-          {!locked && (open ? <IconChevronUp size={16} color="var(--sk-icon-secondary)" /> : <IconChevronDown size={16} color="var(--sk-icon-secondary)" />)}
+          {open ? <IconChevronUp size={16} color="var(--sk-icon-secondary)" /> : <IconChevronDown size={16} color="var(--sk-icon-secondary)" />}
         </div>
       </div>
-      {open && !locked && (
+      {open && (
         <div className="sk-col sk-gap-1" style={{ padding: "4px 8px 8px" }}>
           {stage.items.map((item) => (
-            <div key={item.id} className="sk-check-row" onClick={() => onOpenItem(item)}>
+            <div key={item.id} className="sk-check-row" style={{ cursor: locked ? "default" : "pointer" }}
+              onClick={locked ? undefined : () => onOpenItem(item)}>
               <div style={{ paddingTop: 2 }} onClick={(e) => e.stopPropagation()}>
-                <Checkbox checked={!!item.done} onChange={() => onOpenItem(item, true)} />
+                <Checkbox checked={!!item.done} disabled={locked} onChange={() => onOpenItem(item, true)} />
               </div>
               <div className="sk-col" style={{ flex: 1, gap: item.done ? 0 : 2 }}>
                 <div className="sk-label-3-regular" style={{ textDecoration: item.done ? "line-through" : "none", color: item.done ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{item.title}</div>

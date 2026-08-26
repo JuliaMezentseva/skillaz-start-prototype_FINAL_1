@@ -53,7 +53,7 @@ const SUBGOAL_ICON = {
   returned: { icon: IconInfo, bg: "var(--sk-warning)", fg: "var(--sk-text-contrast)" },
 };
 
-const MIN_TAB_NOTE = "Формальный порог входа в роль. Сотрудник отмечает пункты сам, вашего подтверждения не требуется.";
+const MIN_TAB_NOTE = "Маршрут сотрудника — от первых шагов до погружения в роль. Пункты он отмечает сам, вашего подтверждения не требуется.";
 const MAX_TAB_NOTE = "Персональный план сотрудника на результат в роли. Вы участвуете в проверке подцелей и КТ, где назначены проверяющим.";
 const CP_YELLOW = "var(--yellow-yellow-85)";
 const CP_YELLOW_BG = "var(--yellow-yellow-96)";
@@ -681,6 +681,9 @@ function ReturnCommentModal({ onClose, onSubmit }) {
 }
 
 // ---------------- Чек-лист (только просмотр для руководителя) ----------------
+// Ещё не начатый (locked) этап тоже раскрывается — полезно видеть, что сотруднику
+// предстоит дальше. Отметки в этом режиме недоступны в любом случае: чекбоксы
+// всегда disabled, а ElementModal здесь только для чтения.
 function ManagerStageBlock({ stage, index, onOpenItem, onAdd }) {
   const locked = stage.status === "locked";
   const completed = stage.status === "completed";
@@ -690,9 +693,9 @@ function ManagerStageBlock({ stage, index, onOpenItem, onAdd }) {
     <div className="sk-col sk-gap-2" style={{
       borderRadius: "var(--sk-radius-3)", overflow: "hidden",
       border: current ? "1.5px solid var(--sk-stroke-accent)" : "1px solid var(--sk-stroke)",
-      opacity: locked ? 0.65 : 1,
+      opacity: locked && !open ? 0.65 : 1,
     }}>
-      <div className={locked ? "sk-row" : "sk-row sk-clickable"} onClick={() => !locked && setOpen(o => !o)}
+      <div className="sk-row sk-clickable" onClick={() => setOpen(o => !o)}
         style={{
           justifyContent: "space-between", padding: "10px 12px",
           background: current ? "var(--sk-accent-secondary)" : "var(--sk-surface-secondary)",
@@ -710,10 +713,10 @@ function ManagerStageBlock({ stage, index, onOpenItem, onAdd }) {
           {completed && <span className="sk-label-4" style={{ color: "var(--sk-text-positive)" }}>Завершён</span>}
           {current && stage.dueLabel && <span className="sk-label-4" style={{ color: "var(--sk-text-accent)" }}>{stage.dueLabel}</span>}
           {locked && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{stage.dueLabel}</span>}
-          {!locked && (open ? <IconChevronUp size={16} color="var(--sk-icon-secondary)" /> : <IconChevronDown size={16} color="var(--sk-icon-secondary)" />)}
+          {open ? <IconChevronUp size={16} color="var(--sk-icon-secondary)" /> : <IconChevronDown size={16} color="var(--sk-icon-secondary)" />}
         </div>
       </div>
-      {open && !locked && (
+      {open && (
         <div className="sk-col sk-gap-1" style={{ padding: "4px 8px 8px" }}>
           {stage.items.filter(item => item.kind !== "checkpoint").map(item => (
             <div key={item.id} className="sk-check-row" onClick={() => onOpenItem(item)}>

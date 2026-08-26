@@ -95,7 +95,7 @@ const CHECKPOINT_STEPS = [
   "Обратная связь по итогам — появится здесь после встречи",
 ];
 
-const MIN_TAB_NOTE = "Первые шаги на новом месте: доступы, знакомство с командой и правилами. Отмечайте пункты по мере прохождения.";
+const MIN_TAB_NOTE = "Ваш маршрут адаптации — от первых шагов до погружения в роль. Отмечайте пункты по мере прохождения.";
 const MAX_TAB_NOTE = "Здесь — ваши рабочие цели по плану. Откройте цель, чтобы увидеть шаги и отслеживать прогресс.";
 
 function goalProgress(goal) {
@@ -123,9 +123,12 @@ function findChecklistItem(plan, id) {
 }
 
 // ---------------- Чек-лист этапов ----------------
-// Разворачивается автоматически только текущий этап (in_progress) — в завершённый
-// уже незачем заглядывать, в заблокированный ещё нельзя. Статус читается сразу по
-// цвету фона заголовка и словом, а не только по цвету маленького кружка с номером.
+// Разворачивается автоматически только текущий этап (in_progress). Заблокированный
+// этап тоже можно раскрыть — но только на просмотр: сотруднику полезно заранее знать,
+// что его ждёт дальше. Отмечать пункты в нём нельзя (чекбоксы неактивны, строки не
+// кликабельны). Свёрнутый заблокированный этап приглушён, развёрнутый — в полную
+// яркость, иначе содержимое невозможно прочитать; о блокировке говорят замок и
+// неактивные чекбоксы. Статус читается по цвету фона заголовка и иконке справа.
 function StageBlock({ stage, index, onOpenItem, onOpenCheckpoint }) {
   const locked = stage.status === "locked";
   const completed = stage.status === "completed";
@@ -135,9 +138,9 @@ function StageBlock({ stage, index, onOpenItem, onOpenCheckpoint }) {
     <div className="sk-col sk-gap-2" style={{
       borderRadius: "var(--sk-radius-3)", overflow: "hidden",
       border: current ? "1.5px solid var(--sk-stroke-accent)" : "1px solid var(--sk-stroke)",
-      opacity: locked ? 0.65 : 1,
+      opacity: locked && !open ? 0.65 : 1,
     }}>
-      <div className={locked ? "sk-row" : "sk-row sk-clickable"} onClick={() => !locked && setOpen((o) => !o)}
+      <div className="sk-row sk-clickable" onClick={() => setOpen((o) => !o)}
         style={{
           justifyContent: "space-between", padding: "10px 12px",
           background: current ? "var(--sk-accent-secondary)" : "var(--sk-surface-secondary)",
@@ -151,17 +154,17 @@ function StageBlock({ stage, index, onOpenItem, onOpenCheckpoint }) {
           <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{stage.title}</span>
         </div>
         <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-          {current && stage.dueLabel && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{stage.dueLabel}</span>}
-          {locked && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{stage.dueLabel}</span>}
+          {stage.dueLabel && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{stage.dueLabel}</span>}
           {completed && <IconCheck size={16} color="var(--sk-positive)" />}
           {current && <IconClock size={16} color="var(--sk-accent)" />}
-          {!locked && (open ? <IconChevronUp size={16} color="var(--sk-icon-secondary)" /> : <IconChevronDown size={16} color="var(--sk-icon-secondary)" />)}
+          {open ? <IconChevronUp size={16} color="var(--sk-icon-secondary)" /> : <IconChevronDown size={16} color="var(--sk-icon-secondary)" />}
         </div>
       </div>
-      {open && !locked && (
+      {open && (
         <div className="sk-col sk-gap-1" style={{ padding: "4px 8px 8px" }}>
           {stage.items.map((item) => item.kind === "checkpoint" ? (
-            <div key={item.id} className="sk-check-row" onClick={() => onOpenCheckpoint(item.checkpointId)}>
+            <div key={item.id} className="sk-check-row" style={{ cursor: locked ? "default" : "pointer" }}
+              onClick={locked ? undefined : () => onOpenCheckpoint(item.checkpointId)}>
               <span style={{ paddingTop: 2, color: "var(--sk-icon-accent)" }}><IconTarget size={16} /></span>
               <div className="sk-col" style={{ flex: 1, gap: 2 }}>
                 <div className="sk-label-3-regular">{item.title}</div>
@@ -169,9 +172,10 @@ function StageBlock({ stage, index, onOpenItem, onOpenCheckpoint }) {
               </div>
             </div>
           ) : (
-            <div key={item.id} className="sk-check-row" onClick={() => onOpenItem(item)}>
+            <div key={item.id} className="sk-check-row" style={{ cursor: locked ? "default" : "pointer" }}
+              onClick={locked ? undefined : () => onOpenItem(item)}>
               <div style={{ paddingTop: 2 }} onClick={(e) => e.stopPropagation()}>
-                <Checkbox checked={!!item.done} onChange={() => onOpenItem(item, true)} />
+                <Checkbox checked={!!item.done} disabled={locked} onChange={() => onOpenItem(item, true)} />
               </div>
               <div className="sk-col" style={{ flex: 1, gap: item.done ? 0 : 2 }}>
                 <div className="sk-label-3-regular" style={{ color: item.done ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{item.title}</div>

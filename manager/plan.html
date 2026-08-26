@@ -87,7 +87,7 @@ const STATUS_ICON = {
   pending_review: { icon: IconClock, color: "var(--sk-warning)" },
 };
 
-const MIN_TAB_NOTE = "Формальный порог входа в роль. Сотрудник отмечает пункты сам, вашего подтверждения не требуется.";
+const MIN_TAB_NOTE = "Маршрут сотрудника — от первых шагов до погружения в роль. Пункты он отмечает сам, вашего подтверждения не требуется.";
 const MAX_TAB_NOTE = "Цели помогают сотруднику выйти на результат в роли после адаптации. Открывайте цель, чтобы задать шаги и следить за прогрессом.";
 // На финальном ревью тот же баннер меняет текст под текущую задачу руководителя — вместо
 // обычной подсказки про вкладку показывает, что план ждёт решения, и даёт кнопку сразу
@@ -1866,6 +1866,9 @@ function ReturnCommentModal({ onClose, onSubmit }) {
 }
 
 // ---------------- Чек-лист (только просмотр для руководителя) ----------------
+// Ещё не начатый (locked) этап тоже раскрывается — руководителю нужно видеть, что
+// сотруднику предстоит дальше. Отметки в этом режиме недоступны в любом случае:
+// чекбоксы всегда disabled, а ElementModal здесь только для чтения.
 function ManagerStageBlock({ stage, index, onOpenItem, onAdd }) {
   const locked = stage.status === "locked";
   const completed = stage.status === "completed";
@@ -1875,9 +1878,9 @@ function ManagerStageBlock({ stage, index, onOpenItem, onAdd }) {
     <div className="sk-col sk-gap-2" style={{
       borderRadius: "var(--sk-radius-3)", overflow: "hidden",
       border: current ? "1.5px solid var(--sk-stroke-accent)" : "1px solid var(--sk-stroke)",
-      opacity: locked ? 0.65 : 1,
+      opacity: locked && !open ? 0.65 : 1,
     }}>
-      <div className={locked ? "sk-row" : "sk-row sk-clickable"} onClick={() => !locked && setOpen(o => !o)}
+      <div className="sk-row sk-clickable" onClick={() => setOpen(o => !o)}
         style={{
           justifyContent: "space-between", padding: "10px 12px",
           background: current ? "var(--sk-accent-secondary)" : "var(--sk-surface-secondary)",
@@ -1895,10 +1898,10 @@ function ManagerStageBlock({ stage, index, onOpenItem, onAdd }) {
           {locked && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{stage.dueLabel}</span>}
           {completed && <IconCheck size={16} color="var(--sk-positive)" />}
           {current && <IconClock size={16} color="var(--sk-accent)" />}
-          {!locked && (open ? <IconChevronUp size={16} color="var(--sk-icon-secondary)" /> : <IconChevronDown size={16} color="var(--sk-icon-secondary)" />)}
+          {open ? <IconChevronUp size={16} color="var(--sk-icon-secondary)" /> : <IconChevronDown size={16} color="var(--sk-icon-secondary)" />}
         </div>
       </div>
-      {open && !locked && (
+      {open && (
         <div className="sk-col sk-gap-1" style={{ padding: "4px 8px 8px" }}>
           {stage.items.filter(item => item.kind !== "checkpoint").map(item => (
             <div key={item.id} className="sk-check-row" onClick={() => onOpenItem(item)}>
