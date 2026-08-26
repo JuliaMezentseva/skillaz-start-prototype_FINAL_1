@@ -74,15 +74,67 @@ function CandidateTag({ e, compact }) {
   return <MatchTag percent={e.matchPercent} compact={compact} />;
 }
 
-function CandidateDetail({ e }) {
+function StatTile({ value, label }) {
   return (
-    <div className="sk-col sk-gap-2">
-      <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-        <Avatar name={e.name} size={32} />
-        <div className="sk-label-3">{e.name}</div>
+    <div className="sk-col" style={{ flex: 1, gap: 2, background: "var(--sk-surface-secondary)", borderRadius: 8, padding: "8px 6px", textAlign: "center" }}>
+      <div className="sk-label-3">{value}</div>
+      <div style={{ font: "var(--sk-label-4-regular)", fontSize: 10, color: "var(--sk-text-secondary)" }}>{label}</div>
+    </div>
+  );
+}
+
+// Навыки вакансии, которых кандидату не хватает — оформлены отдельным блоком, а не
+// как предупреждение/риск: это просто зона роста, а не повод сомневаться в рекомендации
+// (сотрудника уже отобрали как подходящего).
+function SkillGapCard({ missingSkills }) {
+  if (!missingSkills || missingSkills.length === 0) return null;
+  return (
+    <div className="sk-col sk-gap-1" style={{ background: "var(--sk-surface-secondary)", borderRadius: 8, padding: "10px 12px" }}>
+      <div className="sk-label-4">Что нужно развить</div>
+      <div className="sk-row sk-gap-1" style={{ flexWrap: "wrap" }}>
+        {missingSkills.map((s, i) => (
+          <Tag key={i} size="s" style={{ background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)" }}>{s}</Tag>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CandidateDetail({ e, vacancy }) {
+  const matchedSkills = (vacancy.requiredSkills || []).filter(s => !(e.missingSkills || []).includes(s));
+  return (
+    <div className="sk-col sk-gap-3">
+      <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+          <Avatar name={e.name} size={32} />
+          <div className="sk-label-3">{e.name}</div>
+        </div>
+        <a href="../stub.html?role=hr&section=profile" style={{ textDecoration: "none" }}>
+          <Button mode="secondary" size="s">Перейти в профиль</Button>
+        </a>
       </div>
       <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{e.position} · {e.department}</div>
       <CandidateTag e={e} />
+      <Divider />
+      <div className="sk-row sk-gap-2">
+        {e.score360 != null && <StatTile value={`${e.score360} из 5`} label="Оценка 360" />}
+        {e.tenure && <StatTile value={e.tenure} label="Стаж в роли" />}
+        {e.iprProgress != null && <StatTile value={`${e.iprProgress}%`} label="ИПР выполнен" />}
+      </div>
+      {e.iprGoal && (
+        <div style={{ font: "var(--sk-label-4-regular)", color: "var(--sk-text-secondary)" }}>Цель ИПР: {e.iprGoal}</div>
+      )}
+      {matchedSkills.length > 0 && (
+        <div className="sk-col sk-gap-1">
+          <div className="sk-label-4">Совпадающие навыки</div>
+          <div className="sk-row sk-gap-1" style={{ flexWrap: "wrap" }}>
+            {matchedSkills.map((s, i) => (
+              <Tag key={i} size="s" hue="positive">{s}</Tag>
+            ))}
+          </div>
+        </div>
+      )}
+      <SkillGapCard missingSkills={e.missingSkills} />
       <Divider />
       <TextList size="s" items={e.matchReasons || []} />
     </div>
@@ -301,7 +353,7 @@ function Page() {
       {openCandidate != null && (
         <Modal open title={matches[openCandidate].name} onClose={() => setOpenCandidate(null)} size="m"
           secondary={<Button mode="secondary" onClick={() => setOpenCandidate(null)}>Закрыть</Button>}>
-          <CandidateDetail e={matches[openCandidate]} />
+          <CandidateDetail e={matches[openCandidate]} vacancy={vacancy} />
         </Modal>
       )}
 
