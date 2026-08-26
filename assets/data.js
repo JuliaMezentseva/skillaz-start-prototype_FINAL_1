@@ -774,7 +774,10 @@ window.SITE_DATA = {
   const stages = JSON.parse(JSON.stringify(templateStages)).map((s, i) => {
     s.id = "n" + (i + 1);
     s.status = i === 0 ? "in_progress" : "locked";
-    s.dueLabel = i === 0 ? "Пройдите до 07 янв" : "Этап пока недоступен";
+    // Подпись этапа — это срок фазы (см. stages в plans.onboarding), а не статус доступа:
+    // заблокированный этап теперь можно раскрыть на просмотр, поэтому «Этап пока недоступен»
+    // там был бы неправдой. У текущего этапа показываем конкретную дату этого плана.
+    if (i === 0) s.dueLabel = "Пройдите до 07 янв";
     s.items = s.items.filter(it => it.kind !== "checkpoint").map((it, j) => {
       it.id = "n" + (i + 1) + "e" + (j + 1);
       it.done = false;
@@ -816,7 +819,7 @@ window.SITE_DATA = {
     s.id = "d" + (i + 1);
     if (i === 0) { s.status = "completed"; s.dueLabel = "Этап завершён"; s.items.forEach((it) => { it.done = true; }); }
     else if (i === 1) { s.status = "in_progress"; s.dueLabel = "Пройдите до 20 янв"; s.items.forEach((it, j) => { it.done = j === 0; }); }
-    else { s.status = "locked"; s.dueLabel = "Этап пока недоступен"; }
+    else { s.status = "locked"; } // подпись остаётся сроком фазы из шаблона — этап открывается на просмотр
     s.items = s.items.map((it, j) => { it.id = "d" + (i + 1) + "e" + (j + 1); return it; });
     return s;
   });
@@ -878,7 +881,7 @@ window.SITE_DATA = {
     s.id = "al" + (i + 1);
     if (i === 0) { s.status = "completed"; s.dueLabel = "Этап завершён"; s.items.forEach((it) => { it.done = true; }); }
     else if (i === 1) { s.status = "in_progress"; s.dueLabel = "Пройдите до 20 янв"; s.items.forEach((it, j) => { it.done = j === 0; }); }
-    else { s.status = "locked"; s.dueLabel = "Этап пока недоступен"; }
+    else { s.status = "locked"; } // подпись остаётся сроком фазы из шаблона — этап открывается на просмотр
     s.items = s.items.map((it, j) => { it.id = "al" + (i + 1) + "e" + (j + 1); return it; });
     return s;
   });
