@@ -20,7 +20,7 @@ const { AppShell, Icons, personPhoto } = window.Site;
 const {
   IconInfo, IconTarget, IconCheck, IconClipboard, IconSettings,
   IconHelpCircle, IconTrash, IconArrowLeft, IconClock, IconFileText, IconLink2, IconGraduationCap, IconMessageCircle,
-  IconPlusSm, IconEdit, IconLayers, IconBookOpen, IconCalendar, IconSearch, IconX,
+  IconPlusSm, IconEdit, IconLayers, IconCalendar, IconSearch, IconX,
   IconFilter, IconChevronDown, IconChevronRight, IconUsers, IconFlag, IconAlertCircle, IconMapPin,
 } = Icons;
 
@@ -526,77 +526,12 @@ function StepAssessmentPicker({ templateId, setTemplateId }) {
   );
 }
 
-// ---------------- Полезные материалы шага — тот же UI, что и у руководителя в
-// manager/plan.html (StepMaterialsPicker): пилюли выбранных материалов + модалка с поиском
-// и чекбоксами. Источник списка — общий каталог материалов шаблона (у шаблона нет чек-листа
-// назначенного плана с конкретными задачами, поэтому список берётся из отдельного каталога,
-// а не из plan.stages, как у руководителя). ----------------
 const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", file: "Файл", link: "Ссылка", survey: "Опрос" };
 const ELEMENT_ICON = { article: IconFileText, task: IconClipboard, course: IconGraduationCap, file: IconFileText, link: IconLink2, survey: IconMessageCircle };
 // Порядок типов элемента чек-листа в селекте создания — "Задача" первой, т.к. только у неё есть поле "Исполнитель" (см. ТЗ "Доработки прототипа_Задачи и Роли").
 const CHECKLIST_ITEM_TYPES = ["task", "survey", "article", "course", "file", "link"];
 
-function TemplateMaterialsPicker({ materials, onAdd, onRemove }) {
-  const D = window.SITE_DATA;
-  const [open, setOpen] = React.useState(false);
-  const [q, setQ] = React.useState("");
-  const allItems = D.templateMaterialsCatalog || [];
-  const list = q.trim() ? allItems.filter((item) => item.title.toLowerCase().includes(q.trim().toLowerCase())) : allItems;
-  const selectedIds = materials.map((m) => m.id);
-  const selectedItems = materials.map((m) => allItems.find((item) => item.id === m.id)).filter(Boolean);
-
-  function toggle(item) {
-    if (selectedIds.includes(item.id)) onRemove(item.id);
-    else onAdd({ id: item.id, title: item.title, kind: item.kind });
-  }
-
-  return (
-    <div className="sk-col sk-gap-2">
-      <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>Полезные материалы</span>
-      {selectedItems.length ? (
-        <div className="sk-col sk-gap-2">
-          {selectedItems.map((item) => (
-            <div key={item.id} className="sk-row" style={{ justifyContent: "space-between", padding: 10, background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-2)" }}>
-              <div className="sk-col sk-gap-1">
-                <div className="sk-label-4">{item.title}</div>
-                <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]}</div>
-              </div>
-              <button className="sk-link-btn" onClick={() => onRemove(item.id)}><IconX size={15} color="var(--sk-icon-secondary)" /></button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Материалы помогут сотруднику разобраться, что нужно сделать</span>
-      )}
-      <button className="sk-link-btn sk-label-3-regular" onClick={() => setOpen(true)}
-        style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)" }}>
-        <span className="sk-row sk-gap-1"><IconPlusSm size={16} />Добавить</span>
-      </button>
-
-      {open && (
-        <Modal open title="Полезные материалы" onClose={() => setOpen(false)} size="m"
-          secondary={<Button mode="secondary" onClick={() => setOpen(false)}>Отменить</Button>}
-          primary={<Button onClick={() => setOpen(false)}>Готово</Button>}
-          options={<Input icon={<IconSearch size={18} />} placeholder="Поиск по названию" value={q} onChange={(e) => setQ(e.target.value || "")} />}>
-          <div className="sk-col sk-gap-1 sk-modal-scroll">
-            {list.map((item) => (
-              <div key={item.id} className="sk-row sk-gap-3 sk-clickable" style={{ padding: "10px 4px" }} onClick={() => toggle(item)}>
-                <Checkbox checked={selectedIds.includes(item.id)} onChange={() => toggle(item)} />
-                <div className="sk-col sk-gap-1" style={{ flex: 1 }}>
-                  <div className="sk-label-3-regular">{item.title}</div>
-                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]}</div>
-                </div>
-              </div>
-            ))}
-            {!list.length && <div className="sk-muted" style={{ padding: "16px 0", textAlign: "center" }}>Ничего не нашлось</div>}
-          </div>
-        </Modal>
-      )}
-    </div>
-  );
-}
-
-const emptySubgoalForm = { title: "", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null };
+const emptySubgoalForm = { title: "", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null };
 
 function SubgoalFormModal({ initial, onClose, onCreate }) {
   const [form, setForm] = React.useState(initial || emptySubgoalForm);
@@ -618,9 +553,6 @@ function SubgoalFormModal({ initial, onClose, onCreate }) {
             options={[{ value: "Руководитель", label: "Руководитель" }, { value: "Наставник", label: "Наставник" }]}
             onChange={set("reviewer")} style={{ flex: 1 }} />
         </div>
-        <TemplateMaterialsPicker materials={form.materials}
-          onAdd={(item) => set("materials")([...form.materials, item])}
-          onRemove={(id) => set("materials")(form.materials.filter((m) => m.id !== id))} />
         <Divider />
         <div className="sk-col sk-gap-3">
           <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>Проверка выполнения шага</span>
@@ -696,7 +628,6 @@ function TemplateGoalCreateDrawer({ draft, setDraft, onClose, onCreate, onAddSub
 // drag-and-drop'ом (см. TemplateGoalDrawer, который передаёт dragHandleProps и index/dragging).
 // Без статус-иконки: до назначения плана сотруднику у шага ещё нет статуса выполнения. ----------------
 function TemplateSubgoalRow({ index, subgoal, onOpen, dragHandleProps, dragging }) {
-  const hasMaterials = (subgoal.materials || []).length > 0;
   return (
     <div className="sk-row sk-gap-2" style={{ alignItems: "center", padding: "10px 4px", borderBottom: "1px solid var(--sk-stroke)", opacity: dragging ? 0.5 : 1 }}>
       <span {...dragHandleProps} style={{ display: "flex", flexShrink: 0, cursor: "grab" }}>
@@ -713,13 +644,6 @@ function TemplateSubgoalRow({ index, subgoal, onOpen, dragHandleProps, dragging 
             <IconCalendar size={13} color="var(--sk-icon-secondary)" />{dueDayLabel(subgoal.dueDays)}
           </span>
         </div>
-        {hasMaterials ? (
-          <span className="sk-row sk-gap-1" style={{ color: "var(--sk-text-secondary)", font: "var(--sk-label-4)", whiteSpace: "nowrap" }}>
-            <IconBookOpen size={15} />Полезные материалы: {subgoal.materials.length}</span>
-        ) : (
-          <span className="sk-row sk-gap-1 sk-clickable" onClick={(e) => { e.stopPropagation(); onOpen(); }} style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-4)", whiteSpace: "nowrap" }}>
-            <IconBookOpen size={15} />Добавить материалы</span>
-        )}
       </div>
     </div>
   );
@@ -1001,7 +925,7 @@ function GoalsSettingsCard({ template, enabled, owner, deadlineDays, reviewRequi
           <div className="sk-row" style={{ justifyContent: "space-between", padding: "16px 24px" }}>
             <div className="sk-row sk-gap-1">
               <span className="sk-label-3">Включить план адаптации с целями</span>
-              <Tooltip content={<div style={{ maxWidth: 260, whiteSpace: "normal" }}>В этом плане сотруднику можно поставить цели, шаги к ним и полезные материалы. С этим планом сотрудник не просто проходит чек-лист, а приближается к тому, чтобы перформить в своей роли.</div>}>
+              <Tooltip content={<div style={{ maxWidth: 260, whiteSpace: "normal" }}>В этом плане сотруднику можно поставить цели и шаги к ним. С этим планом сотрудник не просто проходит маршрут, а приближается к тому, чтобы перформить в своей роли.</div>}>
                 <IconHelpCircle size={16} color="var(--sk-icon-secondary)" />
               </Tooltip>
             </div>
