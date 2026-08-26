@@ -58,68 +58,6 @@ function IconArchive({ size = 15, color = "currentColor" }) {
 
 const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", file: "Файл", link: "Ссылка" };
 
-// ---------------- Полезные материалы шага — тот же UI и тот же каталог материалов,
-// что и в hr/template.html (TemplateMaterialsPicker): поиск + список с чекбоксами. ----------------
-function MaterialsPicker({ materials, onAdd, onRemove }) {
-  const D = window.SITE_DATA;
-  const [open, setOpen] = React.useState(false);
-  const [q, setQ] = React.useState("");
-  const allItems = D.templateMaterialsCatalog || [];
-  const list = q.trim() ? allItems.filter((item) => item.title.toLowerCase().includes(q.trim().toLowerCase())) : allItems;
-  const selectedIds = materials.map((m) => m.id);
-  const selectedItems = materials.map((m) => allItems.find((item) => item.id === m.id)).filter(Boolean);
-
-  function toggle(item) {
-    if (selectedIds.includes(item.id)) onRemove(item.id);
-    else onAdd({ id: item.id, title: item.title, kind: item.kind });
-  }
-
-  return (
-    <div className="sk-col sk-gap-2">
-      <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>Полезные материалы</span>
-      {selectedItems.length ? (
-        <div className="sk-col sk-gap-2">
-          {selectedItems.map((item) => (
-            <div key={item.id} className="sk-row" style={{ justifyContent: "space-between", padding: 10, background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-2)" }}>
-              <div className="sk-col sk-gap-1">
-                <div className="sk-label-4">{item.title}</div>
-                <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]}</div>
-              </div>
-              <button className="sk-link-btn" onClick={() => onRemove(item.id)}><IconX size={15} color="var(--sk-icon-secondary)" /></button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Материалы помогут сотруднику разобраться, что нужно сделать</span>
-      )}
-      <button className="sk-link-btn sk-label-3-regular" onClick={() => setOpen(true)}
-        style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)" }}>
-        <span className="sk-row sk-gap-1"><IconPlusSm size={16} />Добавить</span>
-      </button>
-
-      {open && (
-        <Modal open title="Полезные материалы" onClose={() => setOpen(false)} size="m"
-          secondary={<Button mode="secondary" onClick={() => setOpen(false)}>Отменить</Button>}
-          primary={<Button onClick={() => setOpen(false)}>Готово</Button>}
-          options={<Input icon={<IconSearch size={18} />} placeholder="Поиск по названию" value={q} onChange={(e) => setQ(e.target.value || "")} />}>
-          <div className="sk-col sk-gap-1 sk-modal-scroll">
-            {list.map((item) => (
-              <div key={item.id} className="sk-row sk-gap-3 sk-clickable" style={{ padding: "10px 4px" }} onClick={() => toggle(item)}>
-                <Checkbox checked={selectedIds.includes(item.id)} onChange={() => toggle(item)} />
-                <div className="sk-col sk-gap-1" style={{ flex: 1 }}>
-                  <div className="sk-label-3-regular">{item.title}</div>
-                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]}</div>
-                </div>
-              </div>
-            ))}
-            {!list.length && <div className="sk-muted" style={{ padding: "16px 0", textAlign: "center" }}>Ничего не нашлось</div>}
-          </div>
-        </Modal>
-      )}
-    </div>
-  );
-}
-
 // ---------------- Проверка выполнения шага — тот же UI, что и в hr/template.html ----------------
 function StepAssessmentPicker({ templateId, setTemplateId }) {
   const D = window.SITE_DATA;
@@ -157,7 +95,7 @@ function StepAssessmentPicker({ templateId, setTemplateId }) {
 // ни даты старта, ни конкретного шаблона/плана, к которому она уже привязана. Абсолютная
 // дата тут была бы фиктивной сильнее, чем условный день N — день N честно показывает
 // относительный порядок шагов и остаётся понятным после того, как цель заберут из каталога. ----------------
-const emptySubgoalForm = { title: "", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null };
+const emptySubgoalForm = { title: "", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null };
 
 function SubgoalFormModal({ initial, onClose, onCreate }) {
   const [form, setForm] = React.useState(initial || emptySubgoalForm);
@@ -179,9 +117,6 @@ function SubgoalFormModal({ initial, onClose, onCreate }) {
             options={[{ value: "Руководитель", label: "Руководитель" }, { value: "Наставник", label: "Наставник" }]}
             onChange={set("reviewer")} style={{ flex: 1 }} />
         </div>
-        <MaterialsPicker materials={form.materials}
-          onAdd={(item) => set("materials")([...form.materials, item])}
-          onRemove={(id) => set("materials")(form.materials.filter((m) => m.id !== id))} />
         <Divider />
         <div className="sk-col sk-gap-3">
           <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>Проверка выполнения шага</span>
@@ -263,7 +198,7 @@ function GoalCatalogFormDrawer({ initial, onClose, onSave }) {
           <div className="sk-col sk-gap-2">
             <div className="sk-label-3">Шаги для достижения{form.subgoals.length ? " " + form.subgoals.length : ""}</div>
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-              Разбейте цель на подцели — с материалами и проверкой выполнения, если нужно. Можно добавить сейчас или позже.
+              Разбейте цель на подцели — с проверкой выполнения, если нужно. Можно добавить сейчас или позже.
             </div>
             {form.subgoals.map((sg, i) => (
               <div key={sg.id} className="sk-row sk-gap-2" style={{
@@ -283,7 +218,7 @@ function GoalCatalogFormDrawer({ initial, onClose, onSave }) {
                   <div className="sk-col sk-gap-1" style={{ flex: 1, minWidth: 0 }}>
                     <span className="sk-label-3-regular">{sg.title || "Без названия"}</span>
                     <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-                      День {sg.dueDays}{(sg.materials || []).length ? " · Материалов: " + sg.materials.length : ""}
+                      День {sg.dueDays}
                     </span>
                   </div>
                 </div>
@@ -663,7 +598,7 @@ function Page() {
           <div className="sk-col sk-gap-3" style={{ alignItems: "center", textAlign: "center", padding: "24px 16px" }}>
             <div className="sk-title-5">Добавьте первую цель в каталог</div>
             <div className="sk-muted" style={{ maxWidth: 440 }}>
-              Готовая цель с шагами и материалами — чтобы потом не собирать её заново, а выбрать из каталога при создании шаблона
+              Готовая цель с шагами — чтобы потом не собирать её заново, а выбрать из каталога при создании шаблона
             </div>
             <Button variant="accent" onClick={() => setFormDrawer("create")}>+ Добавить цель</Button>
           </div>
