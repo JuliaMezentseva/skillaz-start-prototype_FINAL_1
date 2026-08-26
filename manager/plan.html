@@ -1883,7 +1883,7 @@ function ManagerStageBlock({ stage, index, onOpenItem, onAdd }) {
       <div className="sk-row sk-clickable" onClick={() => setOpen(o => !o)}
         style={{
           justifyContent: "space-between", padding: "10px 12px",
-          background: current ? "var(--sk-accent-secondary)" : "var(--sk-surface-page)",
+          background: current ? "var(--sk-accent-secondary)" : "color-mix(in srgb, var(--sk-surface-page) 50%, var(--sk-surface-secondary) 50%)",
         }}>
         <div className="sk-row sk-gap-3">
           <span style={{
