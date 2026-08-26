@@ -97,9 +97,12 @@ function CandidateRow({ e, index, isFirst, onOpenOne }) {
     }}>
       <Avatar name={e.name} size={28} />
       <div className="sk-col" style={{ flex: 1, gap: 2, minWidth: 0 }}>
-        <div className="sk-label-4" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}</div>
+        <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", alignItems: "center" }}>
+          <div className="sk-label-4" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}</div>
+          {e.matchPercent != null && <MatchTag percent={e.matchPercent} compact />}
+        </div>
         <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.position}</div>
-        <CandidateTag e={e} compact />
+        {e.source === "reserve" && <ReserveTag />}
       </div>
     </button>
   );
