@@ -21,7 +21,7 @@ const {
 } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, StatusTag, Icons, personPhoto } = window.Site;
 const {
-  IconArrowLeft, IconCheck, IconLock, IconClock, IconFileText, IconLink2, IconMessageCircle,
+  IconArrowLeft, IconCheck, IconClock, IconFileText, IconLink2, IconMessageCircle,
   IconHelpCircle, IconTarget, IconMapPin, IconPhone, IconMail, IconSend,
   IconChevronUp, IconChevronDown, IconChevronRight, IconX, IconAlertCircle, IconTrash, IconSearch, IconFilter, IconClipboard, IconPlusSm,
   IconEdit, IconLayers, IconSparkles, IconMic, IconImage, IconPaperclip, IconRepeat, IconBriefcase,
@@ -1883,14 +1883,14 @@ function ManagerStageBlock({ stage, index, onOpenItem, onAdd }) {
       <div className="sk-row sk-clickable" onClick={() => setOpen(o => !o)}
         style={{
           justifyContent: "space-between", padding: "10px 12px",
-          background: completed ? "var(--sk-positive-secondary)" : current ? "var(--sk-accent-secondary)" : "var(--sk-surface-secondary)",
+          background: current ? "var(--sk-accent-secondary)" : "var(--sk-surface-secondary)",
         }}>
         <div className="sk-row sk-gap-3">
           <span style={{
             width: 22, height: 22, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
             background: current ? "var(--sk-accent)" : "transparent", color: current ? "var(--sk-text-contrast)" : "var(--sk-text-tertiary)",
             border: current ? "none" : "1.5px solid var(--sk-stroke)", font: "var(--sk-label-4)",
-          }}>{locked ? <IconLock size={11} /> : index}</span>
+          }}>{index}</span>
           <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>{stage.title}</span>
         </div>
         <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>

@@ -27,7 +27,7 @@ const {
 } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, StatusTag, Icons, personPhoto } = window.Site;
 const {
-  IconArrowLeft, IconCheck, IconLock, IconClock, IconFileText, IconLink2, IconMessageCircle,
+  IconArrowLeft, IconCheck, IconClock, IconFileText, IconLink2, IconMessageCircle,
   IconHelpCircle, IconInfo, IconTarget, IconMapPin, IconPhone, IconSend,
   IconChevronUp, IconChevronDown, IconClipboard,
 } = Icons;
@@ -51,7 +51,7 @@ function StageBlock({ stage, index, onOpenItem }) {
       <div className="sk-row sk-clickable" onClick={() => setOpen((o) => !o)}
         style={{
           justifyContent: "space-between", padding: "10px 12px",
-          background: completed ? "var(--sk-positive-secondary)" : current ? "var(--sk-accent-secondary)" : "var(--sk-surface-secondary)",
+          background: current ? "var(--sk-accent-secondary)" : "var(--sk-surface-secondary)",
         }}>
         <div className="sk-row sk-gap-3">
           <span style={{
@@ -59,7 +59,7 @@ function StageBlock({ stage, index, onOpenItem }) {
             background: completed ? "var(--sk-positive)" : current ? "var(--sk-accent)" : "var(--sk-surface-page)",
             color: completed || current ? "var(--sk-text-contrast)" : "var(--sk-text-tertiary)",
             border: locked ? "1.5px solid var(--sk-stroke)" : "none", font: "var(--sk-label-4)",
-          }}>{completed ? <IconCheck size={12} /> : locked ? <IconLock size={11} /> : index}</span>
+          }}>{completed ? <IconCheck size={12} /> : index}</span>
           <span className="sk-label-3" style={{ color: completed ? "var(--sk-text-positive)" : current ? "var(--sk-text-accent)" : "var(--sk-text-secondary)" }}>{stage.title}</span>
         </div>
         <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
