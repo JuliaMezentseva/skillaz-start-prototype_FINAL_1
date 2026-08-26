@@ -45,7 +45,7 @@ function DetailRow({ label, value }) {
 
 function MatchTag({ percent, compact }) {
   return (
-    <Tag size="s" icon={<IconSparklesSolid size={12} />} style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)", flexShrink: 0 }}>
+    <Tag size="s" style={{ background: "var(--sk-special-secondary)", color: "rgb(117,59,233)", flexShrink: 0 }}>
       {compact ? `${percent}%` : `Подходит на ${percent}%`}
     </Tag>
   );
