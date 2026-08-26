@@ -52,29 +52,26 @@ function MatchTag({ percent, compact }) {
 }
 
 // Кандидат из кадрового резерва (заранее отобран HR/руководителем под роль или как
-// высокопотенциальный сотрудник). В карточке резервисты идут отдельным списком под
-// заголовком "Из кадрового резерва" (см. MatchingCandidatesCard), поэтому в деталях
-// кандидата этот тег дублирует контекст для случая, когда карточку открыли не из
-// списка. У резервиста может параллельно быть и AI-процент (matchPercent) — тогда
-// оба тега показываются рядом.
-function ReserveTag({ targetRole }) {
+// высокопотенциальный сотрудник) — помечен голубым тегом "Из резерва" прямо в общем
+// списке кандидатов, рядом с AI-процентом (если он тоже есть), а не отдельным списком.
+function ReserveTag() {
   return (
-    <Tag size="s" hue="info" icon={<IconTarget size={12} />} style={{ flexShrink: 0 }}>
-      {targetRole ? "В резерве на эту должность" : "Резерв, высокий потенциал"}
+    <Tag size="s" hue="info" style={{ flexShrink: 0 }}>
+      Из резерва
     </Tag>
   );
 }
 
-function CandidateTag({ e }) {
+function CandidateTag({ e, compact }) {
   if (e.source === "reserve") {
     return (
       <div className="sk-row sk-gap-1" style={{ flexShrink: 0 }}>
-        <ReserveTag targetRole={e.targetRole} />
-        {e.matchPercent != null && <MatchTag percent={e.matchPercent} />}
+        <ReserveTag />
+        {e.matchPercent != null && <MatchTag percent={e.matchPercent} compact={compact} />}
       </div>
     );
   }
-  return <MatchTag percent={e.matchPercent} />;
+  return <MatchTag percent={e.matchPercent} compact={compact} />;
 }
 
 function CandidateDetail({ e }) {
@@ -103,44 +100,28 @@ function CandidateRow({ e, index, isFirst, onOpenOne }) {
         <div className="sk-label-4" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.name}</div>
         <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.position}</div>
       </div>
-      {e.matchPercent != null && <MatchTag percent={e.matchPercent} compact />}
+      <CandidateTag e={e} compact />
     </button>
   );
 }
 
 // Карточка "Подходящие кандидаты" — только у HR, первым блоком в сайдбаре (см. запрос:
 // страница вакансии такая же, как у Сотрудника, плюс этот блок сверху). Компактный
-// список (аватар, имя, должность, процент), шеврон справа — стандартный в этой ДС знак
-// "клик открывает детали" (см. Cell). Клик по строке открывает карточку конкретного
-// кандидата с причинами подбора. Резервисты вынесены в свой список под текстовым
-// заголовком "Из кадрового резерва" — так HR сразу видит, кто пришёл из AI-подбора,
-// а кто заранее отобран в резерв, не читая тег на каждой строке.
+// список (аватар, имя, должность, процент). Клик по строке открывает карточку
+// конкретного кандидата с причинами подбора. Резервисты не вынесены отдельно —
+// помечены голубым тегом "Из резерва" прямо в общем списке.
 function MatchingCandidatesCard({ employees, onOpenOne }) {
-  const aiRows = [];
-  const reserveRows = [];
-  employees.forEach((e, i) => (e.source === "reserve" ? reserveRows : aiRows).push({ e, i }));
   return (
     <Card bordered>
       <div className="sk-col sk-gap-1">
         <div className="sk-row sk-gap-2 sk-label-3" style={{ color: "rgb(117,59,233)" }}>
           <IconSparklesSolid size={16} color="rgb(117,59,233)" />Подходящие кандидаты
         </div>
-        {aiRows.length > 0 && (
-          <div className="sk-col">
-            <div className="sk-label-4" style={{ color: "var(--sk-text-secondary)", padding: "6px 0" }}>По компании</div>
-            {aiRows.map(({ e, i }, idx) => (
-              <CandidateRow key={i} e={e} index={i} isFirst={idx === 0} onOpenOne={onOpenOne} />
-            ))}
-          </div>
-        )}
-        {reserveRows.length > 0 && (
-          <div className="sk-col" style={{ marginTop: aiRows.length > 0 ? 8 : 0 }}>
-            <div className="sk-label-4" style={{ color: "var(--sk-text-secondary)", padding: "6px 0" }}>Из кадрового резерва</div>
-            {reserveRows.map(({ e, i }, idx) => (
-              <CandidateRow key={i} e={e} index={i} isFirst={idx === 0} onOpenOne={onOpenOne} />
-            ))}
-          </div>
-        )}
+        <div className="sk-col">
+          {employees.map((e, i) => (
+            <CandidateRow key={i} e={e} index={i} isFirst={i === 0} onOpenOne={onOpenOne} />
+          ))}
+        </div>
       </div>
     </Card>
   );
