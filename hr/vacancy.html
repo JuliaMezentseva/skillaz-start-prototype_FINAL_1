@@ -103,6 +103,7 @@ function CandidateDetail({ e, vacancy }) {
         <Avatar name={e.name} size={40} />
         <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{e.position} · {e.department}</div>
       </div>
+      {e.tenure && <DetailRow label="Стаж в роли" value={e.tenure} />}
       <div className="sk-row sk-gap-2" style={{ alignItems: "center", flexWrap: "wrap" }}>
         {e.matchPercent != null && <MatchTag percent={e.matchPercent} />}
         {e.source === "reserve" && <ReserveLine e={e} />}
@@ -138,7 +139,6 @@ function CandidateDetail({ e, vacancy }) {
             {e.score360 != null && <StatTile value={`${e.score360} из 5`} label="Оценка 360" href="../stub.html?role=hr&section=report360" />}
             {e.perfReview != null && <StatTile value={`${e.perfReview} из 5`} label="Performance review" href="../stub.html?role=hr&section=performance-review" />}
             {e.kpi != null && <StatTile value={`${e.kpi}%`} label="Выполнение KPI" />}
-            {e.tenure && <StatTile value={e.tenure} label="Стаж в роли" />}
           </div>
         </div>
       </Card>
