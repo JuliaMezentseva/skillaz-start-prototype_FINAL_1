@@ -116,9 +116,13 @@ function CandidateDetail({ e, vacancy }) {
           <TextList size="s" items={e.matchReasons || []} />
           {matchedSkills.length > 0 && (
             <div className="sk-col sk-gap-1">
-              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Совпадают</div>
+              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Владеет</div>
               <div className="sk-row sk-gap-1" style={{ flexWrap: "wrap" }}>
-                {matchedSkills.map((s, i) => <Tag key={i} size="s" hue="positive">{s}</Tag>)}
+                {matchedSkills.map((s, i) => (
+                  <Tag key={i} size="s" hue="positive">
+                    {s}{e.skillScores && e.skillScores[s] != null ? ` · ${e.skillScores[s]}` : ""}
+                  </Tag>
+                ))}
               </div>
             </div>
           )}
