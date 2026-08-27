@@ -251,13 +251,19 @@ function Page() {
           <IconArrowLeft size={16} />
         </IconButton>
       }>
+      <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+        <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+          <div className="sk-title-4">Новая вакансия</div>
+          <Tag size="s" hue="neutral">Черновик</Tag>
+        </div>
+        <div className="sk-row sk-gap-2">
+          <Button mode="secondary" onClick={saveDraft}>Сохранить черновик</Button>
+          <Button variant="accent" disabled={!valid} onClick={() => setConfirmOpen(true)}>Опубликовать</Button>
+        </div>
+      </div>
+
       <div className="sk-row" style={{ alignItems: "flex-start", gap: 40 }}>
         <div className="sk-vacancy-form sk-col sk-gap-6" style={{ flex: 1, minWidth: 0, maxWidth: 720 }}>
-
-          <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-            <div className="sk-title-4">Новая вакансия</div>
-            <Tag size="s" hue="neutral">Черновик</Tag>
-          </div>
 
           <div ref={sectionRefs.basic} data-section="basic" className="sk-col sk-gap-3">
             <div className="sk-label-2">Основное</div>
@@ -326,10 +332,6 @@ function Page() {
         </div>
 
         <div style={{ width: 200, flexShrink: 0, position: "sticky", top: 24 }}>
-          <div className="sk-col sk-gap-2" style={{ marginBottom: 20 }}>
-            <Button variant="accent" disabled={!valid} onClick={() => setConfirmOpen(true)} style={{ width: "100%" }}>Опубликовать</Button>
-            <Button mode="secondary" onClick={saveDraft} style={{ width: "100%" }}>Сохранить черновик</Button>
-          </div>
           <div className="sk-col sk-gap-3">
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
               На этой странице
@@ -347,7 +349,6 @@ function Page() {
                 </button>
               ))}
             </div>
-            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginTop: 4 }}>Черновик сохраняется автоматически</div>
           </div>
         </div>
       </div>
