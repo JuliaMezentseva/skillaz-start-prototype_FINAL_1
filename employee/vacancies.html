@@ -23,15 +23,16 @@ const D = window.SITE_DATA;
 // Переключатель "Вакансии / Мои отклики" — это переход между двумя разными HTML-страницами
 // (та же связка используется в HR-версии витрины, hr/vacancies.html), поэтому onChange
 // просто меняет location, а не переключает состояние на одной странице.
-function EmployeeVacanciesTabs({ active, responsesCount }) {
+function EmployeeVacanciesTabs({ active, responsesCount, referralsCount }) {
   function go(id) {
     if (id === active) return;
-    window.location.href = id === "showcase" ? "vacancies.html" : "my-responses.html";
+    window.location.href = id === "showcase" ? "vacancies.html" : id === "my-responses" ? "my-responses.html" : "my-referrals.html";
   }
   return (
     <Tabs active={active} onChange={go} items={[
       { id: "showcase", label: "Вакансии" },
       { id: "my-responses", label: "Мои отклики", count: responsesCount || undefined },
+      { id: "my-referrals", label: "Я рекомендую", count: referralsCount || undefined },
     ]} />
   );
 }
@@ -376,7 +377,7 @@ function Page() {
   return (
     <AppShell role="employee" active="vacancies" base="..">
       <div className="sk-title-3">Откройте новые карьерные возможности</div>
-      <EmployeeVacanciesTabs active="showcase" responsesCount={responses.length} />
+      <EmployeeVacanciesTabs active="showcase" responsesCount={responses.length} referralsCount={D.myReferrals.length} />
 
       <div className="sk-col sk-gap-3">
         <div className="sk-row sk-gap-2" style={{ alignItems: "center", flexWrap: "wrap" }}>

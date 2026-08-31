@@ -87,7 +87,7 @@ function Page() {
 
   function handleRecommendSubmitted() {
     setRecommendOpen(false);
-    showToast("Рекомендация отправлена рекрутёру " + vacancy.recruiter.name + ".");
+    showToast("Рекомендация отправлена рекрутёру " + vacancy.recruiter.name + ". Она появится во вкладке «Я рекомендую».");
   }
 
   const ApplyCta = () => {
@@ -317,12 +317,13 @@ function ApplyModal({ vacancy, initialLetter, onClose, onSubmitted }) {
 
 function RecommendModal({ vacancy, onClose, onSubmitted }) {
   const p = D.person;
+  const [name, setName] = React.useState("");
   const [city, setCity] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [relation, setRelation] = React.useState(null);
   const [reason, setReason] = React.useState("");
   const [resume, setResume] = React.useState(null);
-  const canSubmit = city.trim() && phone.trim() && relation && reason.trim();
+  const canSubmit = name.trim() && city.trim() && phone.trim() && relation && reason.trim();
 
   return (
     <Modal open title={"Рекомендация: " + vacancy.title} onClose={onClose} size="m"
@@ -339,6 +340,7 @@ function RecommendModal({ vacancy, onClose, onSubmitted }) {
           </div>
         </div>
 
+        <Input label="ФИО кандидата" required placeholder="Например, Никита Северов" value={name} onChange={(e) => setName(e.target.value || "")} />
         <Input label="Город, в котором проживает кандидат" required value={city} onChange={(e) => setCity(e.target.value || "")} />
         <Input label="Мобильный телефон кандидата" required placeholder="+7 900 000 00 00" value={phone} onChange={(e) => setPhone(e.target.value || "")} />
         <Select label="Кем вам приходится кандидат?" required options={RELATION_OPTIONS} value={relation} onChange={setRelation} placeholder="Выберите вариант" />
