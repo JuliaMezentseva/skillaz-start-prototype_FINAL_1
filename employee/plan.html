@@ -326,8 +326,10 @@ function ParamRow({ label, children }) {
 }
 
 // Дровер цели (read-only для сотрудника): описание, срок и полный список шагов
-// с переходом к каждому — то, что не нужно видеть постоянно в списке.
-function GoalDrawer({ goal, onClose, onOpenSubgoal, onTakeSubgoal }) {
+// с переходом к каждому — то, что не нужно видеть постоянно в списке. Под каждым
+// шагом, у которого есть привязанные материалы, сразу видно их состояние
+// (выполнено/нет) — не нужно открывать ещё и дровер шага, чтобы это узнать.
+function GoalDrawer({ goal, plan, onClose, onOpenSubgoal, onTakeSubgoal, onToggleMaterial }) {
   const { pct } = goalProgress(goal);
   const statusVal = deriveGoalStatus(goal);
   return (
@@ -351,10 +353,29 @@ function GoalDrawer({ goal, onClose, onOpenSubgoal, onTakeSubgoal }) {
 
         <div className="sk-col sk-gap-3">
           <div className="sk-label-3">Шаги</div>
-          {goal.subgoals.map((sg, i) => (
-            <SubgoalRow key={sg.id} subgoal={sg} index={i} goalDueLabel={goal.dueLabel} onOpen={() => onOpenSubgoal(sg.id)}
-              onTakeSubgoal={() => onTakeSubgoal(goal.id, sg.id)} />
-          ))}
+          {goal.subgoals.map((sg, i) => {
+            const links = (sg.checklistRefs || []).map((id) => findChecklistItem(plan, id)).filter(Boolean);
+            return (
+              <div key={sg.id} className="sk-col sk-gap-2">
+                <SubgoalRow subgoal={sg} index={i} goalDueLabel={goal.dueLabel} onOpen={() => onOpenSubgoal(sg.id)}
+                  onTakeSubgoal={() => onTakeSubgoal(goal.id, sg.id)} />
+                {links.length > 0 && (
+                  <div className="sk-col sk-gap-1" style={{ marginLeft: 12, paddingLeft: 12, borderLeft: "2px solid var(--sk-stroke)" }}>
+                    {links.map(({ item }) => {
+                      const Icon = ELEMENT_ICON[item.kind] || IconFileText;
+                      return (
+                        <div key={item.id} className="sk-row sk-gap-2 sk-clickable" onClick={() => onToggleMaterial(item.id)} style={{ alignItems: "center", padding: "6px 8px" }}>
+                          <Checkbox checked={!!item.done} onChange={() => onToggleMaterial(item.id)} />
+                          <Icon size={14} color="var(--sk-icon-secondary)" style={{ flexShrink: 0 }} />
+                          <span className="sk-label-4-regular" style={{ color: item.done ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{item.title}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </Drawer>
@@ -465,9 +486,11 @@ function AssessmentTabContent({ history }) {
   );
 }
 
-function SubgoalDrawer({ goal, subgoal, onClose, onSubmit, onAddComment, onTakeSubgoal }) {
+function SubgoalDrawer({ plan, goal, subgoal, onClose, onSubmit, onAddComment, onToggleMaterial, onTakeSubgoal }) {
   const [comment, setComment] = React.useState("");
   const [drawerTab, setDrawerTab] = React.useState("comments");
+  const links = (subgoal.checklistRefs || []).map((id) => findChecklistItem(plan, id)).filter(Boolean);
+  const doneCount = links.filter(({ item }) => item.done).length;
   const reviewer = subgoal.reviewer || D.manager.name;
   const needsAssessment = !!subgoal.assessmentChecklist;
   const commentsCount = (subgoal.comments || []).length;
@@ -513,6 +536,31 @@ function SubgoalDrawer({ goal, subgoal, onClose, onSubmit, onAddComment, onTakeS
               <div className="sk-col sk-gap-1" style={{ padding: "10px 14px", borderLeft: "3px solid var(--sk-accent)" }}>
                 <AssessmentCriteriaPreview criteria={subgoal.assessmentChecklist.criteria} />
               </div>
+            </div>
+          </CollapsibleSection>
+        )}
+
+        {links.length > 0 && (
+          <CollapsibleSection title={<span>Полезные материалы <span style={{ color: "var(--sk-text-secondary)" }}>{doneCount}/{links.length}</span></span>}>
+            <div className="sk-col sk-gap-2" style={{ padding: 12, background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-3)" }}>
+              {links.map(({ item, stage }) => {
+                const Icon = ELEMENT_ICON[item.kind] || IconFileText;
+                return (
+                  <div key={item.id} className="sk-row sk-gap-3 sk-clickable" onClick={() => onToggleMaterial(item.id)}
+                    style={{ alignItems: "flex-start", padding: 10, background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-2)" }}>
+                    <div style={{ paddingTop: 2 }} onClick={(e) => e.stopPropagation()}>
+                      <Checkbox checked={!!item.done} onChange={() => onToggleMaterial(item.id)} />
+                    </div>
+                    <div className="sk-col sk-gap-1" style={{ flex: 1, minWidth: 0 }}>
+                      <div className="sk-label-4" style={{ color: item.done ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{item.title}</div>
+                      <div className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
+                        <Icon size={13} color="var(--sk-icon-secondary)" style={{ flexShrink: 0 }} />
+                        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CollapsibleSection>
         )}
@@ -951,16 +999,18 @@ function Page() {
       {itemModal && <ElementModal item={itemModal} onClose={() => setItemModal(null)} onToggleDone={toggleItemDone} />}
 
       {activeGoal && (
-        <GoalDrawer goal={activeGoal} onClose={() => setGoalDrawer(null)}
+        <GoalDrawer goal={activeGoal} plan={plan} onClose={() => setGoalDrawer(null)}
           onOpenSubgoal={(sgId) => { setGoalDrawer(null); setSubgoalDrawer({ goalId: activeGoal.id, subgoalId: sgId }); }}
-          onTakeSubgoal={takeSubgoal} />
+          onTakeSubgoal={takeSubgoal}
+          onToggleMaterial={toggleItemDone} />
       )}
 
       {subgoalDrawer && activeSubgoal && (
-        <SubgoalDrawer goal={activeSubgoalGoal} subgoal={activeSubgoal}
+        <SubgoalDrawer plan={plan} goal={activeSubgoalGoal} subgoal={activeSubgoal}
           onClose={() => setSubgoalDrawer(null)}
           onSubmit={() => submitSubgoal(subgoalDrawer.goalId, subgoalDrawer.subgoalId)}
           onAddComment={(text) => addSubgoalComment(subgoalDrawer.goalId, subgoalDrawer.subgoalId, text)}
+          onToggleMaterial={toggleItemDone}
           onTakeSubgoal={() => takeSubgoal(subgoalDrawer.goalId, subgoalDrawer.subgoalId)} />
       )}
 

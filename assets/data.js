@@ -185,6 +185,7 @@ window.SITE_DATA = {
           subgoals: [
             { id: "g1s1", title: "Проводить первичную квалификацию лида по чек-листу BANT/SPICED", dueLabel: "до 6 мар", status: "done", reviewer: "Анна Козлова",
               description: "Пройти чек-лист BANT/SPICED на реальных лидах — задать нужные вопросы и корректно зафиксировать ответы в карточке лида.",
+              checklistRefs: ["e2", "e15"],
               comments: [{ author: "Юлия Мезенцева", date: "3 мар, 10:15", text: "Прошла квалификацию по чек-листу на первых лидах, карточки отправила на проверку." }],
               // Демо: два раунда оценки по одному и тому же шагу — сначала "на доработку"
               // (не хватило пары критериев), затем успешное решение. Показывает, что
@@ -219,9 +220,11 @@ window.SITE_DATA = {
               ] },
             { id: "g1s2", title: "Самостоятельно провести 5 квалификационных встреч и зафиксировать итог в CRM", dueLabel: "до 6 мар", status: "done", reviewer: "Анна Козлова",
               description: "Провести 5 встреч с лидами самостоятельно, без наблюдения наставника, и зафиксировать результат каждой встречи в CRM.",
+              checklistRefs: ["e15", "e11"],
               comments: [{ author: "Юлия Мезенцева", date: "5 мар, 16:40", text: "Провела 5 встреч, по каждой оставила итог и следующий шаг в карточке сделки." }] },
             { id: "g1s3", title: "Получить подтверждение руководителя по качеству квалификации на 1:1", dueLabel: "до 6 мар", status: "done", reviewer: "Анна Козлова",
               description: "Обсудить с руководителем на 1:1 качество квалификации лидов за месяц и получить обратную связь.",
+              checklistRefs: ["e12c"],
               comments: [{ author: "Анна Козлова", date: "6 мар, 09:30", text: "Обсудили на 1:1 — квалификация уверенная, карточки в CRM заполнены аккуратно. Продолжай в том же духе." }] },
           ],
         },
@@ -234,20 +237,25 @@ window.SITE_DATA = {
           subgoals: [
             { id: "g2s1", title: "Собрать и вести пайплайн: минимум 12 активных сделок в своей воронке", dueLabel: "5 апр", status: "done", reviewer: "Анна Козлова",
               description: "Наполнить воронку минимум 12 активными сделками и поддерживать её в актуальном состоянии в течение недели.",
+              checklistRefs: ["e15", "e11"],
               comments: [{ author: "Юлия Мезенцева", date: "2 апр, 14:00", text: "Воронка наполнена, 14 активных сделок, статусы актуальны на сегодня." }] },
             { id: "g2s2", title: "Выполнить недельный план активности на 80%+ (звонки, письма, встречи)", dueLabel: "5 апр", status: "not_done", reviewer: "Анна Козлова",
-              description: "Выполнять план по звонкам, письмам и встречам не менее чем на 80% каждую неделю." },
+              description: "Выполнять план по звонкам, письмам и встречам не менее чем на 80% каждую неделю.",
+              checklistRefs: ["e9"] },
             // Проверяющий — сама Юлия наблюдает, но подтверждает Анна (руководитель), а не
             // помощник Дмитрий: так у руководителя сразу есть кнопки решения в шапке дровера,
             // а не только "Ожидает подтверждения от Дмитрий Волков" без возможности действовать.
             { id: "g2s3", title: "Проанализировать 3 компании из подборки", dueLabel: "до 5 апр", status: "pending_review", reviewer: "Анна Козлова",
               description: "Изучить сайты, отчётность и открытые источники по 3 компаниям из подборки, чтобы подготовить персонализированный подход к встрече.",
+              checklistRefs: ["e3"],
               comments: [{ author: "Юлия Мезенцева", date: "4 апр, 18:10", text: "Разобрала все 3 компании, карточки заполнены, ссылки на источники приложила." }] },
             { id: "g2s4", title: "Подготовить и отправить 3 коммерческих предложения по шаблону компании", dueLabel: "до 5 апр", status: "returned",
               description: "Подготовить коммерческие предложения по утверждённому шаблону для 3 клиентов и отправить их с сопроводительным письмом.",
+              checklistRefs: ["e3", "e15", "e4b"],
               comments: [{ author: "Анна Козлова", date: "3 мар, 12:30", text: "Вернула в работу: в части карточек слабо заполнены Budget и Decision — пишешь коротко или пропускаешь. Пройди ещё несколько квалификаций и допиши эти блоки подробнее, потом снова отправь на подтверждение." }] },
             { id: "g2s5", title: "Довести 3 сделки до этапа «Коммерческое предложение» в CRM", dueLabel: "до 5 апр", status: "pending_review", reviewer: "Анна Козлова",
               description: "Провести переговоры и довести минимум 3 сделки из воронки до этапа «Коммерческое предложение», зафиксировав это в CRM.",
+              checklistRefs: ["e15", "e4b"],
               comments: [{ author: "Юлия Мезенцева", date: "5 апр, 10:05", text: "Все 3 сделки доведены до КП, ссылки на карточки в CRM приложила в задаче." }] },
           ],
         },
@@ -260,6 +268,7 @@ window.SITE_DATA = {
           subgoals: [
             { id: "g3s1", title: "Самостоятельно провести сделку от первого контакта до закрытия", dueLabel: "до 4 май", status: "not_started", reviewer: "Анна Козлова",
               description: "Провести сделку полностью самостоятельно — от первого контакта и квалификации до закрытия и фиксации результата в CRM.",
+              checklistRefs: ["e15", "e4b", "e11"],
               // Демо: оценочный лист виден сотруднику ещё до взятия шага в работу — какие
               // критерии будут оценивать. История пуста, шаг ещё не проверяли.
               assessmentChecklist: {
@@ -273,7 +282,8 @@ window.SITE_DATA = {
                 ],
               }, assessmentHistory: [] },
             { id: "g3s2", title: "Обучить нового стажёра одному из этапов процесса", dueLabel: "до 4 май", status: "not_started", reviewer: "Анна Козлова",
-              description: "Помочь новому стажёру разобраться с одним из этапов процесса — например, квалификацией лидов или подготовкой коммерческого предложения." },
+              description: "Помочь новому стажёру разобраться с одним из этапов процесса — например, квалификацией лидов или подготовкой коммерческого предложения.",
+              checklistRefs: ["e12c"] },
           ],
         },
       ],
@@ -926,6 +936,7 @@ window.SITE_DATA = {
         subgoals: [
           { id: "alg1s1", title: "Изучить стандарт приветствия и подойти к первому покупателю", dueLabel: "до 10 янв", status: "done", reviewer: "Анна Козлова" },
           { id: "alg1s2", title: "Провести первую консультацию покупателя под наблюдением наставника", dueLabel: "до 18 янв", status: "done", reviewer: "Анна Козлова",
+            checklistRefs: ["al1e1", "al1e2", "al1e3", "al1e4"],
             comments: [
               { author: "Алексей Ковалев", date: "17 янв, 15:20", text: "Провёл консультацию с покупателем по кроссовкам — подобрал модель под запрос, рассказал про акцию. Готов к оценке.",
                 attachment: { name: "Отчёт по консультации.pdf", size: "412 КБ", kind: "pdf" } },
@@ -1131,9 +1142,9 @@ window.SITE_DATA = {
           description: "Разобраться в ключевых процессах магазина: смены, товарный запас, соответствие стандартам сети.",
           dueDays: 20,
           subgoals: [
-            { id: "rsdsg1", title: "Пройти аудит магазина по чек-листу операционных стандартов вместе с наставником", description: "", dueDays: 10, reviewer: "Руководитель" },
-            { id: "rsdsg2", title: "Устранить 100% критичных замечаний по итогам аудита", description: "", dueDays: 15, reviewer: "Руководитель" },
-            { id: "rsdsg3", title: "Составить и защитить график смен на 4 недели вперёд", description: "", dueDays: 20, reviewer: "Руководитель" },
+            { id: "rsdsg1", title: "Пройти аудит магазина по чек-листу операционных стандартов вместе с наставником", description: "", dueDays: 10, reviewer: "Руководитель", materials: [] },
+            { id: "rsdsg2", title: "Устранить 100% критичных замечаний по итогам аудита", description: "", dueDays: 15, reviewer: "Руководитель", materials: [] },
+            { id: "rsdsg3", title: "Составить и защитить график смен на 4 недели вперёд", description: "", dueDays: 20, reviewer: "Руководитель", materials: [] },
           ],
         },
         {
@@ -1142,9 +1153,9 @@ window.SITE_DATA = {
           description: "Научиться формировать, обучать и мотивировать команду магазина.",
           dueDays: 35,
           subgoals: [
-            { id: "rsdsg4", title: "Провести собеседования на 2 открытые позиции в команде", description: "", dueDays: 25, reviewer: "Руководитель" },
-            { id: "rsdsg5", title: "Провести оценку эффективности для 100% сотрудников смены", description: "", dueDays: 30, reviewer: "Руководитель" },
-            { id: "rsdsg6", title: "Разработать план развития для 1 сотрудника", description: "", dueDays: 35, reviewer: "Руководитель" },
+            { id: "rsdsg4", title: "Провести собеседования на 2 открытые позиции в команде", description: "", dueDays: 25, reviewer: "Руководитель", materials: [] },
+            { id: "rsdsg5", title: "Провести оценку эффективности для 100% сотрудников смены", description: "", dueDays: 30, reviewer: "Руководитель", materials: [] },
+            { id: "rsdsg6", title: "Разработать план развития для 1 сотрудника", description: "", dueDays: 35, reviewer: "Руководитель", materials: [] },
           ],
         },
       ],
@@ -1291,8 +1302,8 @@ window.SITE_DATA = {
           description: "Разобраться в инструментах и данных, с которыми предстоит работать ежедневно.",
           dueDays: 30,
           subgoals: [
-            { id: "tsg1", title: "Настроить доступы к BI-системе и хранилищу", description: "Получить доступы и пройти вводный бриф от дата-инженера.", dueDays: 7, reviewer: "Руководитель" },
-            { id: "tsg2", title: "Пройти вводный курс по SQL-стандартам компании", description: "", dueDays: 14, reviewer: "Руководитель" },
+            { id: "tsg1", title: "Настроить доступы к BI-системе и хранилищу", description: "Получить доступы и пройти вводный бриф от дата-инженера.", dueDays: 7, reviewer: "Руководитель", materials: [] },
+            { id: "tsg2", title: "Пройти вводный курс по SQL-стандартам компании", description: "", dueDays: 14, reviewer: "Руководитель", materials: [] },
           ],
         },
         {
@@ -1301,7 +1312,7 @@ window.SITE_DATA = {
           description: "Самостоятельный аналитический проект — от постановки задачи до презентации результатов.",
           dueDays: 85,
           subgoals: [
-            { id: "tsg3", title: "Защитить план проекта перед руководителем", description: "", dueDays: 45, reviewer: "Руководитель" },
+            { id: "tsg3", title: "Защитить план проекта перед руководителем", description: "", dueDays: 45, reviewer: "Руководитель", materials: [] },
           ],
         },
       ],
@@ -1364,6 +1375,21 @@ window.SITE_DATA = {
     { id: "survey_linear", name: "Опросник для линейных сотрудников" },
   ];
 
+  // Каталог полезных материалов для шага цели в шаблоне (HR-Админ выбирает из него так же,
+  // как руководитель выбирает материалы из чек-листа назначенного плана — тот же UI: поиск +
+  // список с чекбоксами). У шаблона нет чек-листа с конкретными задачами (вкладка "Чек-лист"
+  // ещё не реализована), поэтому это отдельный демо-каталог типовых материалов.
+  window.SITE_DATA.templateMaterialsCatalog = [
+    { id: "tm1", title: "Регламент оформления сделки в CRM", kind: "article" },
+    { id: "tm2", title: "Стандарты общения с клиентом", kind: "article" },
+    { id: "tm3", title: "Вводный курс по продукту компании", kind: "course" },
+    { id: "tm4", title: "Настроить рабочее место и доступы", kind: "task" },
+    { id: "tm5", title: "Презентация о структуре компании", kind: "file" },
+    { id: "tm6", title: "База знаний отдела", kind: "link" },
+    { id: "tm7", title: "Пройти вводный тест по продукту", kind: "task" },
+    { id: "tm8", title: "Курс по работе с возражениями", kind: "course" },
+  ];
+
   window.SITE_DATA.templates.forEach((t) => {
     if (!t.checkpoints) t.checkpoints = [];
     if (!t.goalsOwner) t.goalsOwner = "manager";
@@ -1410,9 +1436,9 @@ window.SITE_DATA = {
       createdAt: "12.01.26",
       usageCount: 6,
       subgoals: [
-        { id: "gcsg_crm_1", title: "Настроить рабочее место и доступы к CRM", description: "", dueDays: 5, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_crm_2", title: "Изучить регламент оформления сделки", description: "", dueDays: 12, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_crm_3", title: "Провести первую сделку самостоятельно", description: "", dueDays: 45, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_crm_1", title: "Настроить рабочее место и доступы к CRM", description: "", dueDays: 5, reviewer: "Руководитель", materials: [{ id: "tm4", title: "Настроить рабочее место и доступы", kind: "task" }], templateId: null },
+        { id: "gcsg_crm_2", title: "Изучить регламент оформления сделки", description: "", dueDays: 12, reviewer: "Руководитель", materials: [{ id: "tm1", title: "Регламент оформления сделки в CRM", kind: "article" }], templateId: null },
+        { id: "gcsg_crm_3", title: "Провести первую сделку самостоятельно", description: "", dueDays: 45, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1430,8 +1456,8 @@ window.SITE_DATA = {
       createdAt: "05.12.25",
       usageCount: 4,
       subgoals: [
-        { id: "gcsg_dev_1", title: "Настроить окружение и запустить проект локально", description: "", dueDays: 3, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_dev_2", title: "Пройти код-ревью первого PR", description: "", dueDays: 20, reviewer: "Руководитель", templateId: "at_code_review" },
+        { id: "gcsg_dev_1", title: "Настроить окружение и запустить проект локально", description: "", dueDays: 3, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_dev_2", title: "Пройти код-ревью первого PR", description: "", dueDays: 20, reviewer: "Руководитель", materials: [], templateId: "at_code_review" },
       ],
     },
     {
@@ -1449,8 +1475,8 @@ window.SITE_DATA = {
       createdAt: "18.11.25",
       usageCount: 3,
       subgoals: [
-        { id: "gcsg_sup_1", title: "Изучить стандарты общения с клиентом", description: "", dueDays: 5, reviewer: "Наставник", templateId: null },
-        { id: "gcsg_sup_2", title: "Отработать 5 обращений под наблюдением наставника", description: "", dueDays: 14, reviewer: "Наставник", templateId: null },
+        { id: "gcsg_sup_1", title: "Изучить стандарты общения с клиентом", description: "", dueDays: 5, reviewer: "Наставник", materials: [{ id: "tm2", title: "Стандарты общения с клиентом", kind: "article" }], templateId: null },
+        { id: "gcsg_sup_2", title: "Отработать 5 обращений под наблюдением наставника", description: "", dueDays: 14, reviewer: "Наставник", materials: [], templateId: null },
       ],
     },
     {
@@ -1468,8 +1494,8 @@ window.SITE_DATA = {
       createdAt: "28.07.26",
       usageCount: 1,
       subgoals: [
-        { id: "gcsg_an_1", title: "Настроить доступы к BI-системе и хранилищу", description: "", dueDays: 7, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_an_2", title: "Собрать первый дашборд по шаблону команды", description: "", dueDays: 40, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_an_1", title: "Настроить доступы к BI-системе и хранилищу", description: "", dueDays: 7, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_an_2", title: "Собрать первый дашборд по шаблону команды", description: "", dueDays: 40, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1487,8 +1513,8 @@ window.SITE_DATA = {
       createdAt: "20.02.26",
       usageCount: 14,
       subgoals: [
-        { id: "gcsg_comp_1", title: "Пройти курс по информационной безопасности", description: "", dueDays: 7, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_comp_2", title: "Ознакомиться с политикой комплаенса и подписать", description: "", dueDays: 10, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_comp_1", title: "Пройти курс по информационной безопасности", description: "", dueDays: 7, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_comp_2", title: "Ознакомиться с политикой комплаенса и подписать", description: "", dueDays: 10, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
 
@@ -1499,8 +1525,8 @@ window.SITE_DATA = {
       category: "Продажи", positions: ["Менеджер по продажам"], level: "Junior", dueDays: 21,
       author: "Ольга Соколова", createdAt: "14.01.26", usageCount: 5,
       subgoals: [
-        { id: "gcsg_calls_1", title: "Изучить скрипт холодного звонка", description: "", dueDays: 5, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_calls_2", title: "Выйти на 50 звонков в неделю", description: "", dueDays: 21, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_calls_1", title: "Изучить скрипт холодного звонка", description: "", dueDays: 5, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_calls_2", title: "Выйти на 50 звонков в неделю", description: "", dueDays: 21, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1509,8 +1535,8 @@ window.SITE_DATA = {
       category: "Продажи", positions: ["Менеджер по продажам", "Старший менеджер по продажам"], level: "Middle", dueDays: 60,
       author: "Ольга Соколова", createdAt: "14.01.26", usageCount: 3,
       subgoals: [
-        { id: "gcsg_conv_1", title: "Разобрать воронку и найти узкое место", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_conv_2", title: "Выйти на конверсию 15%", description: "", dueDays: 60, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_conv_1", title: "Разобрать воронку и найти узкое место", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_conv_2", title: "Выйти на конверсию 15%", description: "", dueDays: 60, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1519,8 +1545,8 @@ window.SITE_DATA = {
       category: "Продажи", positions: ["Менеджер по продажам"], level: "Junior", dueDays: 45,
       author: "Ольга Соколова", createdAt: "14.01.26", usageCount: 2,
       subgoals: [
-        { id: "gcsg_csat_1", title: "Изучить стандарт сервиса при закрытии сделки", description: "", dueDays: 10, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_csat_2", title: "Набрать 10 оценённых сделок", description: "", dueDays: 45, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_csat_1", title: "Изучить стандарт сервиса при закрытии сделки", description: "", dueDays: 10, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_csat_2", title: "Набрать 10 оценённых сделок", description: "", dueDays: 45, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1529,8 +1555,8 @@ window.SITE_DATA = {
       category: "Продажи", positions: ["Старший менеджер по продажам", "Руководитель отдела продаж"], level: "Senior", dueDays: 90,
       author: "Ольга Соколова", createdAt: "14.01.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_upsell_1", title: "Составить список клиентов для доп. предложений", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_upsell_2", title: "Закрыть доп. услуги на 200 000 ₽", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_upsell_1", title: "Составить список клиентов для доп. предложений", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_upsell_2", title: "Закрыть доп. услуги на 200 000 ₽", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
 
@@ -1541,8 +1567,8 @@ window.SITE_DATA = {
       category: "IT и цифровой бизнес", positions: ["Младший разработчик", "Frontend-разработчик"], level: "Junior", dueDays: 30,
       author: "Ольга Соколова", createdAt: "10.12.25", usageCount: 4,
       subgoals: [
-        { id: "gcsg_review_1", title: "Изучить чек-лист оформления PR команды", description: "", dueDays: 5, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_review_2", title: "Держать среднее время ревью PR ≤ 1 дня", description: "", dueDays: 30, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_review_1", title: "Изучить чек-лист оформления PR команды", description: "", dueDays: 5, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_review_2", title: "Держать среднее время ревью PR ≤ 1 дня", description: "", dueDays: 30, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1551,8 +1577,8 @@ window.SITE_DATA = {
       category: "IT и цифровой бизнес", positions: ["Младший разработчик", "Frontend-разработчик"], level: "Middle", dueDays: 45,
       author: "Ольга Соколова", createdAt: "10.12.25", usageCount: 3,
       subgoals: [
-        { id: "gcsg_sprint_1", title: "Научиться корректно оценивать задачи в поинтах", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_sprint_2", title: "Выйти на 90% закрытых задач спринта", description: "", dueDays: 45, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_sprint_1", title: "Научиться корректно оценивать задачи в поинтах", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_sprint_2", title: "Выйти на 90% закрытых задач спринта", description: "", dueDays: 45, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1561,8 +1587,8 @@ window.SITE_DATA = {
       category: "IT и цифровой бизнес", positions: ["Frontend-разработчик"], level: "Middle", dueDays: 40,
       author: "Ольга Соколова", createdAt: "10.12.25", usageCount: 2,
       subgoals: [
-        { id: "gcsg_tests_1", title: "Настроить сбор метрики покрытия тестами", description: "", dueDays: 7, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_tests_2", title: "Довести покрытие модуля до 80%", description: "", dueDays: 40, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_tests_1", title: "Настроить сбор метрики покрытия тестами", description: "", dueDays: 7, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_tests_2", title: "Довести покрытие модуля до 80%", description: "", dueDays: 40, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1571,8 +1597,8 @@ window.SITE_DATA = {
       category: "IT и цифровой бизнес", positions: ["Младший разработчик"], level: "Junior", dueDays: 30,
       author: "Ольга Соколова", createdAt: "10.12.25", usageCount: 3,
       subgoals: [
-        { id: "gcsg_bugs_1", title: "Разобраться в процессе триажа багов", description: "", dueDays: 5, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_bugs_2", title: "Закрыть 5 багов без регрессий", description: "", dueDays: 30, reviewer: "Руководитель", templateId: "at_code_review" },
+        { id: "gcsg_bugs_1", title: "Разобраться в процессе триажа багов", description: "", dueDays: 5, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_bugs_2", title: "Закрыть 5 багов без регрессий", description: "", dueDays: 30, reviewer: "Руководитель", materials: [], templateId: "at_code_review" },
       ],
     },
 
@@ -1583,8 +1609,8 @@ window.SITE_DATA = {
       category: "Поддержка клиентов", positions: ["Специалист поддержки"], level: "Junior", dueDays: 30,
       author: "Юлия Степанова", createdAt: "20.11.25", usageCount: 4,
       subgoals: [
-        { id: "gcsg_vol_1", title: "Освоить рабочие инструменты поддержки", description: "", dueDays: 7, reviewer: "Наставник", templateId: null },
-        { id: "gcsg_vol_2", title: "Выйти на 30 обращений в день", description: "", dueDays: 30, reviewer: "Наставник", templateId: null },
+        { id: "gcsg_vol_1", title: "Освоить рабочие инструменты поддержки", description: "", dueDays: 7, reviewer: "Наставник", materials: [], templateId: null },
+        { id: "gcsg_vol_2", title: "Выйти на 30 обращений в день", description: "", dueDays: 30, reviewer: "Наставник", materials: [], templateId: null },
       ],
     },
     {
@@ -1593,8 +1619,8 @@ window.SITE_DATA = {
       category: "Поддержка клиентов", positions: ["Специалист поддержки"], level: "Middle", dueDays: 30,
       author: "Юлия Степанова", createdAt: "20.11.25", usageCount: 2,
       subgoals: [
-        { id: "gcsg_time_1", title: "Изучить базу готовых ответов", description: "", dueDays: 5, reviewer: "Наставник", templateId: null },
-        { id: "gcsg_time_2", title: "Держать среднее время ответа ≤ 5 минут", description: "", dueDays: 30, reviewer: "Наставник", templateId: null },
+        { id: "gcsg_time_1", title: "Изучить базу готовых ответов", description: "", dueDays: 5, reviewer: "Наставник", materials: [], templateId: null },
+        { id: "gcsg_time_2", title: "Держать среднее время ответа ≤ 5 минут", description: "", dueDays: 30, reviewer: "Наставник", materials: [], templateId: null },
       ],
     },
     {
@@ -1603,8 +1629,8 @@ window.SITE_DATA = {
       category: "Поддержка клиентов", positions: ["Специалист поддержки"], level: "Middle", dueDays: 45,
       author: "Юлия Степанова", createdAt: "20.11.25", usageCount: 1,
       subgoals: [
-        { id: "gcsg_fcr_1", title: "Изучить топ-10 частых обращений и ответы на них", description: "", dueDays: 10, reviewer: "Наставник", templateId: null },
-        { id: "gcsg_fcr_2", title: "Выйти на 90% решений с первого касания", description: "", dueDays: 45, reviewer: "Наставник", templateId: null },
+        { id: "gcsg_fcr_1", title: "Изучить топ-10 частых обращений и ответы на них", description: "", dueDays: 10, reviewer: "Наставник", materials: [], templateId: null },
+        { id: "gcsg_fcr_2", title: "Выйти на 90% решений с первого касания", description: "", dueDays: 45, reviewer: "Наставник", materials: [], templateId: null },
       ],
     },
     {
@@ -1613,8 +1639,8 @@ window.SITE_DATA = {
       category: "Поддержка клиентов", positions: ["Специалист поддержки"], level: "Senior", dueDays: 60,
       author: "Юлия Степанова", createdAt: "20.11.25", usageCount: 1,
       subgoals: [
-        { id: "gcsg_nps_1", title: "Разобрать причины низких оценок за прошлый период", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_nps_2", title: "Выйти на NPS ≥ 60", description: "", dueDays: 60, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_nps_1", title: "Разобрать причины низких оценок за прошлый период", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_nps_2", title: "Выйти на NPS ≥ 60", description: "", dueDays: 60, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
 
@@ -1625,8 +1651,8 @@ window.SITE_DATA = {
       category: "Аналитика", positions: ["Data-аналитик"], level: "Middle", dueDays: 30,
       author: "Ольга Соколова", createdAt: "02.08.26", usageCount: 2,
       subgoals: [
-        { id: "gcsg_rep_1", title: "Разобрать текущий процесс подготовки отчёта", description: "", dueDays: 7, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_rep_2", title: "Довести время подготовки до 2 часов", description: "", dueDays: 30, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_rep_1", title: "Разобрать текущий процесс подготовки отчёта", description: "", dueDays: 7, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_rep_2", title: "Довести время подготовки до 2 часов", description: "", dueDays: 30, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1635,8 +1661,8 @@ window.SITE_DATA = {
       category: "Аналитика", positions: ["Data-аналитик"], level: "Senior", dueDays: 90,
       author: "Ольга Соколова", createdAt: "02.08.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_res_1", title: "Согласовать список тем для исследований", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_res_2", title: "Провести 3 исследования с принятыми рекомендациями", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_res_1", title: "Согласовать список тем для исследований", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_res_2", title: "Провести 3 исследования с принятыми рекомендациями", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1645,8 +1671,8 @@ window.SITE_DATA = {
       category: "Аналитика", positions: ["Data-аналитик", "Стажёр-аналитик"], level: "Middle", dueDays: 45,
       author: "Ольга Соколова", createdAt: "02.08.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_auto_1", title: "Выбрать 2 отчёта для автоматизации", description: "", dueDays: 7, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_auto_2", title: "Настроить автоматический сбор данных", description: "", dueDays: 45, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_auto_1", title: "Выбрать 2 отчёта для автоматизации", description: "", dueDays: 7, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_auto_2", title: "Настроить автоматический сбор данных", description: "", dueDays: 45, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1655,8 +1681,8 @@ window.SITE_DATA = {
       category: "Аналитика", positions: ["Data-аналитик"], level: "Senior", dueDays: 60,
       author: "Ольга Соколова", createdAt: "02.08.26", usageCount: 0,
       subgoals: [
-        { id: "gcsg_fore_1", title: "Оценить точность текущей модели", description: "", dueDays: 10, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_fore_2", title: "Довести точность модели до 85%", description: "", dueDays: 60, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_fore_1", title: "Оценить точность текущей модели", description: "", dueDays: 10, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_fore_2", title: "Довести точность модели до 85%", description: "", dueDays: 60, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
 
@@ -1667,8 +1693,8 @@ window.SITE_DATA = {
       category: "Общие", level: "Junior", dueDays: 90,
       author: "Юлия Степанова", createdAt: "22.02.26", usageCount: 7,
       subgoals: [
-        { id: "gcsg_prob_1", title: "Пройти промежуточную встречу на 30 день без замечаний", description: "", dueDays: 30, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_prob_2", title: "Завершить испытательный срок без замечаний", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_prob_1", title: "Пройти промежуточную встречу на 30 день без замечаний", description: "", dueDays: 30, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_prob_2", title: "Завершить испытательный срок без замечаний", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1677,8 +1703,8 @@ window.SITE_DATA = {
       category: "Общие", level: "Middle", dueDays: 90,
       author: "Юлия Степанова", createdAt: "22.02.26", usageCount: 3,
       subgoals: [
-        { id: "gcsg_fb_1", title: "Собрать обратную связь от коллег и руководителя", description: "", dueDays: 80, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_fb_2", title: "Выйти на среднюю оценку ≥ 4 из 5", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_fb_1", title: "Собрать обратную связь от коллег и руководителя", description: "", dueDays: 80, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_fb_2", title: "Выйти на среднюю оценку ≥ 4 из 5", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1687,8 +1713,8 @@ window.SITE_DATA = {
       category: "Общие", level: "Junior", dueDays: 30,
       author: "Юлия Степанова", createdAt: "22.02.26", usageCount: 5,
       subgoals: [
-        { id: "gcsg_task_1", title: "Настроить личный трекер задач", description: "", dueDays: 3, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_task_2", title: "Продержаться 30 дней без просрочек", description: "", dueDays: 30, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_task_1", title: "Настроить личный трекер задач", description: "", dueDays: 3, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_task_2", title: "Продержаться 30 дней без просрочек", description: "", dueDays: 30, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1697,8 +1723,8 @@ window.SITE_DATA = {
       category: "Общие", level: "Стажёр", dueDays: 7,
       author: "Юлия Степанова", createdAt: "22.02.26", usageCount: 10,
       subgoals: [
-        { id: "gcsg_onb_1", title: "Получить доступы: почта, календарь, корпоративные чаты", description: "", dueDays: 3, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_onb_2", title: "Закрыть чек-лист доступов на 100%", description: "", dueDays: 7, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_onb_1", title: "Получить доступы: почта, календарь, корпоративные чаты", description: "", dueDays: 3, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_onb_2", title: "Закрыть чек-лист доступов на 100%", description: "", dueDays: 7, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
 
@@ -1709,8 +1735,8 @@ window.SITE_DATA = {
       category: "Маркетинг", positions: ["Маркетолог", "Контент-менеджер"], level: "Middle", dueDays: 90,
       author: "Ольга Соколова", createdAt: "15.01.26", usageCount: 2,
       subgoals: [
-        { id: "gcsg_leads_1", title: "Составить контент-план на квартал", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_leads_2", title: "Выйти на 500 лидов за квартал", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_leads_1", title: "Составить контент-план на квартал", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_leads_2", title: "Выйти на 500 лидов за квартал", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1719,8 +1745,8 @@ window.SITE_DATA = {
       category: "Маркетинг", positions: ["SMM-менеджер"], level: "Junior", dueDays: 90,
       author: "Ольга Соколова", createdAt: "15.01.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_reach_1", title: "Проанализировать текущие охваты по каналам", description: "", dueDays: 10, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_reach_2", title: "Вырасти в охвате на 20%", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_reach_1", title: "Проанализировать текущие охваты по каналам", description: "", dueDays: 10, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_reach_2", title: "Вырасти в охвате на 20%", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1729,8 +1755,8 @@ window.SITE_DATA = {
       category: "Маркетинг", positions: ["Маркетолог"], level: "Junior", dueDays: 45,
       author: "Ольга Соколова", createdAt: "15.01.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_email_1", title: "Сегментировать базу подписчиков", description: "", dueDays: 10, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_email_2", title: "Запустить 3 рассылки с Open Rate ≥ 25%", description: "", dueDays: 45, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_email_1", title: "Сегментировать базу подписчиков", description: "", dueDays: 10, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_email_2", title: "Запустить 3 рассылки с Open Rate ≥ 25%", description: "", dueDays: 45, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1739,8 +1765,8 @@ window.SITE_DATA = {
       category: "Маркетинг", positions: ["Контент-менеджер"], level: "Middle", dueDays: 60,
       author: "Ольга Соколова", createdAt: "15.01.26", usageCount: 0,
       subgoals: [
-        { id: "gcsg_cases_1", title: "Согласовать список клиентов для кейсов", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_cases_2", title: "Подготовить 2 принятых кейса", description: "", dueDays: 60, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_cases_1", title: "Согласовать список клиентов для кейсов", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_cases_2", title: "Подготовить 2 принятых кейса", description: "", dueDays: 60, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1749,8 +1775,8 @@ window.SITE_DATA = {
       category: "Маркетинг", positions: ["Маркетолог"], level: "Senior", dueDays: 60,
       author: "Ольга Соколова", createdAt: "15.01.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_cpl_1", title: "Проанализировать текущую стоимость лида по каналам", description: "", dueDays: 10, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_cpl_2", title: "Снизить CPL на 15%", description: "", dueDays: 60, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_cpl_1", title: "Проанализировать текущую стоимость лида по каналам", description: "", dueDays: 10, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_cpl_2", title: "Снизить CPL на 15%", description: "", dueDays: 60, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
 
@@ -1761,8 +1787,8 @@ window.SITE_DATA = {
       category: "HR", positions: ["Рекрутер", "HR-менеджер"], level: "Middle", dueDays: 90,
       author: "Юлия Степанова", createdAt: "10.02.26", usageCount: 3,
       subgoals: [
-        { id: "gcsg_hire_1", title: "Согласовать профили вакансий с нанимающими менеджерами", description: "", dueDays: 10, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_hire_2", title: "Закрыть 5 вакансий за ≤ 30 дней в среднем", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_hire_1", title: "Согласовать профили вакансий с нанимающими менеджерами", description: "", dueDays: 10, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_hire_2", title: "Закрыть 5 вакансий за ≤ 30 дней в среднем", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1771,8 +1797,8 @@ window.SITE_DATA = {
       category: "HR", positions: ["HR-менеджер", "HR-бизнес-партнёр"], level: "Middle", dueDays: 90,
       author: "Юлия Степанова", createdAt: "10.02.26", usageCount: 2,
       subgoals: [
-        { id: "gcsg_adapt_1", title: "Настроить регулярные точки сверки с новичками", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_adapt_2", title: "Провести 10 адаптаций с NPS ≥ 8", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_adapt_1", title: "Настроить регулярные точки сверки с новичками", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_adapt_2", title: "Провести 10 адаптаций с NPS ≥ 8", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1781,8 +1807,8 @@ window.SITE_DATA = {
       category: "HR", positions: ["HR-бизнес-партнёр"], level: "Senior", dueDays: 90,
       author: "Юлия Степанова", createdAt: "10.02.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_turn_1", title: "Проанализировать причины текущих увольнений", description: "", dueDays: 20, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_turn_2", title: "Снизить текучесть на испытательном сроке до 5%", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_turn_1", title: "Проанализировать причины текущих увольнений", description: "", dueDays: 20, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_turn_2", title: "Снизить текучесть на испытательном сроке до 5%", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1791,8 +1817,8 @@ window.SITE_DATA = {
       category: "HR", positions: ["HR-менеджер"], level: "Middle", dueDays: 60,
       author: "Юлия Степанова", createdAt: "10.02.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_train_1", title: "Составить программу 3 тренингов", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_train_2", title: "Провести 3 тренинга с оценкой ≥ 4.5", description: "", dueDays: 60, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_train_1", title: "Составить программу 3 тренингов", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_train_2", title: "Провести 3 тренинга с оценкой ≥ 4.5", description: "", dueDays: 60, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1801,8 +1827,8 @@ window.SITE_DATA = {
       category: "HR", positions: ["HR-менеджер", "Рекрутер"], level: "Junior", dueDays: 14,
       author: "Юлия Степанова", createdAt: "10.02.26", usageCount: 4,
       subgoals: [
-        { id: "gcsg_law_1", title: "Пройти курс по трудовому законодательству", description: "", dueDays: 10, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_law_2", title: "Сдать тест на 100%", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_law_1", title: "Пройти курс по трудовому законодательству", description: "", dueDays: 10, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_law_2", title: "Сдать тест на 100%", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
 
@@ -1813,8 +1839,8 @@ window.SITE_DATA = {
       category: "Финансы", positions: ["Бухгалтер", "Финансовый менеджер"], level: "Middle", dueDays: 60,
       author: "Ольга Соколова", createdAt: "18.01.26", usageCount: 2,
       subgoals: [
-        { id: "gcsg_close_1", title: "Изучить регламент закрытия месяца", description: "", dueDays: 10, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_close_2", title: "Закрыть 2 месяца подряд без расхождений", description: "", dueDays: 60, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_close_1", title: "Изучить регламент закрытия месяца", description: "", dueDays: 10, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_close_2", title: "Закрыть 2 месяца подряд без расхождений", description: "", dueDays: 60, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1823,8 +1849,8 @@ window.SITE_DATA = {
       category: "Финансы", positions: ["Финансовый аналитик"], level: "Middle", dueDays: 90,
       author: "Ольга Соколова", createdAt: "18.01.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_finrep_1", title: "Разобрать текущий процесс подготовки отчёта", description: "", dueDays: 20, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_finrep_2", title: "Сократить срок подготовки до 5 дней", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_finrep_1", title: "Разобрать текущий процесс подготовки отчёта", description: "", dueDays: 20, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_finrep_2", title: "Сократить срок подготовки до 5 дней", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1833,8 +1859,8 @@ window.SITE_DATA = {
       category: "Финансы", positions: ["Финансовый менеджер"], level: "Senior", dueDays: 90,
       author: "Ольга Соколова", createdAt: "18.01.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_debt_1", title: "Проанализировать структуру дебиторской задолженности", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_debt_2", title: "Снизить задолженность на 15%", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_debt_1", title: "Проанализировать структуру дебиторской задолженности", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_debt_2", title: "Снизить задолженность на 15%", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1843,8 +1869,8 @@ window.SITE_DATA = {
       category: "Финансы", positions: ["Финансовый аналитик"], level: "Middle", dueDays: 60,
       author: "Ольга Соколова", createdAt: "18.01.26", usageCount: 0,
       subgoals: [
-        { id: "gcsg_finauto_1", title: "Выбрать 2 отчёта для автоматизации", description: "", dueDays: 10, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_finauto_2", title: "Настроить автоматическую подготовку отчётов", description: "", dueDays: 60, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_finauto_1", title: "Выбрать 2 отчёта для автоматизации", description: "", dueDays: 10, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_finauto_2", title: "Настроить автоматическую подготовку отчётов", description: "", dueDays: 60, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1853,8 +1879,8 @@ window.SITE_DATA = {
       category: "Финансы", positions: ["Бухгалтер"], level: "Senior", dueDays: 90,
       author: "Ольга Соколова", createdAt: "18.01.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_audit_1", title: "Провести предварительную самопроверку", description: "", dueDays: 30, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_audit_2", title: "Пройти аудит без критичных замечаний", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_audit_1", title: "Провести предварительную самопроверку", description: "", dueDays: 30, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_audit_2", title: "Пройти аудит без критичных замечаний", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
 
@@ -1865,8 +1891,8 @@ window.SITE_DATA = {
       category: "Менеджмент", positions: ["Руководитель отдела", "Тимлид"], level: "Lead", dueDays: 90,
       author: "Юлия Степанова", createdAt: "08.06.26", usageCount: 2,
       subgoals: [
-        { id: "gcsg_plan_1", title: "Разобрать причины невыполнения плана за прошлый период", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_plan_2", title: "Выполнить план 3 месяца подряд на 100%", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_plan_1", title: "Разобрать причины невыполнения плана за прошлый период", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_plan_2", title: "Выполнить план 3 месяца подряд на 100%", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1875,8 +1901,8 @@ window.SITE_DATA = {
       category: "Менеджмент", positions: ["Руководитель отдела", "Тимлид"], level: "Middle", dueDays: 60,
       author: "Юлия Степанова", createdAt: "08.06.26", usageCount: 3,
       subgoals: [
-        { id: "gcsg_1on1_1", title: "Составить регулярный график one-to-one с командой", description: "", dueDays: 7, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_1on1_2", title: "Провести 90% встреч без переносов", description: "", dueDays: 60, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_1on1_1", title: "Составить регулярный график one-to-one с командой", description: "", dueDays: 7, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_1on1_2", title: "Провести 90% встреч без переносов", description: "", dueDays: 60, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1885,8 +1911,8 @@ window.SITE_DATA = {
       category: "Менеджмент", positions: ["Руководитель отдела"], level: "Lead", dueDays: 90,
       author: "Юлия Степанова", createdAt: "08.06.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_mgmtturn_1", title: "Провести exit-интервью с ушедшими за год сотрудниками", description: "", dueDays: 20, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_mgmtturn_2", title: "Снизить текучесть команды до 10%", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_mgmtturn_1", title: "Провести exit-интервью с ушедшими за год сотрудниками", description: "", dueDays: 20, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_mgmtturn_2", title: "Снизить текучесть команды до 10%", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1895,8 +1921,8 @@ window.SITE_DATA = {
       category: "Менеджмент", positions: ["Тимлид", "Руководитель отдела"], level: "Middle", dueDays: 60,
       author: "Юлия Степанова", createdAt: "08.06.26", usageCount: 2,
       subgoals: [
-        { id: "gcsg_proc_1", title: "Найти 2 узких места в текущих процессах команды", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_proc_2", title: "Внедрить 2 улучшения с измеримым эффектом", description: "", dueDays: 60, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_proc_1", title: "Найти 2 узких места в текущих процессах команды", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_proc_2", title: "Внедрить 2 улучшения с измеримым эффектом", description: "", dueDays: 60, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
     {
@@ -1905,8 +1931,8 @@ window.SITE_DATA = {
       category: "Менеджмент", positions: ["Руководитель отдела", "Тимлид"], level: "Senior", dueDays: 90,
       author: "Юлия Степанова", createdAt: "08.06.26", usageCount: 1,
       subgoals: [
-        { id: "gcsg_growth_1", title: "Составить план развития для сотрудника", description: "", dueDays: 14, reviewer: "Руководитель", templateId: null },
-        { id: "gcsg_growth_2", title: "Довести сотрудника до повышения", description: "", dueDays: 90, reviewer: "Руководитель", templateId: null },
+        { id: "gcsg_growth_1", title: "Составить план развития для сотрудника", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null },
+        { id: "gcsg_growth_2", title: "Довести сотрудника до повышения", description: "", dueDays: 90, reviewer: "Руководитель", materials: [], templateId: null },
       ],
     },
   ];

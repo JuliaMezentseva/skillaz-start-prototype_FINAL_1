@@ -23,7 +23,7 @@ const { AppShell, StatusTag, Icons, personPhoto } = window.Site;
 const {
   IconArrowLeft, IconCheck, IconClock, IconFileText, IconLink2, IconMessageCircle,
   IconHelpCircle, IconInfo, IconTarget, IconMapPin, IconPhone, IconMail, IconSend,
-  IconChevronUp, IconChevronDown, IconX, IconAlertCircle, IconTrash, IconClipboard,
+  IconChevronUp, IconChevronDown, IconX, IconAlertCircle, IconTrash, IconSearch, IconClipboard, IconPlusSm,
 } = Icons;
 const D = window.SITE_DATA;
 function stripDuePrefix(label) {
@@ -85,6 +85,13 @@ function goalProgress(goal) {
   const done = goal.subgoals.filter(s => s.status === "done").length;
   return { done, total, pct: total ? Math.round((done / total) * 100) : 0 };
 }
+function findChecklistItem(plan, id) {
+  for (const s of plan.stages) {
+    const it = s.items.find(i => i.id === id);
+    if (it) return { item: it, stage: s };
+  }
+  return null;
+}
 function planValidForPublish(goals) {
   if (!goals.length) return false;
   return goals.every(g => g.title && g.description && g.dueLabel && g.subgoals.length > 0 &&
@@ -104,6 +111,7 @@ function Page() {
   const [newGoalDraft, setNewGoalDraft] = React.useState({ title: "", description: "", dueDate: new Date(2026, 0, 20), subgoals: [] });
   const [subgoalModal, setSubgoalModal] = React.useState(null); // { context: "draft" } | { context: "goal", goalId }
   const [subgoalDrawer, setSubgoalDrawer] = React.useState(null); // { goalId, subgoalId }
+  const [checklistPicker, setChecklistPicker] = React.useState(null); // { goalId, subgoalId }
   const [publishConfirm, setPublishConfirm] = React.useState(false);
   const [returnModal, setReturnModal] = React.useState(null); // { goalId, subgoalId }
   const [notDoneConfirm, setNotDoneConfirm] = React.useState(null);
@@ -123,7 +131,7 @@ function Page() {
     const id = "g" + Date.now();
     const subgoals = (draft.subgoals || []).map((sg, i) => ({
       id: "sg" + Date.now() + "_" + i, title: sg.title, description: sg.description,
-      dueLabel: fmtDate(sg.dueDate), reviewer: sg.reviewer, status: "not_started", comments: [],
+      dueLabel: fmtDate(sg.dueDate), reviewer: sg.reviewer, status: "not_started", checklistRefs: [], comments: [],
     }));
     setPlan(prev => ({ ...prev, goals: [...prev.goals, {
       id, title: draft.title, description: draft.description, dueLabel: fmtDate(draft.dueDate),
@@ -144,7 +152,7 @@ function Page() {
     setPlan(prev => ({ ...prev, goals: prev.goals.map(g => g.id !== goalId ? g : {
       ...g, subgoals: [...g.subgoals, {
         id, title: draft.title, description: draft.description, dueLabel: fmtDate(draft.dueDate),
-        reviewer: draft.reviewer, status: "not_started", comments: [],
+        reviewer: draft.reviewer, status: "not_started", checklistRefs: [], comments: [],
       }],
     }) }));
     return id;
@@ -160,6 +168,14 @@ function Page() {
     }) }));
     setDeleteSubgoal(null);
     showToast("Подцель удалена");
+  }
+  function toggleChecklistRef(goalId, subgoalId, itemId) {
+    setPlan(prev => ({ ...prev, goals: prev.goals.map(g => g.id !== goalId ? g : {
+      ...g, subgoals: g.subgoals.map(sg => sg.id !== subgoalId ? sg : {
+        ...sg, checklistRefs: (sg.checklistRefs || []).includes(itemId)
+          ? sg.checklistRefs.filter(x => x !== itemId) : [...(sg.checklistRefs || []), itemId],
+      }),
+    }) }));
   }
   function addComment(goalId, subgoalId, text) {
     setPlan(prev => ({ ...prev, goals: prev.goals.map(g => g.id !== goalId ? g : {
@@ -322,10 +338,19 @@ function Page() {
         <SubgoalDrawer plan={plan} goal={activeSubgoalGoal} subgoal={activeSubgoal}
           onClose={() => setSubgoalDrawer(null)}
           onChange={(patch) => updateSubgoal(subgoalDrawer.goalId, subgoalDrawer.subgoalId, patch)}
+          onOpenChecklistPicker={() => setChecklistPicker({ goalId: subgoalDrawer.goalId, subgoalId: subgoalDrawer.subgoalId })}
+          onUnlinkChecklist={(itemId) => toggleChecklistRef(subgoalDrawer.goalId, subgoalDrawer.subgoalId, itemId)}
           onAddComment={(text) => addComment(subgoalDrawer.goalId, subgoalDrawer.subgoalId, text)}
           onConfirm={() => confirmSubgoal(subgoalDrawer.goalId, subgoalDrawer.subgoalId)}
           onReturn={() => setReturnModal(subgoalDrawer)}
           onNotDone={() => setNotDoneConfirm(subgoalDrawer)} />
+      )}
+
+      {checklistPicker && (
+        <ChecklistPickerModal plan={plan}
+          selected={(plan.goals.find(g => g.id === checklistPicker.goalId).subgoals.find(s => s.id === checklistPicker.subgoalId).checklistRefs) || []}
+          onToggle={(itemId) => toggleChecklistRef(checklistPicker.goalId, checklistPicker.subgoalId, itemId)}
+          onClose={() => setChecklistPicker(null)} />
       )}
 
       {publishConfirm && (
@@ -433,6 +458,7 @@ function ManagerGoalRow({ goal, plan, onOpenGoal, onOpenSubgoal, onDeleteGoal })
 function ManagerSubgoalRow({ subgoal, goalDueLabel, onOpen }) {
   const isDone = subgoal.status === "done";
   const cfg = SUBGOAL_ICON[subgoal.status];
+  const matCount = (subgoal.checklistRefs || []).length;
   const ownDue = stripDuePrefix(subgoal.dueLabel);
   const showOwnDue = !isDone && ownDue && ownDue !== stripDuePrefix(goalDueLabel);
   return (
@@ -443,6 +469,14 @@ function ManagerSubgoalRow({ subgoal, goalDueLabel, onOpen }) {
           <div className="sk-label-3-regular" style={{ color: isDone ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{subgoal.title || "Без названия"}</div>
           {showOwnDue && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ownDue}</div>}
         </div>
+      </div>
+      <div className="sk-row sk-gap-2" style={{ flexShrink: 0, alignItems: "center" }}>
+        <span className="sk-row sk-gap-1" style={{
+          height: 26, padding: "0 10px 0 6px", borderRadius: "var(--sk-radius-full)",
+          background: "var(--sk-accent-secondary)", color: "var(--sk-text-accent)", font: "var(--sk-label-4)", whiteSpace: "nowrap",
+        }}>
+          <IconPlusSm size={16} />{"Полезные материалы" + (matCount > 0 ? " " + matCount : "")}
+        </span>
       </div>
     </div>
   );
@@ -533,6 +567,12 @@ function GoalDrawer({ goal, plan, editable, onClose, onChange, onAddSubgoal, onO
                   </div>
                 </div>
                 <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+                  <span className="sk-row sk-gap-1 sk-clickable" onClick={() => onOpenSubgoal(sg.id)} style={{
+                    height: 26, padding: "0 10px 0 6px", borderRadius: "var(--sk-radius-full)",
+                    background: "var(--sk-accent-secondary)", color: "var(--sk-text-accent)", font: "var(--sk-label-4)", whiteSpace: "nowrap",
+                  }}>
+                    <IconPlusSm size={16} />{"Полезные материалы" + ((sg.checklistRefs || []).length > 0 ? " " + sg.checklistRefs.length : "")}
+                  </span>
                   {editable && <button className="sk-link-btn" onClick={() => onDeleteSubgoal(sg.id)}><IconTrash size={15} color="var(--sk-icon-secondary)" /></button>}
                 </div>
               </div>
@@ -609,10 +649,11 @@ function CommentsPanel({ comments, comment, setComment, onAdd, disabled }) {
 }
 
 // ---------------- Дровер подцели (редактирование / просмотр / подтверждение-возврат) ----------------
-function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onAddComment, onConfirm, onReturn, onNotDone }) {
+function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklistPicker, onUnlinkChecklist, onAddComment, onConfirm, onReturn, onNotDone }) {
   const [comment, setComment] = React.useState("");
   const editable = !plan.employeeStarted;
   const isReview = plan.employeeStarted && subgoal.status === "pending_review";
+  const links = (subgoal.checklistRefs || []).map(id => findChecklistItem(plan, id)).filter(Boolean);
 
   return (
     <Drawer open title={editable ? undefined : goal.title} onClose={onClose} size="s">
@@ -648,6 +689,27 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onAddComment, o
           </React.Fragment>
         )}
 
+        <CollapsibleSection title={"Полезные материалы" + (links.length ? " " + links.length : "")}>
+          <div className="sk-col sk-gap-2" style={{ padding: 12, background: "var(--sk-accent-secondary)", borderRadius: "var(--sk-radius-3)" }}>
+            {!links.length && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Добавьте вспомогательные материалы для выполнения этого шага</div>}
+            {links.map(({ item, stage }) => (
+              <div key={item.id} className="sk-row" style={{ justifyContent: "space-between", padding: 10, background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-2)" }}>
+                <div className="sk-col sk-gap-1">
+                  <div className="sk-label-4">{item.title}</div>
+                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]} · Этап «{stage.title}»</div>
+                </div>
+                {editable && <button className="sk-link-btn" onClick={() => onUnlinkChecklist(item.id)}><IconX size={15} color="var(--sk-icon-secondary)" /></button>}
+              </div>
+            ))}
+            {editable && (
+              <button className="sk-link-btn sk-label-3-regular" onClick={onOpenChecklistPicker}
+                style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)" }}>
+                <span className="sk-row sk-gap-1"><IconPlusSm size={16} />Добавить</span>
+              </button>
+            )}
+          </div>
+        </CollapsibleSection>
+
         <CommentsPanel comments={subgoal.comments} comment={comment} setComment={setComment}
           onAdd={onAddComment} disabled={false} />
 
@@ -676,6 +738,32 @@ function ReturnCommentModal({ onClose, onSubmit }) {
       primary={<Button disabled={!canSubmit} onClick={() => onSubmit(comment.trim())}>Вернуть в работу</Button>}>
       <Textarea label="Комментарий" required helper="Обязателен — объясните сотруднику, что нужно доработать"
         rows={3} value={comment} onChange={(e) => setComment(e.target.value || "")} />
+    </Modal>
+  );
+}
+
+// ---------------- Модалка: привязка чек-листа ----------------
+function ChecklistPickerModal({ plan, selected, onToggle, onClose }) {
+  const [q, setQ] = React.useState("");
+  const allItems = plan.stages.flatMap(s => s.items.filter(i => i.kind !== "checkpoint").map(i => ({ item: i, stage: s })));
+  const list = q.trim() ? allItems.filter(x => x.item.title.toLowerCase().includes(q.trim().toLowerCase())) : allItems;
+  return (
+    <Modal open title="Полезные материалы" onClose={onClose} size="m"
+      secondary={<Button mode="secondary" onClick={onClose}>Отменить</Button>}
+      primary={<Button onClick={onClose}>Добавить</Button>}
+      options={<Input icon={<IconSearch size={18} />} placeholder="Поиск по названию" value={q} onChange={(e) => setQ(e.target.value || "")} />}>
+      <div className="sk-col sk-gap-1 sk-modal-scroll">
+        {list.map(({ item, stage }) => (
+          <div key={item.id} className="sk-row sk-gap-3 sk-clickable" style={{ padding: "10px 4px" }} onClick={() => onToggle(item.id)}>
+            <Checkbox checked={selected.includes(item.id)} onChange={() => onToggle(item.id)} />
+            <div className="sk-col sk-gap-1" style={{ flex: 1 }}>
+              <div className="sk-label-3-regular">{item.title}</div>
+              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]} · Этап «{stage.title}»</div>
+            </div>
+          </div>
+        ))}
+        {!list.length && <div className="sk-muted" style={{ padding: "16px 0", textAlign: "center" }}>Ничего не нашлось</div>}
+      </div>
     </Modal>
   );
 }
