@@ -116,9 +116,12 @@ function ReferralRow({ r }) {
                 <IconMapPin size={15} color="var(--sk-icon-secondary)" />
                 <span className="sk-label-4-regular">{r.city}</span>
               </span>
+              {/* Телефон — единственное здесь, чем сотрудник реально пользуется руками
+                  (позвонить, скопировать, продиктовать рекрутёру), поэтому выделен
+                  акцентным цветом, как контакты рекрутёра на карточке вакансии. */}
               <span className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
-                <IconPhone size={15} color="var(--sk-icon-secondary)" />
-                <span className="sk-label-4-regular">{r.phone}</span>
+                <IconPhone size={15} color="var(--sk-icon-accent)" />
+                <span className="sk-label-4-regular" style={{ color: "var(--sk-text-accent)" }}>{r.phone}</span>
               </span>
             </div>
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Отправлено {fmtRuDate(r.date)}</div>
