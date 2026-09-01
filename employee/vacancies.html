@@ -286,7 +286,7 @@ function VacancyCard({ vacancy, hasResponse, matchPercent }) {
           <div className="sk-row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
             <div className="sk-label-3">{vacancy.title}</div>
             {hasResponse
-              ? <Tag size="s" hue="positive" icon={<IconThumbUp size={13} />}>Уже откликнулись</Tag>
+              ? <Tag size="s" hue="positive" icon={<IconThumbUp size={13} />}>Вы откликнулись</Tag>
               : closed
                 ? <Tag size="s" hue="neutral">Закрыта</Tag>
                 : (vacancy.isNew && <Tag size="s" style={{ background: "var(--sk-accent)", color: "var(--sk-text-contrast)" }}>Новая</Tag>)}
