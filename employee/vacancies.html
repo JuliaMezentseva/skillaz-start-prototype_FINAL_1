@@ -52,11 +52,11 @@ function IconThumbUp({ size = 24, color = "currentColor", style }) {
 function fmtMoney(n) { return n.toLocaleString("ru-RU"); }
 function toOptions(list) { return list.map((v) => ({ value: v, label: v })); }
 
-const emptyFilters = { directions: [], positions: [], departments: [], experience: [], cities: [], formats: [], employments: [], transitionTypes: [] };
+const emptyFilters = { directions: [], positions: [], departments: [], experience: [], cities: [], formats: [], transitionTypes: [] };
 
 // Подпись бирки подписки в духе "Регион: Москва, Пермь +2" — короткая, без перечисления
 // всех значений сразу, чтобы бирка не растягивалась на всю ширину при большом наборе фильтров.
-const FILTER_LABELS = { directions: "Направление", positions: "Должность", departments: "Подразделение", experience: "Опыт", cities: "Регион", formats: "Формат", employments: "Занятость", transitionTypes: "Тип перехода" };
+const FILTER_LABELS = { directions: "Направление", positions: "Должность", departments: "Подразделение", experience: "Опыт", cities: "Регион", formats: "Формат", transitionTypes: "Тип перехода" };
 function summarizeFilters(filters) {
   return Object.keys(FILTER_LABELS)
     .filter((k) => filters[k].length)
@@ -263,7 +263,6 @@ function FiltersChipsRow({ filters, onChange, directionOptions, positionOptions,
       <FilterChip label="Опыт" options={toOptions(D.experienceOptions)} value={filters.experience} onChange={set("experience")} />
       <FilterChip label="Регион" options={toOptions(D.cities)} value={filters.cities} onChange={set("cities")} />
       <FilterChip label="Формат работы" options={toOptions(D.workFormats)} value={filters.formats} onChange={set("formats")} />
-      <FilterChip label="Тип занятости" options={toOptions(D.employmentTypes)} value={filters.employments} onChange={set("employments")} />
       <FilterChip label="Тип перехода" options={toOptions(D.transitionTypes)} value={filters.transitionTypes} onChange={set("transitionTypes")} />
     </div>
   );
@@ -364,14 +363,13 @@ function Page() {
     if (filters.experience.length && !filters.experience.includes(v.experience)) return false;
     if (filters.cities.length && !filters.cities.includes(v.city)) return false;
     if (filters.formats.length && !filters.formats.includes(v.format)) return false;
-    if (filters.employments.length && !filters.employments.includes(v.employment)) return false;
     if (filters.transitionTypes.length && !filters.transitionTypes.includes(v.transitionType)) return false;
     if (needle && !v.title.toLowerCase().includes(needle) && !v.department.toLowerCase().includes(needle)) return false;
     return true;
   });
 
   const activeFilterCount = filters.directions.length + filters.positions.length + filters.departments.length + filters.experience.length
-    + filters.cities.length + filters.formats.length + filters.employments.length + filters.transitionTypes.length;
+    + filters.cities.length + filters.formats.length + filters.transitionTypes.length;
   const hasActiveFilters = activeFilterCount > 0;
 
   return (

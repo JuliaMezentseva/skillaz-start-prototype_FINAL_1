@@ -200,7 +200,7 @@ function ColumnsPicker({ visible, onApply }) {
   );
 }
 
-const emptyFilters = { directions: [], departments: [], cities: [], formats: [], employments: [], sources: [], visibilities: [] };
+const emptyFilters = { directions: [], departments: [], cities: [], formats: [], sources: [], visibilities: [] };
 
 const emptyForm = {
   title: "", direction: D.directions[0], department: "", city: D.cities[0], format: D.workFormats[0],
@@ -299,7 +299,6 @@ function Page() {
     if (filters.departments.length) list = list.filter((v) => filters.departments.includes(v.department));
     if (filters.cities.length) list = list.filter((v) => filters.cities.includes(v.city));
     if (filters.formats.length) list = list.filter((v) => filters.formats.includes(v.format));
-    if (filters.employments.length) list = list.filter((v) => filters.employments.includes(v.employment));
     if (filters.sources.length) list = list.filter((v) => filters.sources.includes(v.source || "ats"));
     if (filters.visibilities.length) list = list.filter((v) => filters.visibilities.includes(v.visibleToEmployees ? "visible" : "hidden"));
     if (sortBy) {
@@ -322,7 +321,7 @@ function Page() {
   const departmentOptions = [...new Set(D.vacancies.map((v) => v.department))].sort();
   const cityOptions = [...new Set(D.vacancies.map((v) => v.city))].sort();
   const activeFilterCount = filters.directions.length + filters.departments.length + filters.cities.length
-    + filters.formats.length + filters.employments.length + filters.sources.length + filters.visibilities.length;
+    + filters.formats.length + filters.sources.length + filters.visibilities.length;
   const hasActiveFilters = activeFilterCount > 0;
 
   function toggleSort(key) {
@@ -442,7 +441,6 @@ function Page() {
           <FilterChip label="Подразделение" searchable options={toOptions(departmentOptions)} value={filters.departments} onChange={(v) => setFilters((f) => ({ ...f, departments: v }))} />
           <FilterChip label="Регион" options={toOptions(cityOptions)} value={filters.cities} onChange={(v) => setFilters((f) => ({ ...f, cities: v }))} />
           <FilterChip label="Формат работы" options={toOptions(D.workFormats)} value={filters.formats} onChange={(v) => setFilters((f) => ({ ...f, formats: v }))} />
-          <FilterChip label="Тип занятости" options={toOptions(D.employmentTypes)} value={filters.employments} onChange={(v) => setFilters((f) => ({ ...f, employments: v }))} />
           <FilterChip label="Источник" options={[{ value: "ats", label: "ATS" }, { value: "manual", label: "Вручную" }]} value={filters.sources} onChange={(v) => setFilters((f) => ({ ...f, sources: v }))} />
           <FilterChip label="Видимость в витрине" options={[{ value: "visible", label: "Видна" }, { value: "hidden", label: "Скрыта" }]} value={filters.visibilities} onChange={(v) => setFilters((f) => ({ ...f, visibilities: v }))} />
         </div>
