@@ -63,14 +63,15 @@ function ReserveTag() {
 }
 
 // В резерве под конкретную роль — показываем её текстом рядом с тегом; если роли ещё
-// нет (общий кадровый резерв высокопотенциальных сотрудников), явно говорим об этом,
-// а не оставляем тег без пояснения.
+// нет (общий кадровый резерв высокопотенциальных сотрудников), явно говорим об этом.
+// Текст не повторяет корень "резерв" из тега — иначе связка читается как "Резервист,
+// в резерве на роль" (тавтология).
 function ReserveLine({ e }) {
   return (
-    <div className="sk-row sk-gap-1" style={{ alignItems: "center", flexWrap: "wrap" }}>
+    <div className="sk-row sk-gap-2" style={{ alignItems: "center", flexWrap: "wrap" }}>
       <ReserveTag />
-      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-        {e.targetRole ? <>в резерве на роль «{e.targetRole}»</> : "в общем кадровом резерве"}
+      <span style={{ font: "var(--sk-label-4-regular)" }}>
+        {e.targetRole ? <>на роль «{e.targetRole}»</> : "общий кадровый резерв"}
       </span>
     </div>
   );
@@ -99,19 +100,27 @@ function CandidateDetail({ e, vacancy }) {
   const matchedSkills = (vacancy.requiredSkills || []).filter(s => !(e.missingSkills || []).includes(s));
   return (
     <div className="sk-col sk-gap-3">
-      <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-        <Avatar name={e.name} size={40} />
-        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{e.position} · {e.department}</div>
+      <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
+        <Avatar name={e.name} size={48} />
+        <div className="sk-col" style={{ gap: 2 }}>
+          <div className="sk-label-3">{e.name}</div>
+          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{e.position} · {e.department}</div>
+        </div>
       </div>
-      {e.tenure && <DetailRow label="Стаж в роли" value={e.tenure} />}
-      <div className="sk-row sk-gap-2" style={{ alignItems: "center", flexWrap: "wrap" }}>
+      {e.source === "reserve" && <ReserveLine e={e} />}
+      <div className="sk-row sk-gap-3" style={{ alignItems: "center", flexWrap: "wrap" }}>
+        {e.tenure && (
+          <div className="sk-row sk-gap-1" style={{ alignItems: "baseline" }}>
+            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Стаж:</span>
+            <span className="sk-label-4">{e.tenure}</span>
+          </div>
+        )}
         {e.matchPercent != null && <MatchTag percent={e.matchPercent} />}
-        {e.source === "reserve" && <ReserveLine e={e} />}
       </div>
       <Card bordered>
         <div className="sk-col sk-gap-2">
           <div className="sk-row sk-gap-1 sk-label-4" style={{ alignItems: "center", color: "rgb(117,59,233)" }}>
-            <IconSparklesSolid size={14} color="rgb(117,59,233)" />Совпадение по требованиям
+            <IconSparklesSolid size={14} color="rgb(117,59,233)" />Совпадение по компетенциям
           </div>
           <TextList size="s" items={e.matchReasons || []} />
           {matchedSkills.length > 0 && (
@@ -240,6 +249,14 @@ function Page() {
     showToast("Рекомендация отправлена рекрутёру " + vacancy.recruiter.name + ".");
   }
 
+  // Рекрутёр сам создаёт отклик по подходящему кандидату (из AI-подбора или кадрового
+  // резерва) — источник в ATS фиксируется как "Внутренний кандидат", без обращения к
+  // самому сотруднику, в отличие от обычного отклика через "Откликнуться".
+  function handleCreateResponseFromCandidate(candidate) {
+    setOpenCandidate(null);
+    showToast("Отклик по кандидату " + candidate.name + " создан в ATS с источником «Внутренний кандидат».");
+  }
+
   const ApplyCta = () => {
     if (closed) return <Button disabled>Вакансия закрыта</Button>;
     if (myResponse) return (
@@ -360,13 +377,13 @@ function Page() {
       {recommendOpen && <RecommendModal vacancy={vacancy} onClose={() => setRecommendOpen(false)} onSubmitted={handleRecommendSubmitted} />}
 
       {openCandidate != null && (
-        <Modal open title={matches[openCandidate].name} onClose={() => setOpenCandidate(null)} size="m"
+        <Modal open title={vacancy.title} onClose={() => setOpenCandidate(null)} size="m"
           headerActions={
-            <a href="../stub.html?role=hr&section=profile" className="sk-label-4-regular" style={{ color: "var(--sk-text-accent)", textDecoration: "none", whiteSpace: "nowrap" }}>
-              Перейти в профиль
+            <a href="../stub.html?role=hr&section=profile" className="sk-row sk-gap-1 sk-label-4-regular" style={{ color: "var(--sk-text-accent)", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap" }}>
+              Перейти в профиль<IconChevronRight size={14} color="var(--sk-icon-accent)" />
             </a>
           }
-          secondary={<Button mode="secondary" onClick={() => setOpenCandidate(null)}>Закрыть</Button>}>
+          primary={<Button variant="accent" onClick={() => handleCreateResponseFromCandidate(matches[openCandidate])}>Создать отклик с данными кандидата</Button>}>
           <CandidateDetail e={matches[openCandidate]} vacancy={vacancy} />
         </Modal>
       )}
