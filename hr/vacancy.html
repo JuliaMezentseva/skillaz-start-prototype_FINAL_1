@@ -114,27 +114,33 @@ function CandidateDetail({ e, vacancy }) {
           <Avatar name={e.name} size={52} />
           <div className="sk-col" style={{ gap: 2 }}>
             <div className="sk-label-3">{e.name}</div>
-            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-              {e.position}{e.tenure ? ` · Стаж ${e.tenure}` : ""}
-            </div>
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{e.position} · {e.department}</div>
           </div>
         </div>
-        {e.matchPercent != null && (
-          <div style={{ background: "var(--sk-special-secondary)", borderRadius: "var(--sk-radius-3)", padding: "10px 16px", textAlign: "center", flexShrink: 0, minWidth: 84 }}>
-            <div style={{ font: "var(--sk-title-4)", fontWeight: 800, color: "rgb(117,59,233)", lineHeight: 1 }}>{e.matchPercent}%</div>
-            <div style={{ font: "var(--sk-label-4-regular)", color: "rgb(117,59,233)", marginTop: 3 }}>совпадение</div>
-          </div>
-        )}
+        <div className="sk-col sk-gap-2" style={{ alignItems: "flex-end", flexShrink: 0 }}>
+          <a href="../stub.html?role=hr&section=profile" className="sk-row sk-gap-1 sk-label-4-regular sk-clickable"
+            style={{ color: "var(--sk-text-accent)", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap" }}>
+            В профиль<IconChevronRight size={14} color="var(--sk-icon-accent)" />
+          </a>
+          {e.matchPercent != null && (
+            <div style={{ background: "var(--sk-special-secondary)", borderRadius: "var(--sk-radius-3)", padding: "10px 16px", textAlign: "center", minWidth: 84 }}>
+              <div style={{ font: "var(--sk-title-4)", fontWeight: 800, color: "rgb(117,59,233)", lineHeight: 1 }}>{e.matchPercent}%</div>
+              <div style={{ font: "var(--sk-label-4-regular)", color: "rgb(117,59,233)", marginTop: 3 }}>совпадение</div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {e.tenure && (
+        <div className="sk-row sk-gap-1" style={{ alignItems: "baseline" }}>
+          <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Стаж:</span>
+          <span className="sk-label-4">{e.tenure}</span>
+        </div>
+      )}
 
       {e.source === "reserve"
         ? <ReserveNote e={e} />
         : (e.matchReasons && e.matchReasons[0] && <MatchReasonNote reason={e.matchReasons[0]} />)}
-
-      <a href="../stub.html?role=hr&section=profile" className="sk-row sk-gap-1 sk-clickable"
-        style={{ color: "var(--sk-text-secondary)", alignItems: "center", textDecoration: "none", font: "var(--sk-label-4-regular)" }}>
-        Показать профиль сотрудника<IconChevronRight size={12} color="var(--sk-icon-secondary)" />
-      </a>
 
       <Card bordered padding={0}>
         <div style={{ padding: 20 }}>
