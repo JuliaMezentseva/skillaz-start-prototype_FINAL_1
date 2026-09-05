@@ -402,7 +402,7 @@ function Page() {
       {recommendOpen && <RecommendModal vacancy={vacancy} onClose={() => setRecommendOpen(false)} onSubmitted={handleRecommendSubmitted} />}
 
       {openCandidate != null && (
-        <Modal open title={`Подходящий кандидат на «${vacancy.title}»`} onClose={() => setOpenCandidate(null)} size="m"
+        <Modal open title={`Подходящий кандидат на «${vacancy.title}»`} onClose={() => setOpenCandidate(null)} size="l"
           primary={<Button variant="accent" onClick={() => handleCreateResponseFromCandidate(matches[openCandidate])}>Создать отклик с данными кандидата</Button>}>
           <CandidateDetail e={matches[openCandidate]} vacancy={vacancy} />
         </Modal>
