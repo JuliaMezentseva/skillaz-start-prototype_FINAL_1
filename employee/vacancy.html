@@ -332,14 +332,6 @@ function RecommendModal({ vacancy, onClose, onSubmitted }) {
       <div className="sk-col sk-gap-3 sk-modal-scroll">
         <Alert hue="accent">Рекомендация уйдёт рекрутёру вакансии. Ваше имя и почта прикрепятся к ней автоматически.</Alert>
 
-        <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
-          <Avatar name={p.name} size={36} />
-          <div className="sk-col" style={{ gap: 0 }}>
-            <div className="sk-label-3">{p.name}</div>
-            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{p.email} · рекомендует на «{vacancy.title}»</div>
-          </div>
-        </div>
-
         <Input label="ФИО кандидата" required placeholder="Например, Никита Северов" value={name} onChange={(e) => setName(e.target.value || "")} />
         <Input label="Город, в котором проживает кандидат" required value={city} onChange={(e) => setCity(e.target.value || "")} />
         <Input label="Мобильный телефон кандидата" required placeholder="+7 900 000 00 00" value={phone} onChange={(e) => setPhone(e.target.value || "")} />
