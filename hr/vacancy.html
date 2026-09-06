@@ -158,7 +158,7 @@ function CandidateDetail({ e, vacancy }) {
           )}
           {growthSkills.length > 0 && (
             <div className="sk-col sk-gap-1">
-              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Выбрал как свою зону развития · есть в требованиях роли</div>
+              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Указал в интересах · есть в требованиях роли</div>
               <div className="sk-row sk-gap-1" style={{ flexWrap: "wrap" }}>
                 {growthSkills.map((s, i) => <Tag key={i} size="s" hue="warning">{s}</Tag>)}
               </div>
@@ -166,7 +166,7 @@ function CandidateDetail({ e, vacancy }) {
           )}
           {e.missingSkills && e.missingSkills.length > 0 && (
             <div className="sk-col sk-gap-1">
-              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Нужно развить</div>
+              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Требует развития</div>
               <div className="sk-row sk-gap-1" style={{ flexWrap: "wrap" }}>
                 {e.missingSkills.map((s, i) => <Tag key={i} size="s" style={{ background: "var(--sk-surface-secondary)" }}>{s}</Tag>)}
               </div>
@@ -539,7 +539,7 @@ function RecommendModal({ vacancy, onClose, onSubmitted }) {
       secondary={<Button mode="secondary" onClick={onClose}>Отмена</Button>}
       primary={<Button variant="accent" disabled={!canSubmit} onClick={onSubmitted}>Отправить рекомендацию</Button>}>
       <div className="sk-col sk-gap-3 sk-modal-scroll">
-        <Alert hue="neutral">Рекомендация уйдёт рекрутёру вакансии. Ваше имя и почта прикрепятся к ней автоматически.</Alert>
+        <Alert hue="accent">Рекомендация уйдёт рекрутёру вакансии. Ваше имя и почта прикрепятся к ней автоматически.</Alert>
 
         <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
           <Avatar name={p.name} size={36} />

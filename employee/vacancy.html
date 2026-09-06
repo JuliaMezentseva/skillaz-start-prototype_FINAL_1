@@ -330,7 +330,7 @@ function RecommendModal({ vacancy, onClose, onSubmitted }) {
       secondary={<Button mode="secondary" onClick={onClose}>Отмена</Button>}
       primary={<Button variant="accent" disabled={!canSubmit} onClick={onSubmitted}>Отправить рекомендацию</Button>}>
       <div className="sk-col sk-gap-3 sk-modal-scroll">
-        <Alert hue="neutral">Рекомендация уйдёт рекрутёру вакансии. Ваше имя и почта прикрепятся к ней автоматически.</Alert>
+        <Alert hue="accent">Рекомендация уйдёт рекрутёру вакансии. Ваше имя и почта прикрепятся к ней автоматически.</Alert>
 
         <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
           <Avatar name={p.name} size={36} />
