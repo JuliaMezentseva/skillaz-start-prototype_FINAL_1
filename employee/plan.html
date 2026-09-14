@@ -69,6 +69,11 @@ const SCALE_BORDERS = { 1: "#E0716F", 2: "#E0A23D", 3: "#D2B93B", 4: "#5DAE6F", 
 const CP_YELLOW = "var(--yellow-yellow-85)";
 const CP_YELLOW_BG = "var(--yellow-yellow-96)";
 const CP_YELLOW_BORDER = "var(--yellow-yellow-80)";
+// В боковой панели контрольную точку называем встречей: "30 дней" -> "Встреча на 30 день".
+function cpMeetingName(cp) {
+  const m = /(\d+)/.exec(cp.short || "");
+  return m ? `Встреча на ${m[1]} день` : (cp.short || cp.title);
+}
 // Лица шкалы опроса рисуем сами (глаза-точки + рот), а не эмодзи — рендер эмодзи зависит от ОС
 // (на iPhone это одни картинки, на Windows/Android другие) и не соответствует нашей ДС.
 const SCALE_MOUTHS = {
@@ -770,22 +775,27 @@ function RightPanel({ plan, overallPct, checkpoints, onOpenCheckpoint, showCheck
   const currentCp = firstPendingIndex >= 0 ? cps[firstPendingIndex] : null;
   return (
     <div className="sk-col sk-gap-5">
-      {showCheckpoints && currentCp && (
+      {showCheckpoints && cps.length > 0 && (
         <Card bordered>
           <div className="sk-col sk-gap-3">
-            <div className="sk-label-3">Контрольная точка</div>
-            <div className="sk-clickable" onClick={() => onOpenCheckpoint(currentCp.id)} style={{
-              display: "flex", alignItems: "center", gap: 10, padding: 10, borderRadius: "var(--sk-radius-3)",
-              border: "1.5px solid " + CP_YELLOW_BORDER, background: CP_YELLOW_BG,
-            }}>
-              <div className="sk-col" style={{ gap: 0, flex: 1, minWidth: 0 }}>
-                <div className="sk-label-4">{currentCp.dateLabel || currentCp.date}</div>
-                <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>до {currentCp.dueLabelShort || currentCp.dateLabel}</div>
-              </div>
-              <button type="button" onClick={() => onOpenCheckpoint(currentCp.id)} style={{
-                height: 32, padding: "0 14px", borderRadius: "var(--sk-radius-full)", border: "none", cursor: "pointer",
-                background: CP_YELLOW, color: "var(--sk-text-contrast)", font: "var(--sk-label-3)", fontWeight: 600, flexShrink: 0,
-              }}>Пройти</button>
+            <div className="sk-label-3">Контрольные точки</div>
+            <div className="sk-col sk-gap-3">
+              {cps.map((cp, i) => {
+                const isCurrent = i === firstPendingIndex;
+                return (
+                  <div key={cp.id} className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
+                    <div className="sk-col" style={{ gap: 0, flex: 1, minWidth: 0 }}>
+                      <div className="sk-label-4-regular">{cpMeetingName(cp)}</div>
+                      <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>
+                        {isCurrent ? "до " + (cp.dueLabelShort || cp.dateLabel) : (cp.dateLabel || cp.date)}
+                      </div>
+                    </div>
+                    {isCurrent && (
+                      <Button variant="accent" size="s" onClick={() => onOpenCheckpoint(cp.id)} style={{ flexShrink: 0 }}>Пройти</Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </Card>

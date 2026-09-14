@@ -98,6 +98,11 @@ const REVIEW_MAX_NOTE = "План на итоговой проверке — о�
 const CP_YELLOW = "var(--yellow-yellow-85)";
 const CP_YELLOW_BG = "var(--yellow-yellow-96)";
 const CP_YELLOW_BORDER = "var(--yellow-yellow-80)";
+// В боковой панели контрольную точку называем встречей: "30 дней" -> "Встреча на 30 день".
+function cpMeetingName(cp) {
+  const m = /(\d+)/.exec(cp.short || "");
+  return m ? `Встреча на ${m[1]} день` : (cp.short || cp.title);
+}
 // Та же шкала-смайлы, что видит сотрудник в employee/plan.html (CheckpointModal) — переносим
 // 1-в-1, чтобы проверяющий читал ответы сотрудника в той же визуальной кодировке, а не как
 // мелкие голые цифры без цвета и формы.
@@ -161,6 +166,7 @@ function Page() {
   const [plan, setPlan] = useDeepState(basePlan);
   const [tab, setTab] = React.useState(() => initialTabFromUrl(basePlan.hasGoals));
   const [toast, setToast] = React.useState(null);
+  const [openRisks, setOpenRisks] = React.useState(() => member.risks || []);
 
   const [goalDrawer, setGoalDrawer] = React.useState(null); // { mode: "new" } | { mode: "edit", goalId }
   const [newGoalDraft, setNewGoalDraft] = React.useState({ title: "", description: "", dueDate: new Date(2026, 0, 20), subgoals: [] });
@@ -440,7 +446,9 @@ function Page() {
 
         <div style={{ width: 320, flexShrink: 0 }}>
           <RightPanel member={member} plan={plan} overallPct={overallPct} onOpenCheckpoint={setCpModal} showCheckpoints={tab === "max"}
-            onOpenReview={() => setReviewModal(true)} />
+            onOpenReview={() => setReviewModal(true)}
+            openRisks={openRisks}
+            onDismissRisk={(risk) => setOpenRisks(rs => rs.filter(r => r !== risk))} />
         </div>
       </div>
 
@@ -2441,8 +2449,33 @@ function PersonCard({ p }) {
   );
 }
 
+// Плашка рисков по плану. Риски приходят из member.risks — это признаки, которые система
+// определила сама (просрочки, низкая оценка в КТ), поэтому автора у них нет, в отличие от
+// комментария руководителя. Снятие риска здесь локальное — бэкенда в прототипе нет.
+function RiskPanel({ risks, onDismiss }) {
+  if (!risks || risks.length === 0) return null;
+  return (
+    <Card bordered={false} style={{ background: "var(--sk-negative-secondary)", boxShadow: "none" }}>
+      <div className="sk-col sk-gap-4">
+        <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+          <IconAlertCircle size={18} color="var(--sk-icon-negative)" />
+          <span className="sk-label-3" style={{ color: "var(--sk-text-negative)" }}>Есть риск</span>
+        </div>
+        {risks.map((risk, i) => (
+          <div key={risk} className="sk-col sk-gap-2">
+            {i > 0 && <Divider style={{ marginBottom: 4 }} />}
+            <div className="sk-label-4-regular">{risk}</div>
+            <button type="button" className="sk-link-btn" onClick={() => onDismiss(risk)}
+              style={{ alignSelf: "flex-start", font: "var(--sk-label-3)" }}>Снять риск</button>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 const PLAN_STATUS_TAG = { completed: "completed", failed: "failed_plan", on_review: "on_review" };
-function RightPanel({ member, plan, overallPct, onOpenCheckpoint, showCheckpoints, onOpenReview }) {
+function RightPanel({ member, plan, overallPct, onOpenCheckpoint, showCheckpoints, onOpenReview, openRisks, onDismissRisk }) {
   const cpOrder = Object.keys(plan.checkpoints);
   const checkpoints = cpOrder.filter(id => plan.checkpoints[id]).map(id => plan.checkpoints[id]);
   const firstPendingIndex = checkpoints.findIndex(c => c.status !== "done");
@@ -2461,36 +2494,26 @@ function RightPanel({ member, plan, overallPct, onOpenCheckpoint, showCheckpoint
         </div>
       </div>
 
+      <RiskPanel risks={openRisks} onDismiss={onDismissRisk} />
+
       {showCheckpoints && checkpoints.length > 0 && (
         <Card bordered>
           <div className="sk-col sk-gap-3">
             <div className="sk-label-3">Контрольные точки <span style={{ color: "var(--sk-text-secondary)" }}>· {checkpoints.filter(c => c.status === "done").length} из {checkpoints.length}</span></div>
-            <div className="sk-col sk-gap-2">
+            <div className="sk-col sk-gap-3">
               {checkpoints.map((cp, i) => {
                 const isDone = cp.status === "done";
                 const isCurrent = !isDone && i === firstPendingIndex;
-                const isMine = cp.reviewer === (typeof D !== "undefined" && (D.manager ? D.manager.name : (D.assistantMe ? D.assistantMe.name : null)));
                 return (
-                  <div key={cp.id} className="sk-clickable" onClick={() => onOpenCheckpoint(cp.id)} style={{
-                    display: "flex", alignItems: "center", gap: 10, padding: 10, borderRadius: "var(--sk-radius-3)",
-                    border: isCurrent ? "1.5px solid " + CP_YELLOW_BORDER : "1px solid var(--sk-stroke)",
-                    background: isCurrent ? CP_YELLOW_BG : "var(--sk-surface-page)",
-                  }}>
-                    <span style={{
-                      width: 28, height: 28, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                      font: "var(--sk-label-3)",
-                      background: isDone ? "var(--sk-surface-dark)" : isCurrent ? CP_YELLOW : "var(--sk-surface-secondary)",
-                      color: isDone || isCurrent ? "var(--sk-text-contrast)" : "var(--sk-text-tertiary)",
-                    }}>{isDone ? <IconCheck size={13} /> : i + 1}</span>
-                    <div className="sk-col" style={{ gap: 0, flex: 1, minWidth: 0 }}>
-                      <div className="sk-label-4">{cp.dateLabel || cp.date}</div>
-                      <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{isDone ? cp.reviewer : (isMine ? "Ожидает вас" : "Проверяющий: " + cp.reviewer)}</div>
+                  <div key={cp.id} className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
+                    <div className="sk-col sk-clickable" onClick={() => onOpenCheckpoint(cp.id)} style={{ gap: 0, flex: 1, minWidth: 0 }}>
+                      <div className="sk-label-4-regular">{cpMeetingName(cp)}</div>
+                      <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>
+                        {isCurrent ? "до " + (cp.dueLabelShort || cp.dateLabel) : (cp.dateLabel || cp.date)}
+                      </div>
                     </div>
                     {isCurrent && (
-                      <button type="button" onClick={(e) => { e.stopPropagation && e.stopPropagation(); onOpenCheckpoint(cp.id); }} style={{
-                        height: 32, padding: "0 14px", borderRadius: "var(--sk-radius-full)", border: "none", cursor: "pointer",
-                        background: CP_YELLOW, color: "var(--sk-text-contrast)", font: "var(--sk-label-3)", fontWeight: 600, flexShrink: 0,
-                      }}>Пройти</button>
+                      <Button variant="accent" size="s" onClick={() => onOpenCheckpoint(cp.id)} style={{ flexShrink: 0 }}>Пройти</Button>
                     )}
                   </div>
                 );
