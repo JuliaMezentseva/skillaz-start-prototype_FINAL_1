@@ -17,8 +17,7 @@
 <div id="root"></div>
 <script type="text/babel">
 const { Card, ProgressCircle, Tag } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, StatusTag, Icons, PlanCover, PLAN_COVER_HUE } = window.Site;
-const { IconTarget, IconCheck } = Icons;
+const { AppShell, StatusTag, PlanCover, PLAN_COVER_HUE } = window.Site;
 const D = window.SITE_DATA;
 
 function progressOf(plan) {
@@ -34,7 +33,6 @@ function progressOf(plan) {
 function PlanCard({ plan, clickable = true }) {
   const pending = plan.status === "awaiting_start";
   const pct = plan.status === "completed" ? 100 : (plan.stages ? progressOf(plan) : 0);
-  const checkpoints = Object.values(plan.checkpoints || {});
   const statusKey = plan.status === "completed" ? "completed" : pending ? "awaiting_start" : "in_progress_plan";
   // План ещё не сформирован — приглушаем содержимое, но не статус-тег: он как раз
   // объясняет, почему карточка выглядит неактивной.
@@ -50,27 +48,9 @@ function PlanCard({ plan, clickable = true }) {
             <StatusTag status={statusKey} />
           </div>
           <div className="sk-title-5" style={fade}>{plan.title}</div>
-          {!pending && (
-            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-              {plan.dateEnd ? `${plan.dateStart} – ${plan.dateEnd}` : `с ${plan.dateStart}`}
-            </div>
-          )}
-          {checkpoints.length > 0 && (
-            <div className="sk-row sk-gap-2" style={{ marginTop: 2 }}>
-              <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Контрольные точки:</span>
-              <div className="sk-row sk-gap-1">
-                {checkpoints.map(cp => (
-                  <span key={cp.id} title={cp.short} style={{
-                    width: 18, height: 18, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-                    background: cp.status === "done" ? "var(--sk-positive)" : "var(--sk-surface-secondary)",
-                    color: cp.status === "done" ? "var(--sk-text-contrast)" : "var(--sk-icon-secondary)",
-                  }}>
-                    {cp.status === "done" ? <IconCheck size={10} /> : <IconTarget size={10} />}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", ...fade }}>
+            {plan.dateEnd ? `${plan.dateStart} – ${plan.dateEnd}` : `с ${plan.dateStart}`}
+          </div>
         </div>
         {pending ? (
           <div style={{ textAlign: "center", flexShrink: 0, ...fade }}>
