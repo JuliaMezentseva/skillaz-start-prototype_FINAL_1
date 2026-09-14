@@ -20,7 +20,7 @@
 // (employee/adaptation.html), но всегда ровно одна карточка: план пребординга
 // кандидата (window.SITE_DATA.plans.candidatePreboarding).
 const { Card, ProgressCircle, Tag } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, StatusTag, PlanCover } = window.Site;
+const { AppShell, StatusTag, PlanCover, PLAN_COVER_HUE } = window.Site;
 const D = window.SITE_DATA;
 
 function progressOf(plan) {
@@ -35,8 +35,7 @@ function PlanCard({ plan }) {
     <a href={"plan.html"} style={{ textDecoration: "none" }}>
       <Card bordered padding={0} style={{ cursor: "pointer", overflow: "hidden" }}>
         <div className="sk-row" style={{ alignItems: "stretch", gap: 0 }}>
-          {/* Пребординг кандидата всегда с зелёной обложкой — как план "Пребординг" у сотрудника. */}
-          <PlanCover hue="green" />
+          <PlanCover hue={PLAN_COVER_HUE[plan.status === "completed" ? "completed" : "in_progress_plan"]} />
           <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between", padding: 24, flex: 1, minWidth: 0 }}>
             <div className="sk-col sk-gap-2" style={{ flex: 1, minWidth: 0 }}>
               <div className="sk-row sk-gap-2">
