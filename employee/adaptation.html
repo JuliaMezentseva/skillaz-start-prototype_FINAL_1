@@ -17,56 +17,9 @@
 <div id="root"></div>
 <script type="text/babel">
 const { Card, ProgressCircle, Tag } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, StatusTag, Icons } = window.Site;
+const { AppShell, StatusTag, Icons, PlanCover, PLAN_COVER_HUE } = window.Site;
 const { IconTarget, IconCheck } = Icons;
 const D = window.SITE_DATA;
-const { FRAME, RIBBONS, ICONS } = window.CoverArt;
-
-// band — область исходной обложки [x0, y0, x1, y1], которую показываем в баннере.
-// lightFrom — с какого x закрасить светлым: у жёлтой обложки справа круглая «шапка»
-// фигуры, на узкой полосе она читается как случайный полукруг. Закрашиваем её,
-// а не подрезаем band, иначе зигзаг слева растянулся бы по-другому.
-const BANNER_THEME = {
-  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", ribbon: "yellow", icon: "star", band: [0, 282, 1920, 582], lightFrom: 1340 },
-  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", ribbon: "blue",   icon: "hand", band: [0, 282, 1920, 582] },
-  // Зелёная и розовая берут форму голубой обложки: у их оригиналов зигзаг другой,
-  // а в наборе карточек нижние должны читаться одинаково.
-  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", ribbon: "blue",   icon: "star", band: [0, 282, 1920, 582] },
-  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", ribbon: "blue",   icon: "star", band: [0, 282, 1920, 582] },
-};
-const BANNER_HUE = { completed: "green", in_progress_plan: "blue", awaiting_start: "yellow" };
-
-function TracedShape({ shape, fill }) {
-  return (
-    <g transform={`translate(${shape.tx},${shape.ty}) scale(${shape.sx},${shape.sy})`}>
-      <path d={shape.d} fill={fill} />
-    </g>
-  );
-}
-
-function PlanBanner({ hue, height = 72 }) {
-  const t = BANNER_THEME[hue] || BANNER_THEME.blue;
-  const ribbon = RIBBONS[t.ribbon];
-  const icon = ICONS[t.icon];
-  const [bx0, by0, bx1, by1] = t.band;
-  const iconH = Math.round(height * 0.56);
-  const iconW = Math.round(iconH * (icon.w / icon.h));
-  return (
-    <div style={{ position: "relative", height, background: t.bg, overflow: "hidden" }}>
-      <svg viewBox={`${bx0} ${by0} ${bx1 - bx0} ${by1 - by0}`} preserveAspectRatio="none"
-           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}>
-        <TracedShape shape={ribbon} fill={t.light} />
-        {t.lightFrom && (
-          <rect x={t.lightFrom} y={by0} width={bx1 - t.lightFrom} height={by1 - by0} fill={t.light} />
-        )}
-      </svg>
-      <svg viewBox={`0 0 ${icon.w} ${icon.h}`} width={iconW} height={iconH}
-           style={{ position: "absolute", right: Math.round(height * 0.7), top: (height - iconH) / 2 }}>
-        <TracedShape shape={icon} fill={t.accent} />
-      </svg>
-    </div>
-  );
-}
 
 function progressOf(plan) {
   if (!plan.hasGoals) {
@@ -88,9 +41,10 @@ function PlanCard({ plan, clickable = true }) {
   const fade = pending ? { opacity: 0.55 } : undefined;
   const body = (
     <Card bordered padding={0} style={{ cursor: clickable ? "pointer" : "default", overflow: "hidden" }}>
-      <PlanBanner hue={BANNER_HUE[statusKey]} />
-      <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between", padding: 24 }}>
-        <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
+      <div className="sk-row" style={{ alignItems: "stretch", gap: 0 }}>
+      <PlanCover hue={PLAN_COVER_HUE[statusKey]} />
+      <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between", padding: 24, flex: 1, minWidth: 0 }}>
+        <div className="sk-col sk-gap-2" style={{ flex: 1, minWidth: 0 }}>
           <div className="sk-row sk-gap-2">
             <Tag size="s" hue="neutral">{plan.type}</Tag>
             <StatusTag status={statusKey} />
@@ -126,6 +80,7 @@ function PlanCard({ plan, clickable = true }) {
         ) : (
           <ProgressCircle value={pct} size={72} thickness={5} hue={plan.status === "completed" ? "positive" : "accent"} />
         )}
+      </div>
       </div>
     </Card>
   );

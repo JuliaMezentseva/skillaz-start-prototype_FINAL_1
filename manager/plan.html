@@ -2449,6 +2449,18 @@ function PersonCard({ p }) {
   );
 }
 
+// Заголовок риска — по тому, чем он вызван. В данных риск лежит одной строкой-описанием,
+// поэтому сопоставляем по подстроке: так заголовок переживёт правку формулировки.
+const RISK_TITLES = [
+  { match: "обязательных элементов", title: "Просрочка обязательных действий" },
+  { match: "контрольной точке", title: "Итоги контрольной точки" },
+  { match: "срока плана", title: "Прогресс по плану" },
+];
+function riskTitle(text) {
+  const found = RISK_TITLES.find(r => text.includes(r.match));
+  return found ? found.title : null;
+}
+
 // Плашка рисков по плану. Риски приходят из member.risks — это признаки, которые система
 // определила сама (просрочки, низкая оценка в КТ), поэтому автора у них нет, в отличие от
 // комментария руководителя. Снятие риска здесь локальное — бэкенда в прототипе нет.
@@ -2461,14 +2473,18 @@ function RiskPanel({ risks, onDismiss }) {
           <IconAlertCircle size={18} color="var(--sk-icon-negative)" />
           <span className="sk-label-3" style={{ color: "var(--sk-text-negative)" }}>Есть риск</span>
         </div>
-        {risks.map((risk, i) => (
-          <div key={risk} className="sk-col sk-gap-2">
-            {i > 0 && <Divider style={{ marginBottom: 4 }} />}
-            <div className="sk-label-4-regular">{risk}</div>
-            <button type="button" className="sk-link-btn" onClick={() => onDismiss(risk)}
-              style={{ alignSelf: "flex-start", font: "var(--sk-label-3)" }}>Снять риск</button>
-          </div>
-        ))}
+        {risks.map((risk, i) => {
+          const title = riskTitle(risk);
+          return (
+            <div key={risk} className="sk-col sk-gap-2">
+              {i > 0 && <Divider style={{ marginBottom: 4 }} />}
+              {title && <div className="sk-label-3">{title}</div>}
+              <div className="sk-label-4-regular">{risk}</div>
+              <button type="button" className="sk-link-btn" onClick={() => onDismiss(risk)}
+                style={{ alignSelf: "flex-start", font: "var(--sk-label-3)" }}>Снять риск</button>
+            </div>
+          );
+        })}
       </div>
     </Card>
   );

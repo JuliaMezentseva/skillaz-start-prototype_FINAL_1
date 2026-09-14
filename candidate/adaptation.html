@@ -10,6 +10,7 @@
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <script src="../assets/ds_bundle.js"></script>
 <script src="../assets/data.js"></script>
+<script src="../assets/cover-art.js"></script>
 <script type="text/babel" src="../assets/shell.js"></script>
 </head>
 <body>
@@ -19,7 +20,7 @@
 // (employee/adaptation.html), но всегда ровно одна карточка: план пребординга
 // кандидата (window.SITE_DATA.plans.candidatePreboarding).
 const { Card, ProgressCircle, Tag } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, StatusTag } = window.Site;
+const { AppShell, StatusTag, PlanCover } = window.Site;
 const D = window.SITE_DATA;
 
 function progressOf(plan) {
@@ -32,19 +33,23 @@ function PlanCard({ plan }) {
   const pct = plan.status === "completed" ? 100 : progressOf(plan);
   return (
     <a href={"plan.html"} style={{ textDecoration: "none" }}>
-      <Card bordered style={{ cursor: "pointer" }}>
-        <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between" }}>
-          <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
-            <div className="sk-row sk-gap-2">
-              <Tag size="s" hue="neutral">{plan.type}</Tag>
-              <StatusTag status={plan.status === "completed" ? "completed" : "in_progress_plan"} />
+      <Card bordered padding={0} style={{ cursor: "pointer", overflow: "hidden" }}>
+        <div className="sk-row" style={{ alignItems: "stretch", gap: 0 }}>
+          {/* Пребординг кандидата всегда с зелёной обложкой — как план "Пребординг" у сотрудника. */}
+          <PlanCover hue="green" />
+          <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between", padding: 24, flex: 1, minWidth: 0 }}>
+            <div className="sk-col sk-gap-2" style={{ flex: 1, minWidth: 0 }}>
+              <div className="sk-row sk-gap-2">
+                <Tag size="s" hue="neutral">{plan.type}</Tag>
+                <StatusTag status={plan.status === "completed" ? "completed" : "in_progress_plan"} />
+              </div>
+              <div className="sk-title-5">{plan.title}</div>
+              <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
+                {plan.dateStart} – {plan.dateEnd}
+              </div>
             </div>
-            <div className="sk-title-5">{plan.title}</div>
-            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-              {plan.dateStart} – {plan.dateEnd}
-            </div>
+            <ProgressCircle value={pct} size={72} thickness={5} hue={plan.status === "completed" ? "positive" : "accent"} />
           </div>
-          <ProgressCircle value={pct} size={72} thickness={5} hue={plan.status === "completed" ? "positive" : "accent"} />
         </div>
       </Card>
     </a>
