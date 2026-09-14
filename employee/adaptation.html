@@ -20,13 +20,24 @@ const { AppShell, StatusTag, Icons } = window.Site;
 const { IconTarget, IconCheck, IconSparklesSolid, IconRocket, IconCopyLocal2 } = Icons;
 const D = window.SITE_DATA;
 
+function IconHandOk({ size = 24, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ color, flexShrink: 0 }}>
+      <circle cx="9.5" cy="15" r="4.6" stroke="currentColor" strokeWidth="2.6" />
+      <rect x="12.5" y="2" width="2.6" height="8.5" rx="1.3" fill="currentColor" transform="rotate(-6 13.8 6.25)" />
+      <rect x="15.6" y="3" width="2.6" height="8" rx="1.3" fill="currentColor" transform="rotate(4 16.9 7)" />
+      <rect x="18.6" y="4.2" width="2.4" height="7.2" rx="1.2" fill="currentColor" transform="rotate(14 19.8 7.8)" />
+    </svg>
+  );
+}
+
 const BANNER_THEME = {
   yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", Icon: IconSparklesSolid },
-  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", Icon: IconCopyLocal2 },
+  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", Icon: IconSparklesSolid },
   green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", Icon: IconRocket },
-  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", Icon: IconSparklesSolid },
+  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", Icon: IconHandOk },
 };
-const BANNER_HUE = { completed: "green", in_progress_plan: "blue", awaiting_start: "yellow" };
+const BANNER_HUE = { completed: "blue", in_progress_plan: "pink", awaiting_start: "yellow" };
 
 function PlanBanner({ hue, height = 72 }) {
   const t = BANNER_THEME[hue] || BANNER_THEME.blue;
@@ -34,10 +45,15 @@ function PlanBanner({ hue, height = 72 }) {
   const badge = Math.round(height * 0.78);
   const pad = Math.round((height - badge) / 2);
   const iconSize = Math.round(badge * 0.46);
+  const skew = Math.round(height * 3.6);
+  const stripeW = Math.round(height * 1.1);
+  const stripes = [40, 320]
+    .map(x => `M${x},${height} L${x + skew},0 L${x + skew + stripeW},0 L${x + stripeW},${height} Z`)
+    .join(" ");
   return (
     <svg viewBox={`0 0 800 ${height}`} preserveAspectRatio="none" style={{ width: "100%", height, display: "block" }}>
       <rect width="800" height={height} fill={t.bg} />
-      <path d={`M0,${height} L260,0 L800,0 L800,${height * 0.28} L340,${height} Z`} fill={t.light} />
+      <path d={stripes} fill={t.light} />
       <g transform={`translate(${800 - pad - badge},${pad})`}>
         <rect width={badge} height={badge} rx={Math.round(badge * 0.29)} fill={t.accent} />
         <g transform={`translate(${(badge - iconSize) / 2},${(badge - iconSize) / 2})`}><IconEl size={iconSize} color="#fff" /></g>
@@ -74,9 +90,11 @@ function PlanCard({ plan, clickable = true }) {
             <StatusTag status={statusKey} />
           </div>
           <div className="sk-title-5">{plan.title}</div>
-          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-            {pending ? plan.note : (plan.dateEnd ? `${plan.dateStart} – ${plan.dateEnd}` : `с ${plan.dateStart}`)}
-          </div>
+          {!pending && (
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
+              {plan.dateEnd ? `${plan.dateStart} – ${plan.dateEnd}` : `с ${plan.dateStart}`}
+            </div>
+          )}
           {checkpoints.length > 0 && (
             <div className="sk-row sk-gap-2" style={{ marginTop: 2 }}>
               <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Контрольные точки:</span>
