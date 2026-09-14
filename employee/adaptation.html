@@ -79,12 +79,12 @@ function PlanCard({ plan, clickable = true }) {
   const checkpoints = Object.values(plan.checkpoints || {});
   const statusKey = plan.status === "completed" ? "completed" : pending ? "awaiting_start" : "in_progress_plan";
   const body = (
-    <Card bordered padding={0} style={{
-      cursor: clickable ? "pointer" : "default", overflow: "hidden",
-      ...(pending ? { opacity: 0.55 } : {}),
-    }}>
+    <Card bordered padding={0} style={{ cursor: clickable ? "pointer" : "default", overflow: "hidden" }}>
       <PlanBanner hue={BANNER_HUE[statusKey]} />
-      <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between", padding: 24 }}>
+      <div className="sk-row sk-gap-4" style={{
+        justifyContent: "space-between", padding: 24,
+        ...(pending ? { opacity: 0.55 } : {}),
+      }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
           <div className="sk-row sk-gap-2">
             <Tag size="s" hue="neutral">{plan.type}</Tag>
