@@ -17,22 +17,14 @@
 <script type="text/babel">
 const { Card, ProgressCircle, Tag } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, StatusTag, Icons } = window.Site;
-const { IconTarget, IconCheck } = Icons;
+const { IconTarget, IconCheck, IconSparklesSolid, IconRocket, IconCopyLocal2 } = Icons;
 const D = window.SITE_DATA;
 
-function IconSparkle({ size = 24, color = "currentColor" }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ color, flexShrink: 0 }}>
-      <path d="M12 2c.7 5 1.8 6.1 6.8 6.8-5 .7-6.1 1.8-6.8 6.8-.7-5-1.8-6.1-6.8-6.8C10.2 8.1 11.3 7 12 2z" fill="currentColor" />
-    </svg>
-  );
-}
-
 const BANNER_THEME = {
-  yellow: { bg: "#F6DE8E", light: "#FBF0C9", accent: "#E8A800", Icon: IconSparkle },
-  blue:   { bg: "#A9D9F6", light: "#DFF1FC", accent: "#1786D6", Icon: IconTarget },
-  green:  { bg: "#93E3AC", light: "#DAF7E3", accent: "#22A855", Icon: IconCheck },
-  pink:   { bg: "#F6B9DB", light: "#FCE3F1", accent: "#E23D8E", Icon: IconSparkle },
+  yellow: { bg: "#F6DE8E", light: "#FBF0C9", accent: "#E8A800", Icon: IconSparklesSolid },
+  blue:   { bg: "#A9D9F6", light: "#DFF1FC", accent: "#1786D6", Icon: IconCopyLocal2 },
+  green:  { bg: "#93E3AC", light: "#DAF7E3", accent: "#22A855", Icon: IconRocket },
+  pink:   { bg: "#F6B9DB", light: "#FCE3F1", accent: "#E23D8E", Icon: IconSparklesSolid },
 };
 const BANNER_HUE = { completed: "green", in_progress_plan: "blue", awaiting_start: "yellow" };
 
