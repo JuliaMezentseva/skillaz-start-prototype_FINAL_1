@@ -1484,9 +1484,10 @@ function AiAssistantWidget({ role }) {
 }
 
 // ---------------- Обложка карточки плана ----------------
-// Вертикальный блок слева от содержимого карточки, на всю её высоту: зигзаг из исходной
-// обложки и иконка по центру. Контуры обведены из assets/cover NN.png и лежат в
-// assets/cover-art.js. Компонент общий для ролей "Сотрудник" и "Кандидат".
+// Вертикальный блок слева от содержимого карточки, на всю её высоту: цвет плана и
+// диагональ из исходной обложки, без иконки — с ней обложка читалась слишком пёстро.
+// Контур ленты обведён из assets/cover NN.png и лежит в assets/cover-art.js. Компонент
+// общий для ролей "Сотрудник" и "Кандидат".
 //
 // Все обложки берут ленту жёлтой картинки и одно окно: через плитку проходит ровно одна
 // диагональ — сверху светлая часть ленты, снизу насыщенный фон. Вершина клина в кадр не
@@ -1495,10 +1496,10 @@ function AiAssistantWidget({ role }) {
 const PLAN_COVER_RIBBON = "yellow";
 const PLAN_COVER_BAND = "60 300 520 400";
 const PLAN_COVER_THEME = {
-  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", icon: "star" },
-  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", icon: "hand" },
-  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", icon: "star" },
-  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", icon: "star" },
+  yellow: { bg: "#FFF3C7", light: "#FFFAE7" },
+  blue:   { bg: "#DEF4FF", light: "#F1FAFF" },
+  green:  { bg: "#D9FFDB", light: "#EEFFEF" },
+  pink:   { bg: "#FFE9F8", light: "#FFF5FC" },
 };
 const PLAN_COVER_HUE = { completed: "green", in_progress_plan: "blue", awaiting_start: "yellow" };
 
@@ -1514,9 +1515,6 @@ function PlanCover({ hue, width = 80 }) {
   const art = window.CoverArt;
   const t = PLAN_COVER_THEME[hue] || PLAN_COVER_THEME.blue;
   if (!art) return null;
-  const icon = art.ICONS[t.icon];
-  const iconH = Math.round(width * 0.34);
-  const iconW = Math.round(iconH * (icon.w / icon.h));
   return (
     <div style={{
       // Встык с контентом: обложка занимает левый край карточки на всю её высоту.
@@ -1526,11 +1524,6 @@ function PlanCover({ hue, width = 80 }) {
       <svg viewBox={PLAN_COVER_BAND} preserveAspectRatio="none"
            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}>
         <TracedShape shape={art.RIBBONS[PLAN_COVER_RIBBON]} fill={t.light} />
-      </svg>
-      {/* Иконка — акцент, а не главный элемент: приглушаем, чтобы она не спорила с заголовком плана. */}
-      <svg viewBox={`0 0 ${icon.w} ${icon.h}`} width={iconW} height={iconH}
-           style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)", opacity: 0.55 }}>
-        <TracedShape shape={icon} fill={t.accent} />
       </svg>
     </div>
   );
