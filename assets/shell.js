@@ -1488,15 +1488,17 @@ function AiAssistantWidget({ role }) {
 // обложки и иконка по центру. Контуры обведены из assets/cover NN.png и лежат в
 // assets/cover-art.js. Компонент общий для ролей "Сотрудник" и "Кандидат".
 //
-// band — область исходника [x y w h]. Окна подобраны так, чтобы через плитку проходила
-// ровно одна диагональ: сверху светлая часть ленты, снизу насыщенный фон. Вершина клина
-// в кадр не попадает — иначе в маленькой плитке она читается как острый шип.
-// У жёлтой обложки своя лента, поэтому и окно другое.
+// Все обложки берут ленту жёлтой картинки и одно окно: через плитку проходит ровно одна
+// диагональ — сверху светлая часть ленты, снизу насыщенный фон. Вершина клина в кадр не
+// попадает, иначе в маленькой плитке она читается как острый шип. Разные ленты для разных
+// цветов давали заметно разный наклон, поэтому геометрия общая, отличается только цвет.
+const PLAN_COVER_RIBBON = "yellow";
+const PLAN_COVER_BAND = "60 300 520 400";
 const PLAN_COVER_THEME = {
-  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", icon: "star", ribbon: "yellow", band: "60 300 520 400" },
-  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", icon: "hand", ribbon: "blue",   band: "300 380 800 380" },
-  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", icon: "star", ribbon: "blue",   band: "300 380 800 380" },
-  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", icon: "star", ribbon: "blue",   band: "300 380 800 380" },
+  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", icon: "star" },
+  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", icon: "hand" },
+  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", icon: "star" },
+  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", icon: "star" },
 };
 const PLAN_COVER_HUE = { completed: "green", in_progress_plan: "blue", awaiting_start: "yellow" };
 
@@ -1521,9 +1523,9 @@ function PlanCover({ hue, width = 80 }) {
       // Скругление слева даёт сама карточка — у неё overflow: hidden.
       position: "relative", width, alignSelf: "stretch", flexShrink: 0, background: t.bg, overflow: "hidden",
     }}>
-      <svg viewBox={t.band} preserveAspectRatio="none"
+      <svg viewBox={PLAN_COVER_BAND} preserveAspectRatio="none"
            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}>
-        <TracedShape shape={art.RIBBONS[t.ribbon]} fill={t.light} />
+        <TracedShape shape={art.RIBBONS[PLAN_COVER_RIBBON]} fill={t.light} />
       </svg>
       {/* Иконка — акцент, а не главный элемент: приглушаем, чтобы она не спорила с заголовком плана. */}
       <svg viewBox={`0 0 ${icon.w} ${icon.h}`} width={iconW} height={iconH}
