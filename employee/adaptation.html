@@ -10,6 +10,7 @@
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <script src="../assets/ds_bundle.js"></script>
 <script src="../assets/data.js"></script>
+<script src="../assets/cover-art.js"></script>
 <script type="text/babel" src="../assets/shell.js"></script>
 </head>
 <body>
@@ -17,48 +18,42 @@
 <script type="text/babel">
 const { Card, ProgressCircle, Tag } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, StatusTag, Icons } = window.Site;
-const { IconTarget, IconCheck, IconSparklesSolid, IconRocket, IconCopyLocal2 } = Icons;
+const { IconTarget, IconCheck } = Icons;
 const D = window.SITE_DATA;
-
-function IconHandOk({ size = 24, color = "currentColor" }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ color, flexShrink: 0 }}>
-      <circle cx="9.5" cy="15" r="4.6" stroke="currentColor" strokeWidth="2.6" />
-      <rect x="12.5" y="2" width="2.6" height="8.5" rx="1.3" fill="currentColor" transform="rotate(-6 13.8 6.25)" />
-      <rect x="15.6" y="3" width="2.6" height="8" rx="1.3" fill="currentColor" transform="rotate(4 16.9 7)" />
-      <rect x="18.6" y="4.2" width="2.4" height="7.2" rx="1.2" fill="currentColor" transform="rotate(14 19.8 7.8)" />
-    </svg>
-  );
-}
+const { FRAME, RIBBONS, ICONS } = window.CoverArt;
 
 const BANNER_THEME = {
-  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", Icon: IconSparklesSolid },
-  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", Icon: IconSparklesSolid },
-  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", Icon: IconRocket },
-  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", Icon: IconHandOk },
+  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", ribbon: "yellow", icon: "star" },
+  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", ribbon: "blue",   icon: "star" },
+  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", ribbon: "pink",   icon: "hand" },
 };
 const BANNER_HUE = { completed: "blue", in_progress_plan: "pink", awaiting_start: "yellow" };
 
+function TracedShape({ shape, fill }) {
+  return (
+    <g transform={`translate(${shape.tx},${shape.ty}) scale(${shape.sx},${shape.sy})`}>
+      <path d={shape.d} fill={fill} />
+    </g>
+  );
+}
+
 function PlanBanner({ hue, height = 72 }) {
   const t = BANNER_THEME[hue] || BANNER_THEME.blue;
-  const IconEl = t.Icon;
-  const badge = Math.round(height * 0.78);
-  const pad = Math.round((height - badge) / 2);
-  const iconSize = Math.round(badge * 0.46);
-  const skew = Math.round(height * 3.6);
-  const stripeW = Math.round(height * 1.1);
-  const stripes = [40, 320]
-    .map(x => `M${x},${height} L${x + skew},0 L${x + skew + stripeW},0 L${x + stripeW},${height} Z`)
-    .join(" ");
+  const ribbon = RIBBONS[t.ribbon];
+  const icon = ICONS[t.icon];
+  const iconH = Math.round(height * 0.56);
+  const iconW = Math.round(iconH * (icon.w / icon.h));
   return (
-    <svg viewBox={`0 0 800 ${height}`} preserveAspectRatio="none" style={{ width: "100%", height, display: "block" }}>
-      <rect width="800" height={height} fill={t.bg} />
-      <path d={stripes} fill={t.light} />
-      <g transform={`translate(${800 - pad - badge},${pad})`}>
-        <rect width={badge} height={badge} rx={Math.round(badge * 0.29)} fill={t.accent} />
-        <g transform={`translate(${(badge - iconSize) / 2},${(badge - iconSize) / 2})`}><IconEl size={iconSize} color="#fff" /></g>
-      </g>
-    </svg>
+    <div style={{ position: "relative", height, background: t.bg, overflow: "hidden" }}>
+      <svg viewBox={`0 0 ${FRAME.w} ${FRAME.h}`} preserveAspectRatio="none"
+           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}>
+        <TracedShape shape={ribbon} fill={t.light} />
+      </svg>
+      <svg viewBox={`0 0 ${icon.w} ${icon.h}`} width={iconW} height={iconH}
+           style={{ position: "absolute", right: Math.round(height * 0.7), top: (height - iconH) / 2 }}>
+        <TracedShape shape={icon} fill={t.accent} />
+      </svg>
+    </div>
   );
 }
 
@@ -135,7 +130,7 @@ function RoleGroup({ title, period, children }) {
         <span className="sk-label-3">{title}</span>
         {period && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>· {period}</span>}
       </div>
-      <div className="sk-col sk-gap-4" style={{ maxWidth: "94%" }}>{children}</div>
+      <div className="sk-col sk-gap-4" style={{ maxWidth: 720 }}>{children}</div>
     </div>
   );
 }
