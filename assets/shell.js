@@ -1520,10 +1520,9 @@ function PlanCover({ hue, width = 80 }) {
   const iconW = Math.round(iconH * (icon.w / icon.h));
   return (
     <div style={{
-      position: "relative", width, alignSelf: "stretch", flexShrink: 0, background: t.bg,
-      // Обложка — скруглённая плитка с отступом, а не заливка края: так она читается
-      // как элемент карточки и меньше давит на содержимое.
-      margin: 8, borderRadius: "var(--sk-radius-4)", overflow: "hidden",
+      // Встык с контентом: обложка занимает левый край карточки на всю её высоту.
+      // Скругление слева даёт сама карточка — у неё overflow: hidden.
+      position: "relative", width, alignSelf: "stretch", flexShrink: 0, background: t.bg, overflow: "hidden",
     }}>
       <svg viewBox={PLAN_COVER_BAND} preserveAspectRatio="none"
            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}>
