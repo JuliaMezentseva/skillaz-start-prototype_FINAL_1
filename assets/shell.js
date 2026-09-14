@@ -1484,16 +1484,14 @@ function AiAssistantWidget({ role }) {
 }
 
 // ---------------- Обложка карточки плана ----------------
-// Вертикальный блок слева от содержимого карточки, на всю её высоту: зигзаг из исходной
-// обложки и иконка по центру. Контуры обведены из assets/cover NN.png и лежат в
-// assets/cover-art.js. Компонент общий для ролей "Сотрудник" и "Кандидат".
+// Вертикальный блок слева от содержимого карточки, на всю её высоту: диагональные полосы
+// и иконка по центру. Цвета сняты с assets/cover NN.png, иконки обведены оттуда же и
+// лежат в assets/cover-art.js. Компонент общий для ролей "Сотрудник" и "Кандидат".
 const PLAN_COVER_THEME = {
-  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", ribbon: "yellow", icon: "star" },
-  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", ribbon: "blue",   icon: "hand" },
-  // Зелёная и розовая берут форму голубой обложки: у их оригиналов зигзаг другой,
-  // а в наборе карточек они должны читаться одинаково.
-  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", ribbon: "blue",   icon: "star" },
-  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", ribbon: "blue",   icon: "star" },
+  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", icon: "star" },
+  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", icon: "hand" },
+  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", icon: "star" },
+  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", icon: "star" },
 };
 const PLAN_COVER_HUE = { completed: "green", in_progress_plan: "blue", awaiting_start: "yellow" };
 
@@ -1505,11 +1503,15 @@ function TracedShape({ shape, fill }) {
   );
 }
 
-// Кусок исходной обложки. Берём широкую область и сжимаем её по ширине в узкий блок
-// (preserveAspectRatio="none"): так диагональ зигзага становится круче и занимает
-// заметную часть плитки. Квадратная область с slice здесь вырождается в горизонтальную
-// полосу — блок слишком узкий и высокий.
-const PLAN_COVER_BAND = "300 150 900 560";
+// Полосы обложки рисуем сами, а не берём контур из исходной картинки: зигзаг оригинала
+// весь построен на острых углах, и в маленькой плитке вершина колется. Здесь это две
+// диагональные полосы со скруглёнными концами — тот же мотив, но без острых углов.
+// Координаты в системе 80×112, наружу выходят намеренно: концы обрезаются краем плитки.
+const PLAN_COVER_VB = { w: 80, h: 112 };
+const PLAN_COVER_STRIPES = [
+  { x1: -14, y1: 122, x2: 86, y2: 34, w: 34 },
+  { x1: 22, y1: 142, x2: 110, y2: 62, w: 18 },
+];
 
 function PlanCover({ hue, width = 80 }) {
   const art = window.CoverArt;
@@ -1524,9 +1526,12 @@ function PlanCover({ hue, width = 80 }) {
       // Скругление слева даёт сама карточка — у неё overflow: hidden.
       position: "relative", width, alignSelf: "stretch", flexShrink: 0, background: t.bg, overflow: "hidden",
     }}>
-      <svg viewBox={PLAN_COVER_BAND} preserveAspectRatio="none"
+      <svg viewBox={`0 0 ${PLAN_COVER_VB.w} ${PLAN_COVER_VB.h}`} preserveAspectRatio="xMidYMid slice"
            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}>
-        <TracedShape shape={art.RIBBONS[t.ribbon]} fill={t.light} />
+        {PLAN_COVER_STRIPES.map((s, i) => (
+          <line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
+            stroke={t.light} strokeWidth={s.w} strokeLinecap="round" />
+        ))}
       </svg>
       {/* Иконка — акцент, а не главный элемент: приглушаем, чтобы она не спорила с заголовком плана. */}
       <svg viewBox={`0 0 ${icon.w} ${icon.h}`} width={iconW} height={iconH}
