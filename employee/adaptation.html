@@ -24,10 +24,11 @@ const { FRAME, RIBBONS, ICONS } = window.CoverArt;
 
 const BANNER_THEME = {
   yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", ribbon: "yellow", icon: "star" },
-  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", ribbon: "blue",   icon: "star" },
+  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", ribbon: "blue",   icon: "hand" },
+  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", ribbon: "green",  icon: "star" },
   pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", ribbon: "pink",   icon: "hand" },
 };
-const BANNER_HUE = { completed: "blue", in_progress_plan: "pink", awaiting_start: "yellow" };
+const BANNER_HUE = { completed: "green", in_progress_plan: "blue", awaiting_start: "yellow" };
 
 function TracedShape({ shape, fill }) {
   return (
@@ -37,6 +38,11 @@ function TracedShape({ shape, fill }) {
   );
 }
 
+// Высота полосы исходной обложки, которую показываем в баннере. Чем меньше — тем
+// сильнее растягивается зигзаг по горизонтали; чем больше — тем сильнее обрезка
+// по высоте, но угол наклона ближе к оригиналу.
+const BAND_H = 300;
+
 function PlanBanner({ hue, height = 72 }) {
   const t = BANNER_THEME[hue] || BANNER_THEME.blue;
   const ribbon = RIBBONS[t.ribbon];
@@ -45,7 +51,7 @@ function PlanBanner({ hue, height = 72 }) {
   const iconW = Math.round(iconH * (icon.w / icon.h));
   return (
     <div style={{ position: "relative", height, background: t.bg, overflow: "hidden" }}>
-      <svg viewBox={`0 0 ${FRAME.w} ${FRAME.h}`} preserveAspectRatio="none"
+      <svg viewBox={`0 ${(FRAME.h - BAND_H) / 2} ${FRAME.w} ${BAND_H}`} preserveAspectRatio="none"
            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}>
         <TracedShape shape={ribbon} fill={t.light} />
       </svg>
@@ -73,12 +79,12 @@ function PlanCard({ plan, clickable = true }) {
   const checkpoints = Object.values(plan.checkpoints || {});
   const statusKey = plan.status === "completed" ? "completed" : pending ? "awaiting_start" : "in_progress_plan";
   const body = (
-    <Card bordered padding={0} style={{ cursor: clickable ? "pointer" : "default", overflow: "hidden" }}>
+    <Card bordered padding={0} style={{
+      cursor: clickable ? "pointer" : "default", overflow: "hidden",
+      ...(pending ? { opacity: 0.55 } : {}),
+    }}>
       <PlanBanner hue={BANNER_HUE[statusKey]} />
-      <div className="sk-row sk-gap-4" style={{
-        justifyContent: "space-between", padding: 24,
-        ...(pending ? { background: "color-mix(in srgb, var(--sk-surface-secondary) 45%, white)" } : {}),
-      }}>
+      <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between", padding: 24 }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
           <div className="sk-row sk-gap-2">
             <Tag size="s" hue="neutral">{plan.type}</Tag>
@@ -130,7 +136,7 @@ function RoleGroup({ title, period, children }) {
         <span className="sk-label-3">{title}</span>
         {period && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>· {period}</span>}
       </div>
-      <div className="sk-col sk-gap-4" style={{ maxWidth: 720 }}>{children}</div>
+      <div className="sk-col sk-gap-4" style={{ maxWidth: 880 }}>{children}</div>
     </div>
   );
 }
