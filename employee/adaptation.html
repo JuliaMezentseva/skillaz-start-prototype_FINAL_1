@@ -22,13 +22,18 @@ const { IconTarget, IconCheck } = Icons;
 const D = window.SITE_DATA;
 const { FRAME, RIBBONS, ICONS } = window.CoverArt;
 
+// band — область исходной обложки [x0, y0, x1, y1], которую показываем в баннере.
+// Правый край подрезан, чтобы в кадр не попадали круглые «шапки» исходных фигур:
+// растянутые на узкую полосу они читаются как случайные полукруги.
 const BANNER_THEME = {
-  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", ribbon: "yellow", icon: "star" },
-  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", ribbon: "blue",   icon: "hand" },
-  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", ribbon: "green",  icon: "star" },
-  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", ribbon: "pink",   icon: "hand" },
+  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", ribbon: "yellow", icon: "star", band: [0, 282, 1500, 582] },
+  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", ribbon: "blue",   icon: "hand", band: [0, 282, 1800, 582] },
+  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", ribbon: "green",  icon: "star", band: [0, 282, 1800, 582] },
+  // Розовая карточка намеренно берёт форму голубой обложки — у розового оригинала
+  // зигзаг другой, а в наборе карточек они должны читаться одинаково.
+  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", ribbon: "blue",   icon: "star", band: [0, 282, 1800, 582] },
 };
-const BANNER_HUE = { completed: "green", in_progress_plan: "blue", awaiting_start: "yellow" };
+const BANNER_HUE = { completed: "pink", in_progress_plan: "blue", awaiting_start: "yellow" };
 
 function TracedShape({ shape, fill }) {
   return (
@@ -38,20 +43,16 @@ function TracedShape({ shape, fill }) {
   );
 }
 
-// Высота полосы исходной обложки, которую показываем в баннере. Чем меньше — тем
-// сильнее растягивается зигзаг по горизонтали; чем больше — тем сильнее обрезка
-// по высоте, но угол наклона ближе к оригиналу.
-const BAND_H = 300;
-
 function PlanBanner({ hue, height = 72 }) {
   const t = BANNER_THEME[hue] || BANNER_THEME.blue;
   const ribbon = RIBBONS[t.ribbon];
   const icon = ICONS[t.icon];
+  const [bx0, by0, bx1, by1] = t.band;
   const iconH = Math.round(height * 0.56);
   const iconW = Math.round(iconH * (icon.w / icon.h));
   return (
     <div style={{ position: "relative", height, background: t.bg, overflow: "hidden" }}>
-      <svg viewBox={`0 ${(FRAME.h - BAND_H) / 2} ${FRAME.w} ${BAND_H}`} preserveAspectRatio="none"
+      <svg viewBox={`${bx0} ${by0} ${bx1 - bx0} ${by1 - by0}`} preserveAspectRatio="none"
            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}>
         <TracedShape shape={ribbon} fill={t.light} />
       </svg>
@@ -78,19 +79,19 @@ function PlanCard({ plan, clickable = true }) {
   const pct = plan.status === "completed" ? 100 : (plan.stages ? progressOf(plan) : 0);
   const checkpoints = Object.values(plan.checkpoints || {});
   const statusKey = plan.status === "completed" ? "completed" : pending ? "awaiting_start" : "in_progress_plan";
+  // План ещё не сформирован — приглушаем содержимое, но не статус-тег: он как раз
+  // объясняет, почему карточка выглядит неактивной.
+  const fade = pending ? { opacity: 0.55 } : undefined;
   const body = (
     <Card bordered padding={0} style={{ cursor: clickable ? "pointer" : "default", overflow: "hidden" }}>
       <PlanBanner hue={BANNER_HUE[statusKey]} />
-      <div className="sk-row sk-gap-4" style={{
-        justifyContent: "space-between", padding: 24,
-        ...(pending ? { opacity: 0.55 } : {}),
-      }}>
+      <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between", padding: 24 }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
           <div className="sk-row sk-gap-2">
             <Tag size="s" hue="neutral">{plan.type}</Tag>
             <StatusTag status={statusKey} />
           </div>
-          <div className="sk-title-5">{plan.title}</div>
+          <div className="sk-title-5" style={fade}>{plan.title}</div>
           {!pending && (
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
               {plan.dateEnd ? `${plan.dateStart} – ${plan.dateEnd}` : `с ${plan.dateStart}`}
@@ -114,7 +115,7 @@ function PlanCard({ plan, clickable = true }) {
           )}
         </div>
         {pending ? (
-          <div style={{ textAlign: "center", flexShrink: 0 }}>
+          <div style={{ textAlign: "center", flexShrink: 0, ...fade }}>
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>старт</div>
             <div className="sk-title-5">{plan.dateStart.slice(0, 5)}</div>
           </div>
