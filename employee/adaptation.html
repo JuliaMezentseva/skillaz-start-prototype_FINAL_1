@@ -20,6 +20,40 @@ const { AppShell, StatusTag, Icons } = window.Site;
 const { IconTarget, IconCheck } = Icons;
 const D = window.SITE_DATA;
 
+function IconSparkle({ size = 24, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ color, flexShrink: 0 }}>
+      <path d="M12 2c.7 5 1.8 6.1 6.8 6.8-5 .7-6.1 1.8-6.8 6.8-.7-5-1.8-6.1-6.8-6.8C10.2 8.1 11.3 7 12 2z" fill="currentColor" />
+    </svg>
+  );
+}
+
+const BANNER_THEME = {
+  yellow: { bg: "#F6DE8E", light: "#FBF0C9", accent: "#E8A800", Icon: IconSparkle },
+  blue:   { bg: "#A9D9F6", light: "#DFF1FC", accent: "#1786D6", Icon: IconTarget },
+  green:  { bg: "#93E3AC", light: "#DAF7E3", accent: "#22A855", Icon: IconCheck },
+  pink:   { bg: "#F6B9DB", light: "#FCE3F1", accent: "#E23D8E", Icon: IconSparkle },
+};
+const BANNER_HUE = { completed: "green", in_progress_plan: "blue", awaiting_start: "yellow" };
+
+function PlanBanner({ hue, height = 72 }) {
+  const t = BANNER_THEME[hue] || BANNER_THEME.blue;
+  const IconEl = t.Icon;
+  const badge = Math.round(height * 0.78);
+  const pad = Math.round((height - badge) / 2);
+  const iconSize = Math.round(badge * 0.46);
+  return (
+    <svg viewBox={`0 0 800 ${height}`} preserveAspectRatio="none" style={{ width: "100%", height, display: "block" }}>
+      <rect width="800" height={height} fill={t.bg} />
+      <path d={`M0,${height} L260,0 L800,0 L800,${height * 0.28} L340,${height} Z`} fill={t.light} />
+      <g transform={`translate(${800 - pad - badge},${pad})`}>
+        <rect width={badge} height={badge} rx={Math.round(badge * 0.29)} fill={t.accent} />
+        <g transform={`translate(${(badge - iconSize) / 2},${(badge - iconSize) / 2})`}><IconEl size={iconSize} color="#fff" /></g>
+      </g>
+    </svg>
+  );
+}
+
 function progressOf(plan) {
   if (!plan.hasGoals) {
     const all = plan.stages.flatMap(s => s.items.filter(i => i.kind !== "checkpoint"));
@@ -36,11 +70,12 @@ function PlanCard({ plan, clickable = true }) {
   const checkpoints = Object.values(plan.checkpoints || {});
   const statusKey = plan.status === "completed" ? "completed" : pending ? "awaiting_start" : "in_progress_plan";
   const body = (
-    <Card bordered style={{
-      cursor: clickable ? "pointer" : "default",
-      ...(pending ? { background: "color-mix(in srgb, var(--sk-surface-secondary) 45%, white)" } : {}),
-    }}>
-      <div className="sk-row sk-gap-4" style={{ justifyContent: "space-between" }}>
+    <Card bordered padding={0} style={{ cursor: clickable ? "pointer" : "default", overflow: "hidden" }}>
+      <PlanBanner hue={BANNER_HUE[statusKey]} />
+      <div className="sk-row sk-gap-4" style={{
+        justifyContent: "space-between", padding: 24,
+        ...(pending ? { background: "color-mix(in srgb, var(--sk-surface-secondary) 45%, white)" } : {}),
+      }}>
         <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
           <div className="sk-row sk-gap-2">
             <Tag size="s" hue="neutral">{plan.type}</Tag>
