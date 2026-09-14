@@ -23,17 +23,18 @@ const D = window.SITE_DATA;
 const { FRAME, RIBBONS, ICONS } = window.CoverArt;
 
 // band — область исходной обложки [x0, y0, x1, y1], которую показываем в баннере.
-// Правый край подрезан, чтобы в кадр не попадали круглые «шапки» исходных фигур:
-// растянутые на узкую полосу они читаются как случайные полукруги.
+// lightFrom — с какого x закрасить светлым: у жёлтой обложки справа круглая «шапка»
+// фигуры, на узкой полосе она читается как случайный полукруг. Закрашиваем её,
+// а не подрезаем band, иначе зигзаг слева растянулся бы по-другому.
 const BANNER_THEME = {
-  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", ribbon: "yellow", icon: "star", band: [0, 282, 1500, 582] },
-  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", ribbon: "blue",   icon: "hand", band: [0, 282, 1800, 582] },
-  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", ribbon: "green",  icon: "star", band: [0, 282, 1800, 582] },
-  // Розовая карточка намеренно берёт форму голубой обложки — у розового оригинала
-  // зигзаг другой, а в наборе карточек они должны читаться одинаково.
-  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", ribbon: "blue",   icon: "star", band: [0, 282, 1800, 582] },
+  yellow: { bg: "#FDE284", light: "#FFF3C7", accent: "#FFC804", ribbon: "yellow", icon: "star", band: [0, 282, 1920, 582], lightFrom: 1340 },
+  blue:   { bg: "#98DEFF", light: "#DEF4FF", accent: "#38C0FF", ribbon: "blue",   icon: "hand", band: [0, 282, 1920, 582] },
+  // Зелёная и розовая берут форму голубой обложки: у их оригиналов зигзаг другой,
+  // а в наборе карточек нижние должны читаться одинаково.
+  green:  { bg: "#8FFF92", light: "#D9FFDB", accent: "#49DE4E", ribbon: "blue",   icon: "star", band: [0, 282, 1920, 582] },
+  pink:   { bg: "#FFB7E8", light: "#FFE9F8", accent: "#FF79D5", ribbon: "blue",   icon: "star", band: [0, 282, 1920, 582] },
 };
-const BANNER_HUE = { completed: "pink", in_progress_plan: "blue", awaiting_start: "yellow" };
+const BANNER_HUE = { completed: "green", in_progress_plan: "blue", awaiting_start: "yellow" };
 
 function TracedShape({ shape, fill }) {
   return (
@@ -55,6 +56,9 @@ function PlanBanner({ hue, height = 72 }) {
       <svg viewBox={`${bx0} ${by0} ${bx1 - bx0} ${by1 - by0}`} preserveAspectRatio="none"
            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}>
         <TracedShape shape={ribbon} fill={t.light} />
+        {t.lightFrom && (
+          <rect x={t.lightFrom} y={by0} width={bx1 - t.lightFrom} height={by1 - by0} fill={t.light} />
+        )}
       </svg>
       <svg viewBox={`0 0 ${icon.w} ${icon.h}`} width={iconW} height={iconH}
            style={{ position: "absolute", right: Math.round(height * 0.7), top: (height - iconH) / 2 }}>
