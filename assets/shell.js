@@ -1496,10 +1496,10 @@ function AiAssistantWidget({ role }) {
 const PLAN_COVER_RIBBON = "yellow";
 const PLAN_COVER_BAND = "60 300 520 400";
 const PLAN_COVER_THEME = {
-  yellow: { bg: "#FFF3C7", light: "#FFFAE7" },
-  blue:   { bg: "#DEF4FF", light: "#F1FAFF" },
-  green:  { bg: "#D9FFDB", light: "#EEFFEF" },
-  pink:   { bg: "#FFE9F8", light: "#FFF5FC" },
+  yellow: { bg: "#FDE284", light: "#FFF3C7" },
+  blue:   { bg: "#98DEFF", light: "#DEF4FF" },
+  green:  { bg: "#8FFF92", light: "#D9FFDB" },
+  pink:   { bg: "#FFB7E8", light: "#FFE9F8" },
 };
 const PLAN_COVER_HUE = { completed: "green", in_progress_plan: "blue", awaiting_start: "yellow" };
 
