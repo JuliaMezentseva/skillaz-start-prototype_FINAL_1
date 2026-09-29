@@ -17,7 +17,7 @@
 <script type="text/babel">
 const { Card, Tag, Tabs, Divider, Avatar } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, Icons } = window.Site;
-const { IconFileText, IconPhone, IconMapPin } = Icons;
+const { IconFileText, IconPhone, IconMapPin, IconMail } = Icons;
 const D = window.SITE_DATA;
 
 function fmtMoney(n) { return n.toLocaleString("ru-RU"); }
@@ -47,7 +47,8 @@ function EmployeeVacanciesTabs({ active, responsesCount, referralsCount }) {
 // Резюме кандидата в контуре не хранится как настоящий файл — при скачивании собираем
 // текстовый слепок из тех же данных, что уже показаны (тот же приём, что в my-responses.html).
 function downloadResumeStub(name, referral) {
-  const lines = [referral.candidateName, referral.city + " · " + referral.phone, "", "Файл: " + name, "",
+  const contacts = [referral.city, referral.phone, referral.email].filter(Boolean).join(" · ");
+  const lines = [referral.candidateName, contacts, "", "Файл: " + name, "",
     "Рекомендует: " + D.person.name + " (" + D.person.position + ")", "Кем приходится: " + referral.relation, "",
     "Причина рекомендации:", referral.reason];
   const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8;" });
@@ -112,16 +113,23 @@ function ReferralRow({ r }) {
               </div>
             </div>
             <div className="sk-row sk-gap-4" style={{ flexWrap: "wrap" }}>
-              <span className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
-                <IconMapPin size={15} color="var(--sk-icon-secondary)" />
-                <span className="sk-label-4-regular">{r.city}</span>
-              </span>
-              {/* Телефон — единственное здесь, чем сотрудник реально пользуется руками
-                  (позвонить, скопировать, продиктовать рекрутёру), поэтому выделен
+              {/* Город в форме рекомендации необязателен — если его не заполнили, строку не рисуем. */}
+              {r.city && (
+                <span className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
+                  <IconMapPin size={15} color="var(--sk-icon-secondary)" />
+                  <span className="sk-label-4-regular">{r.city}</span>
+                </span>
+              )}
+              {/* Телефон и почта — единственное здесь, чем сотрудник реально пользуется руками
+                  (позвонить, скопировать, продиктовать рекрутёру), поэтому выделены
                   акцентным цветом, как контакты рекрутёра на карточке вакансии. */}
               <span className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
                 <IconPhone size={15} color="var(--sk-icon-accent)" />
                 <span className="sk-label-4-regular" style={{ color: "var(--sk-text-accent)" }}>{r.phone}</span>
+              </span>
+              <span className="sk-row sk-gap-1" style={{ alignItems: "center", minWidth: 0 }}>
+                <IconMail size={15} color="var(--sk-icon-accent)" />
+                <span className="sk-label-4-regular" style={{ color: "var(--sk-text-accent)" }}>{r.email}</span>
               </span>
             </div>
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Отправлено {fmtRuDate(r.date)}</div>

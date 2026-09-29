@@ -20,12 +20,15 @@ const { AppShell, StatusTag, Icons } = window.Site;
 const { IconArrowLeft, IconMail, IconPhone, IconUpload, IconFileText, IconTarget, IconCheck, IconGift, IconLayers, IconUser } = Icons;
 const D = window.SITE_DATA;
 
+// Рекрутёру от этого поля нужно ровно одно: насколько близко рекомендующий видел
+// работу кандидата (и нет ли конфликта интересов на реферальном бонусе). Поэтому
+// варианты разведены по силе профессионального сигнала, а не по формальному статусу —
+// прежняя пара "Бывший коллега" / "Коллега из другой компании" различала неразличимое.
 const RELATION_OPTIONS = [
-  { value: "colleague_former", label: "Бывший коллега" },
-  { value: "colleague_other_company", label: "Коллега из другой компании" },
+  { value: "worked_together", label: "Работали вместе" },
+  { value: "industry", label: "Знакомы по отрасли, вместе не работали" },
   { value: "friend", label: "Друг / знакомый" },
   { value: "relative", label: "Родственник" },
-  { value: "other", label: "Другое" },
 ];
 
 function fmtMoney(n) { return n.toLocaleString("ru-RU"); }
@@ -317,31 +320,40 @@ function ApplyModal({ vacancy, initialLetter, onClose, onSubmitted }) {
 
 function RecommendModal({ vacancy, onClose, onSubmitted }) {
   const p = D.person;
-  const [name, setName] = React.useState("");
+  const [lastName, setLastName] = React.useState("");
+  const [firstName, setFirstName] = React.useState("");
+  const [patronymic, setPatronymic] = React.useState("");
   const [city, setCity] = React.useState("");
   const [phone, setPhone] = React.useState("");
+  const [email, setEmail] = React.useState("");
   const [relation, setRelation] = React.useState(null);
   const [reason, setReason] = React.useState("");
   const [resume, setResume] = React.useState(null);
-  const canSubmit = name.trim() && city.trim() && phone.trim() && relation && reason.trim();
+  const canSubmit = lastName.trim() && firstName.trim() && phone.trim() && email.trim() && relation && reason.trim();
 
   return (
     <Modal open title={"Рекомендация: " + vacancy.title} onClose={onClose} size="m"
       secondary={<Button mode="secondary" onClick={onClose}>Отмена</Button>}
       primary={<Button variant="accent" disabled={!canSubmit} onClick={onSubmitted}>Отправить рекомендацию</Button>}>
       <div className="sk-col sk-gap-3 sk-modal-scroll">
-        <Alert hue="accent">Рекомендация уйдёт рекрутёру вакансии. Ваше имя и почта прикрепятся к ней автоматически.</Alert>
+        <Alert hue="accent">Порекомендуйте внешнего кандидата на вакансию. Ваше имя и почта прикрепятся к рекомендации автоматически.</Alert>
 
-        <Input label="ФИО кандидата" required placeholder="Например, Никита Северов" value={name} onChange={(e) => setName(e.target.value || "")} />
-        <Input label="Город, в котором проживает кандидат" required value={city} onChange={(e) => setCity(e.target.value || "")} />
-        <Input label="Мобильный телефон кандидата" required placeholder="+7 900 000 00 00" value={phone} onChange={(e) => setPhone(e.target.value || "")} />
+        <div className="sk-row sk-gap-3" style={{ alignItems: "flex-end", flexWrap: "wrap" }}>
+          <Input label="Фамилия кандидата" required placeholder="Северов" value={lastName} onChange={(e) => setLastName(e.target.value || "")} style={{ flex: "1 1 180px", minWidth: 0 }} />
+          <Input label="Имя кандидата" required placeholder="Никита" value={firstName} onChange={(e) => setFirstName(e.target.value || "")} style={{ flex: "1 1 180px", minWidth: 0 }} />
+        </div>
+        <Input label="Отчество кандидата" placeholder="Андреевич" value={patronymic} onChange={(e) => setPatronymic(e.target.value || "")} />
+        <Input label="Город, в котором проживает кандидат" value={city} onChange={(e) => setCity(e.target.value || "")} />
+        <div className="sk-row sk-gap-3" style={{ alignItems: "flex-end", flexWrap: "wrap" }}>
+          <Input label="Мобильный телефон кандидата" required placeholder="+7 900 000 00 00" value={phone} onChange={(e) => setPhone(e.target.value || "")} style={{ flex: "1 1 200px", minWidth: 0 }} />
+          <Input label="Почта кандидата" required placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value || "")} style={{ flex: "1 1 200px", minWidth: 0 }} />
+        </div>
         <Select label="Кем вам приходится кандидат?" required options={RELATION_OPTIONS} value={relation} onChange={setRelation} placeholder="Выберите вариант" />
         <Textarea label="Причина рекомендации" required placeholder="Почему вы считаете кандидата подходящим?"
           value={reason} onChange={(e) => setReason((e.target.value || "").slice(0, 500))} rows={3} />
 
         <div className="sk-col sk-gap-2">
-          <div className="sk-row sk-gap-1"><div className="sk-label-3">Резюме кандидата</div>
-            <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>(необязательно)</span></div>
+          <div className="sk-label-3">Резюме кандидата</div>
           {resume ? (
             <div className="sk-row sk-gap-2" style={{ padding: "10px 12px", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-2)" }}>
               <IconFileText size={16} color="var(--sk-icon-secondary)" />
