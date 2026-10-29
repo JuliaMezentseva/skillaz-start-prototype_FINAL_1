@@ -500,9 +500,12 @@ function buildAdminContent() {
 // Все табы процессов, кроме "Вакансии" — у вакансий нет командного среза.
 const TEAM_RELEVANT_MODULES = ["all", "adaptation", "learning", "assessment", "idp"];
 
+const DEMO_PLAN_ID = window.Site.employeeDemoPlanId();
+window.Site.applyEmployeePersona(DEMO_PLAN_ID);
+
 function Page() {
   const [activeModule, setActiveModule] = React.useState("all");
-  const plan = D.plans.onboarding;
+  const plan = D.plans[DEMO_PLAN_ID];
   const planHref = "plan.html?plan=" + plan.id;
   const courses = planCourses(plan);
 

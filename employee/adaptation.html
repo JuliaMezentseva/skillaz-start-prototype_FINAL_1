@@ -19,6 +19,7 @@
 const { Card, ProgressCircle, Tag } = window.SkillazCoreDesignSystem_bf9566;
 const { AppShell, StatusTag, PlanCover, PLAN_COVER_HUE } = window.Site;
 const D = window.SITE_DATA;
+window.Site.applyEmployeePersona(window.Site.employeeDemoPlanId());
 
 function progressOf(plan) {
   if (!plan.hasGoals) {
@@ -82,23 +83,17 @@ function RoleGroup({ title, period, children }) {
 }
 
 function Page() {
-  const currentRolePlans = [D.plans.onboarding, D.plans.preboarding]
+  const plan = D.plans[window.Site.employeeDemoPlanId()];
+  const plans = [plan, D.plans.preboarding]
     .sort((a, b) => (a.status === "completed") - (b.status === "completed"));
-  const newRolePlan = D.plans.roleTransition;
   return (
     <AppShell role="employee" active="my-adaptation" base="..">
       <div className="sk-col sk-gap-2">
         <div className="sk-title-4">Моя адаптация</div>
       </div>
 
-      {newRolePlan && (
-        <RoleGroup title={newRolePlan.role}>
-          <PlanCard plan={newRolePlan} clickable={false} />
-        </RoleGroup>
-      )}
-
-      <RoleGroup title="Менеджер по продажам">
-        {currentRolePlans.map(p => <PlanCard key={p.id} plan={p} />)}
+      <RoleGroup title={plan.employee.position}>
+        {plans.map(p => <PlanCard key={p.id} plan={p} />)}
       </RoleGroup>
     </AppShell>
   );

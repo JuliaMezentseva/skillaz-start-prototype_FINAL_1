@@ -45,22 +45,14 @@ function useDeepState(initial) {
 }
 function planIdFromUrl() {
   const id = new URLSearchParams(window.location.search).get("plan");
-  return D.plans[id] ? id : "onboarding";
+  return D.plans[id] ? id : window.Site.employeeDemoPlanId();
 }
 
 const ELEMENT_ICON = { article: IconFileText, task: IconCheck, course: IconFileText, survey: IconHelpCircle, file: IconFileText, link: IconLink2, checkpoint: IconTarget, assessment: Icons.IconClipboardCheck };
 const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", survey: "Опрос", file: "Файл", link: "Ссылка", checkpoint: "Контрольная точка", assessment: "Оценочный лист" };
 
-// План может принадлежать другому демо-сотруднику (?plan=electrician / foreman): тогда
-// подменяем «вошедшего» сотрудника и должности участников до первого рендера шапки,
-// чтобы имя, контакты и адрес объекта совпадали с планом.
-(function applyPlanPersona() {
-  const p = D.plans[planIdFromUrl()];
-  if (p.employee) Object.assign(D.person, p.employee);
-  if (p.participants && p.participants.manager) Object.assign(D.manager, p.participants.manager);
-  if (p.participants && p.participants.assistants) D.assistants = p.participants.assistants;
-  if (p.info) Object.assign(D.info, p.info);
-})();
+// Имя, контакты и адрес объекта в шапке должны совпадать с планом (электромонтажник / прораб).
+window.Site.applyEmployeePersona(planIdFromUrl());
 const SUBGOAL_STATUS_LABEL = {
   done: "Выполнено", not_done: "Не выполнено", pending_review: "На проверке",
   in_progress: "В работе", returned: "Возвращена в работу", not_started: "Не начата",

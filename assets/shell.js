@@ -836,7 +836,7 @@ function aiFindChecklistItem(plan, id) {
 function aiEmployeePlanCurrent() {
   const D = window.SITE_DATA;
   const id = new URLSearchParams(window.location.search).get("plan");
-  return D.plans[id] || D.plans.onboarding;
+  return D.plans[id] || D.plans[employeeDemoPlanId()];
 }
 function aiEmployeePlanUpcomingCheckpoint(plan) {
   const cps = Object.values(plan.checkpoints || {});
@@ -1714,12 +1714,46 @@ function applyRouteAssessmentDecision(plan, itemId, decision, { criteria, note }
   };
 }
 
+// Сотрудник в демо — Pridex: электромонтажник или прораб. Последний открытый из этих
+// планов запоминается, чтобы главная, «Моя адаптация» и пребординг показывали того же
+// человека; без запомненного — электромонтажник. Офисные планы (onboarding и др.)
+// по-прежнему открываются по прямой ссылке ?plan=… от лица Юлии.
+const EMPLOYEE_DEMO_PLANS = ["electrician", "foreman"];
+const EMPLOYEE_DEMO_KEY = "skillaz-demo-employee-plan";
+function employeeDemoPlanId() {
+  const D = window.SITE_DATA;
+  const fromUrl = new URLSearchParams(window.location.search).get("plan");
+  if (EMPLOYEE_DEMO_PLANS.indexOf(fromUrl) !== -1) {
+    try { localStorage.setItem(EMPLOYEE_DEMO_KEY, fromUrl); } catch (e) {}
+    return fromUrl;
+  }
+  let saved = null;
+  try { saved = localStorage.getItem(EMPLOYEE_DEMO_KEY); } catch (e) {}
+  return EMPLOYEE_DEMO_PLANS.indexOf(saved) !== -1 && D.plans[saved] ? saved : EMPLOYEE_DEMO_PLANS[0];
+}
+// Подменяет «вошедшего» сотрудника, руководителя, помощников и адрес объекта до первого
+// рендера. Пребординг общий — он берёт сотрудника из демо-плана.
+function applyEmployeePersona(planId) {
+  const D = window.SITE_DATA;
+  const own = D.plans[planId];
+  if (EMPLOYEE_DEMO_PLANS.indexOf(planId) !== -1) {
+    try { localStorage.setItem(EMPLOYEE_DEMO_KEY, planId); } catch (e) {}
+  }
+  const p = own && own.employee ? own : (planId === "preboarding" ? D.plans[employeeDemoPlanId()] : null);
+  if (!p || !p.employee) return;
+  Object.assign(D.person, p.employee);
+  if (p.participants && p.participants.manager) Object.assign(D.manager, p.participants.manager);
+  if (p.participants && p.participants.assistants) D.assistants = p.participants.assistants;
+  if (p.info) Object.assign(D.info, p.info);
+}
+
 window.Site = {
   ROLES, roleHref, AppShell, StatusTag, directionHue, ClearableSelect,
   Icons: window.SiteIcons,
   personPhoto,
   PlanCover, PLAN_COVER_HUE,
   RouteAssessment: { Row: RouteAssessmentRow, Modal: RouteAssessmentModal, status: routeAssessmentStatus, apply: applyRouteAssessmentDecision },
+  employeeDemoPlanId, applyEmployeePersona,
   AI: { vacancyApplyGuard: aiVacancyApplyGuard, vacancyLetterDraft: aiVacancyLetterDraft },
 };
 })();
