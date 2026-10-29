@@ -6,7 +6,7 @@
 (function () {
 const {
   Header, SkillazLogo, Badge, Tag, Avatar, Divider, Menu, Snackbar, IconButton, SegmentedControl,
-  Input, SkOverlayHeader, Button,
+  Input, SkOverlayHeader, Button, Modal, Textarea,
 } = window.SkillazCoreDesignSystem_bf9566;
 
 // ---------------- Иконки (в наборе ДС нет экспортируемых svg-икон отдельным
@@ -89,6 +89,8 @@ const IconSettings = mkIcon(<>
   <rect x="10.8" y="2.6" width="2.4" height="3.6" rx="0.7" fill="currentColor" transform="rotate(315 12 12)" />
 </>);
 const IconClipboard = mkIcon(<><rect x="6" y="5.5" width="12" height="15" rx="2" stroke="currentColor" strokeWidth="1.5" /><rect x="9" y="3.5" width="6" height="3.5" rx="1.2" stroke="currentColor" strokeWidth="1.5" /><path d="M9 12h6M9 15.5h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></>);
+// Оценочный лист в маршруте — планшет с галочкой, чтобы отличать его от задачи и статьи.
+const IconClipboardCheck = mkIcon(<><rect x="6" y="5.5" width="12" height="15" rx="2" stroke="currentColor" strokeWidth="1.5" /><rect x="9" y="3.5" width="6" height="3.5" rx="1.2" stroke="currentColor" strokeWidth="1.5" /><path d="M9.2 13.6l2 2 3.8-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></>);
 const IconRocket = mkIcon(<><path d="M12 3c2.8 1.4 4.6 4.2 4.6 8 0 2-.6 3.7-1.6 5.1l-3-1-3 1c-1-1.4-1.6-3.1-1.6-5.1 0-3.8 1.8-6.6 4.6-8Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><circle cx="12" cy="10" r="1.6" stroke="currentColor" strokeWidth="1.4" /><path d="M9 15.5 7 18M15 15.5l2 2.5M10 19.5h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></>);
 // добавлено для сценария "Создание цели с ИИ-помощником" (роль Руководитель) — в наборе
 // ДС нет иконки-маркера ИИ; звёздочки-искры — стандартный визуальный код для AI-функций.
@@ -127,7 +129,7 @@ window.SiteIcons = {
   IconFileText, IconLink2, IconMessageCircle, IconHelpCircle, IconInfo, IconBriefcase, IconUsers,
   IconTarget, IconMapPin, IconPhone, IconMail, IconSend, IconUpload, IconDownload, IconX, IconFilter, IconAlertCircle, IconBell,
   IconGraduationCap, IconGift, IconLayers, IconPlusSm, IconEye, IconPaperclip, IconCalendar, IconUser,
-  IconMoreHorizontal, IconEdit, IconTrash, IconFlag, IconSettings, IconClipboard, IconRocket, IconSparkles, IconSparklesSolid, IconBookOpen,
+  IconMoreHorizontal, IconEdit, IconTrash, IconFlag, IconSettings, IconClipboard, IconClipboardCheck, IconRocket, IconSparkles, IconSparklesSolid, IconBookOpen,
   IconUnlink, IconUserSwitch, IconRepeat, IconColumns, IconInbox, IconUserX, IconCopyLocal2, IconMic, IconImage,
   IconHome, IconAiSpark,
 };
@@ -464,6 +466,9 @@ function AppShell({ role, active, base, breadcrumb, children }) {
 
 // ---------------- Статус-теги (единая точка соответствия статус -> Tag) ----------------
 const STATUS_MAP = {
+  as_pending: { label: "Ожидает оценки", hue: "neutral" },
+  as_passed: { label: "Зачтено", hue: "positive" },
+  as_returned: { label: "На доработку", hue: "warning" },
   not_started: { label: "Не начата", hue: "neutral" },
   in_progress: { label: "В процессе", hue: "blue" },
   pending_review: { label: "На проверке", hue: "warning" },
@@ -1529,11 +1534,181 @@ function PlanCover({ hue, width = 80 }) {
   );
 }
 
+// ==================== Оценочный лист как элемент маршрута ====================
+// Оценочный лист живёт в маршруте отдельным шагом (kind: "assessment"), а не внутри
+// подцели: подцель — это результат, который подтверждает проверяющий, а лист —
+// наблюдение за практикой по критериям ("знает" подтверждает курс, "умеет" — лист).
+// Сотрудник сам шаг не отмечает: видит заранее, по каким критериям его будут
+// оценивать, и историю попыток. Оценивает тот, кто указан в item.assessment.reviewer
+// (руководитель или помощник) — со своей роли, кнопкой "Оценить". Каждое решение —
+// новая запись в assessmentHistory; шаг считается выполненным после "Зачтено".
+function routeAssessmentStatus(item) {
+  const h = item.assessmentHistory || [];
+  return h.length ? h[h.length - 1].decision : "pending"; // pending | passed | returned
+}
+
+function RouteAssessmentRow({ item, locked, canEvaluate, onOpen, onEvaluate }) {
+  const status = routeAssessmentStatus(item);
+  const passed = status === "passed";
+  const reviewer = item.assessment && item.assessment.reviewer;
+  return (
+    <div className={"sk-check-row" + (locked ? " is-static" : "")} onClick={locked ? undefined : onOpen}>
+      <span style={{ paddingTop: 2, color: passed ? "var(--sk-icon-positive)" : "var(--sk-icon-accent)" }}><IconClipboardCheck size={16} /></span>
+      <div className="sk-col" style={{ flex: 1, gap: 2, minWidth: 0 }}>
+        <div className="sk-label-3-regular" style={{ color: passed ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{item.title}</div>
+        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
+          Оценочный лист{item.date ? " · " + item.date : ""}{reviewer ? " · оценивает " + reviewer : ""}
+        </div>
+      </div>
+      <div className="sk-row sk-gap-2" style={{ flexShrink: 0, alignItems: "center" }}>
+        {item.required && !passed && <Tag size="s" hue="neutral">Обязательный</Tag>}
+        <StatusTag status={"as_" + status} />
+        {canEvaluate && !passed && !locked && (
+          <Button size="xs" variant="accent" onClick={(e) => { e.stopPropagation(); (onEvaluate || onOpen)(); }}>Оценить</Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Критерии: в просмотре — галочка/крестик (или прочерк до оценки), при оценке — Да/Нет.
+function RouteAssessmentCriteria({ criteria, editable, onChange }) {
+  return (
+    <div className="sk-col sk-gap-1">
+      {criteria.map((c) => editable ? (
+        <div key={c.id} className="sk-row sk-gap-3" style={{
+          alignItems: "center", justifyContent: "space-between", padding: 10,
+          border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", background: "var(--sk-surface-page)",
+        }}>
+          <span className="sk-label-4" style={{ flex: 1 }}>{c.label}</span>
+          <div className="sk-row sk-gap-2">
+            <Button size="s" mode={c.checked === true ? "primary" : "secondary"} variant={c.checked === true ? "positive" : "neutral"}
+              onClick={() => onChange(c.id, true)}>Да</Button>
+            <Button size="s" mode={c.checked === false ? "primary" : "secondary"} variant={c.checked === false ? "negative" : "neutral"}
+              onClick={() => onChange(c.id, false)}>Нет</Button>
+          </div>
+        </div>
+      ) : (
+        <div key={c.id} className="sk-row sk-gap-2" style={{ alignItems: "flex-start", padding: "3px 0" }}>
+          <span style={{ width: 16, flexShrink: 0, display: "flex", justifyContent: "center", paddingTop: 2 }}>
+            {c.checked === true ? <IconCheck size={14} color="var(--sk-icon-positive)" />
+              : c.checked === false ? <IconX size={14} color="var(--sk-icon-negative)" />
+              : <span style={{ width: 5, height: 5, marginTop: 5, borderRadius: "50%", background: "var(--sk-icon-secondary)" }} />}
+          </span>
+          <span className="sk-label-4-regular">{c.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RouteAssessmentModal({ item, canEvaluate, startEvaluating, onClose, onDecision }) {
+  const a = item.assessment || { criteria: [] };
+  const status = routeAssessmentStatus(item);
+  const rounds = (item.assessmentHistory || []).slice().reverse();
+  const [evaluating, setEvaluating] = React.useState(!!(canEvaluate && startEvaluating));
+  const [answers, setAnswers] = React.useState(() => a.criteria.map((c) => ({ id: c.id, label: c.label, checked: null })));
+  const [note, setNote] = React.useState("");
+  const allAnswered = answers.every((c) => c.checked !== null);
+  const allYes = answers.every((c) => c.checked === true);
+
+  if (evaluating) {
+    return (
+      <Modal open title={item.title} onClose={() => setEvaluating(false)} size="m"
+        secondary={<Button mode="secondary" onClick={() => setEvaluating(false)}>Назад</Button>}
+        primary={allYes
+          ? <Button variant="positive" disabled={!allAnswered} onClick={() => onDecision("passed", { criteria: answers, note })}>Зачесть</Button>
+          : <Button variant="accent" disabled={!allAnswered} onClick={() => onDecision("returned", { criteria: answers, note })}>Вернуть на доработку</Button>}>
+        <div className="sk-col sk-gap-4">
+          <div className="sk-label-3-regular">Отметьте по каждому критерию, что вы увидели во время работы сотрудника.</div>
+          <RouteAssessmentCriteria criteria={answers} editable
+            onChange={(id, v) => setAnswers((prev) => prev.map((c) => c.id === id ? { ...c, checked: v } : c))} />
+          <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
+            {!allAnswered ? "Отметьте все критерии, чтобы принять решение."
+              : allYes ? "Все критерии выполнены — шаг можно зачесть."
+              : "Есть невыполненные критерии — шаг вернётся сотруднику на доработку."}
+          </div>
+          <Textarea label="Комментарий для сотрудника" placeholder="Что получилось и что нужно исправить"
+            rows={3} maxLength={1000} value={note} onChange={(e) => setNote(e.target.value || "")} />
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal open title={item.title} onClose={onClose} size="m"
+      secondary={<Button mode="secondary" onClick={onClose}>Закрыть</Button>}
+      primary={canEvaluate && status !== "passed" ? <Button variant="accent" onClick={() => setEvaluating(true)}>Оценить</Button> : null}>
+      <div className="sk-col sk-gap-4">
+        <div className="sk-row sk-gap-2" style={{ alignItems: "center", flexWrap: "wrap" }}>
+          <Tag size="s" hue="neutral">Оценочный лист</Tag>
+          {item.required && <Tag size="s" hue="neutral">Обязательный</Tag>}
+          <StatusTag status={"as_" + status} />
+          {item.date && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{item.date}</span>}
+        </div>
+        {item.description && <div className="sk-label-3-regular">{item.description}</div>}
+        {a.reviewer && (
+          <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+            <Avatar src={personPhoto(a.reviewer)} name={a.reviewer} size={28} />
+            <div className="sk-col" style={{ gap: 0 }}>
+              <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Оценивает</span>
+              <span className="sk-label-4">{a.reviewer}{a.reviewerRole ? ", " + a.reviewerRole : ""}</span>
+            </div>
+          </div>
+        )}
+        <div className="sk-col sk-gap-2">
+          <div className="sk-label-3">Критерии оценки</div>
+          <div style={{ padding: "10px 14px", borderLeft: "3px solid var(--sk-accent)" }}>
+            <RouteAssessmentCriteria criteria={a.criteria} />
+          </div>
+          {!canEvaluate && status !== "passed" && (
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
+              Шаг отмечает оценивающий после того, как понаблюдает за вашей работой. Критерии открыты заранее — по ним можно подготовиться.
+            </div>
+          )}
+        </div>
+        <div className="sk-col sk-gap-2">
+          <div className="sk-label-3">История оценок</div>
+          {rounds.length ? rounds.map((h, i) => (
+            <div key={i} className="sk-col sk-gap-2" style={{ padding: 12, border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)" }}>
+              <div className="sk-row sk-gap-2" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                <StatusTag status={"as_" + h.decision} />
+                <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{h.reviewer} · {h.date}</span>
+              </div>
+              <RouteAssessmentCriteria criteria={h.criteria} />
+              {h.note && (
+                <div className="sk-col sk-gap-1" style={{ padding: 10, background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-3)" }}>
+                  <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Комментарий</span>
+                  <span className="sk-label-4-regular">{h.note}</span>
+                </div>
+              )}
+            </div>
+          )) : (
+            <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Оценок пока не было.</div>
+          )}
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// Запись решения в план: новая попытка в истории, шаг выполнен только после "Зачтено".
+function applyRouteAssessmentDecision(plan, itemId, decision, { criteria, note }, reviewer) {
+  return {
+    ...plan,
+    stages: plan.stages.map((s) => ({ ...s, items: s.items.map((i) => i.id !== itemId ? i : {
+      ...i, done: decision === "passed",
+      assessmentHistory: [...(i.assessmentHistory || []), { date: "Сегодня", reviewer, decision, criteria, note }],
+    }) })),
+  };
+}
+
 window.Site = {
   ROLES, roleHref, AppShell, StatusTag, directionHue, ClearableSelect,
   Icons: window.SiteIcons,
   personPhoto,
   PlanCover, PLAN_COVER_HUE,
+  RouteAssessment: { Row: RouteAssessmentRow, Modal: RouteAssessmentModal, status: routeAssessmentStatus, apply: applyRouteAssessmentDecision },
   AI: { vacancyApplyGuard: aiVacancyApplyGuard, vacancyLetterDraft: aiVacancyLetterDraft },
 };
 })();

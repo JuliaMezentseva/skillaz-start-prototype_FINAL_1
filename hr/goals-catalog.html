@@ -120,44 +120,13 @@ function MaterialsPicker({ materials, onAdd, onRemove }) {
   );
 }
 
-// ---------------- Проверка выполнения шага — тот же UI, что и в hr/template.html ----------------
-function StepAssessmentPicker({ templateId, setTemplateId }) {
-  const D = window.SITE_DATA;
-  const templates = D.assessmentTemplates || [];
-  const checked = !!templateId;
-
-  function toggle() {
-    setTemplateId(checked ? null : (templates[0] && templates[0].id));
-  }
-
-  return (
-    <div className="sk-col sk-gap-1">
-      <div className="sk-row sk-gap-3 sk-clickable" style={{ alignItems: "flex-start" }} onClick={toggle}>
-        <div style={{ paddingTop: 1 }}><Checkbox checked={checked} onChange={toggle} /></div>
-        <span className="sk-label-4">Добавить оценочный лист</span>
-      </div>
-      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginLeft: 32 }}>Готовые критерии помогут оценить выполнение шага</span>
-      <div style={{ marginLeft: 32, marginTop: 8 }}>
-        {checked ? (
-          <Select value={templateId} options={templates.map((t) => ({ value: t.id, label: t.title }))} onChange={setTemplateId} />
-        ) : (
-          <div style={{ padding: "12px 14px", background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-2)" }}>
-            <span className="sk-label-3-regular">
-              Без оценочного листа итог выставляется на усмотрение проверяющего: «Шаг выполнен», «Не выполнен» или «Требует доработки».
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ---------------- Шаг цели каталога — своя копия SubgoalFormModal из hr/template.html,
 // но срок — простое число дней "от начала цели", а не DatePicker: у цели в каталоге нет
 // ни даты старта, ни конкретного шаблона/плана, к которому она уже привязана. Абсолютная
 // дата тут была бы фиктивной сильнее, чем условный день N — день N честно показывает
 // относительный порядок шагов и остаётся понятным после того, как цель заберут из каталога. ----------------
-const emptySubgoalForm = { title: "", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null };
+const emptySubgoalForm = { title: "", description: "", dueDays: 14, reviewer: "Руководитель", materials: [] };
 
 function SubgoalFormModal({ initial, onClose, onCreate }) {
   const [form, setForm] = React.useState(initial || emptySubgoalForm);
@@ -182,11 +151,6 @@ function SubgoalFormModal({ initial, onClose, onCreate }) {
         <MaterialsPicker materials={form.materials}
           onAdd={(item) => set("materials")([...form.materials, item])}
           onRemove={(id) => set("materials")(form.materials.filter((m) => m.id !== id))} />
-        <Divider />
-        <div className="sk-col sk-gap-3">
-          <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>Проверка выполнения шага</span>
-          <StepAssessmentPicker templateId={form.templateId} setTemplateId={set("templateId")} />
-        </div>
       </div>
     </Modal>
   );

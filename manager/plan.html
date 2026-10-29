@@ -19,7 +19,7 @@ const {
   Card, ProgressCircle, ProgressBar, Tag, Avatar, Divider, Tabs, SegmentedControl, Modal, Drawer, Checkbox, Radio,
   Textarea, Input, Select, DatePicker, Button, Snackbar, Alert, Tooltip, Loader,
 } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, StatusTag, Icons, personPhoto } = window.Site;
+const { AppShell, StatusTag, Icons, personPhoto, RouteAssessment } = window.Site;
 const {
   IconArrowLeft, IconCheck, IconClock, IconFileText, IconLink2, IconMessageCircle,
   IconHelpCircle, IconTarget, IconMapPin, IconPhone, IconMail, IconSend,
@@ -66,8 +66,11 @@ function initialTabFromUrl(hasGoals) {
 const MONTHS = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 function fmtDate(date) { return date.getDate() + " " + MONTHS[date.getMonth()] + " " + date.getFullYear(); }
 
-const ELEMENT_ICON = { article: IconFileText, task: IconCheck, course: IconFileText, survey: IconHelpCircle, file: IconFileText, link: IconLink2, checkpoint: IconTarget };
-const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", survey: "Опрос", file: "Файл", link: "Ссылка", checkpoint: "Контрольная точка" };
+const ELEMENT_ICON = { article: IconFileText, task: IconCheck, course: IconFileText, survey: IconHelpCircle, file: IconFileText, link: IconLink2, checkpoint: IconTarget, assessment: Icons.IconClipboardCheck };
+const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", survey: "Опрос", file: "Файл", link: "Ссылка", checkpoint: "Контрольная точка", assessment: "Оценочный лист" };
+// Оценочный лист в маршруте оценивает только тот, кто указан в шаге оценивающим.
+const VIEWER_NAME = D.manager.name;
+const canEvaluateItem = (item) => item.kind === "assessment" && item.assessment && item.assessment.reviewer === VIEWER_NAME;
 // Кружок с номером шага теперь всегда нейтральный, независимо от статуса — см. STATUS_ICON.
 const NUMBER_BADGE = {
   not_started: { bg: "transparent", fg: "var(--sk-text-tertiary)", border: "1.5px solid var(--sk-stroke)" },
@@ -158,6 +161,15 @@ function planValidForPublish(goals) {
     g.subgoals.every(sg => sg.title && sg.dueLabel && sg.reviewer));
 }
 const REVIEWER_OPTIONS = [D.manager, ...D.assistants].map(p => ({ value: p.name, label: p.name === D.manager.name ? "Я (" + p.name + ")" : p.name }));
+
+// Должности участников берём из плана, если он их задаёт (демо-планы стройки).
+(function applyPlanParticipants() {
+  const m = D.team.find(t => t.id === employeeIdFromUrl());
+  const p = m && D.plans[m.planId];
+  if (p && p.participants && p.participants.manager) Object.assign(D.manager, p.participants.manager);
+  if (p && p.participants && p.participants.assistants) D.assistants = p.participants.assistants;
+  if (p && p.info) Object.assign(D.info, p.info);
+})();
 
 function Page() {
   const employeeId = employeeIdFromUrl();
@@ -392,7 +404,7 @@ function Page() {
               <div className="sk-col sk-gap-4">
                 {plan.stages.map((s, i) => (
                   <ManagerStageBlock key={s.id} stage={s} index={i + 1}
-                    onOpenItem={(item) => setTaskModal(item)}
+                    onOpenItem={(item, evaluate) => setTaskModal(evaluate ? { ...item, startEvaluating: true } : item)}
                     onAdd={() => showToast("Добавление элементов чек-листа доступно в редакторе адаптации")} />
                 ))}
               </div>
@@ -590,7 +602,14 @@ function Page() {
         </Modal>
       )}
 
-      {taskModal && <ElementModal item={taskModal} onClose={() => setTaskModal(null)} />}
+      {taskModal && (taskModal.kind === "assessment" ? (
+        <RouteAssessment.Modal item={taskModal} canEvaluate={canEvaluateItem(taskModal)} startEvaluating={taskModal.startEvaluating} onClose={() => setTaskModal(null)}
+          onDecision={(decision, answers) => {
+            setPlan((prev) => RouteAssessment.apply(prev, taskModal.id, decision, answers, VIEWER_NAME));
+            setTaskModal(null);
+            showToast(decision === "passed" ? "Оценочный лист зачтён" : "Оценочный лист возвращён сотруднику на доработку");
+          }} />
+      ) : <ElementModal item={taskModal} onClose={() => setTaskModal(null)} />)}
       {cpModal && (
         <ManagerCheckpointDrawer checkpoint={plan.checkpoints[cpModal]} viewerName={D.manager.name} employee={member}
           canEdit={plan.checkpoints[cpModal].reviewer === D.manager.name}
@@ -1526,42 +1545,6 @@ function StepMaterialsPicker({ plan, selected, onToggle }) {
   );
 }
 
-// ---------------- Выбор способа проверки шага — обязательное решение при создании:
-// либо привязать готовый оценочный лист (критерии, по которым будет приниматься
-// решение), либо оставить без него — тогда проверяющий просто выставит итог
-// (Шаг выполнен / Не выполнен / Требует доработки) без промежуточных критериев. ----------------
-function StepAssessmentPicker({ templateId, setTemplateId }) {
-  const templates = D.assessmentTemplates || [];
-  const checked = !!templateId;
-
-  function toggle() {
-    setTemplateId(checked ? null : (templates[0] && templates[0].id));
-  }
-
-  return (
-    <div className="sk-col sk-gap-1">
-      <div className="sk-row sk-gap-3 sk-clickable" style={{ alignItems: "flex-start" }} onClick={toggle}>
-        <div style={{ paddingTop: 1 }}><Checkbox checked={checked} onChange={toggle} /></div>
-        <span className="sk-label-4">Добавить оценочный лист</span>
-      </div>
-      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginLeft: 32 }}>Готовые критерии помогут оценить выполнение шага</span>
-      <div style={{ marginLeft: 32, marginTop: 8 }}>
-        {checked ? (
-          <React.Fragment>
-            <Select value={templateId} options={templates.map(t => ({ value: t.id, label: t.title }))} onChange={setTemplateId} />
-            <div style={{ height: 220 }} />
-          </React.Fragment>
-        ) : (
-          <div style={{ padding: "12px 14px", background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-2)" }}>
-            <span className="sk-label-3-regular">
-              Без оценочного листа итог выставляется на усмотрение проверяющего: «Шаг выполнен», «Не выполнен» или «Требует доработки».
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function SubgoalCreateModal({ plan, initial, onClose, onCreate }) {
   const [title, setTitle] = React.useState(initial ? initial.title : "");
@@ -1569,12 +1552,6 @@ function SubgoalCreateModal({ plan, initial, onClose, onCreate }) {
   const [dueDate, setDueDate] = React.useState(initial ? initial.dueDate : new Date(2026, 0, 20));
   const [reviewer, setReviewer] = React.useState(initial ? initial.reviewer : D.manager.name);
   const [checklistRefs, setChecklistRefs] = React.useState(initial ? (initial.checklistRefs || []) : []);
-  // Шаблон оценочного листа не хранится в шаге напрямую (см. handleCreate ниже) — при
-  // редактировании ищем его обратно по названию, это лучшее, что можно сделать без id.
-  const initialTemplateId = (initial && initial.assessmentChecklist)
-    ? ((D.assessmentTemplates || []).find(t => t.title === initial.assessmentChecklist.title) || {}).id || null
-    : null;
-  const [templateId, setTemplateId] = React.useState(initialTemplateId);
   const canCreate = title.trim().length > 0;
 
   function toggleMaterial(itemId) {
@@ -1582,14 +1559,9 @@ function SubgoalCreateModal({ plan, initial, onClose, onCreate }) {
   }
 
   function handleCreate() {
-    const template = templateId ? (D.assessmentTemplates || []).find(t => t.id === templateId) : null;
-    // Шаблон хранит только название критериев — ответы ("checked") и комментарий живут не
-    // здесь, а в отдельных записях assessmentHistory, по одной на каждый раунд оценки.
-    const assessmentChecklist = template ? {
-      title: template.title, hint: template.hint,
-      criteria: template.criteria.map(c => ({ id: c.id, label: c.label })),
-    } : null;
-    onCreate({ title, description, dueDate, reviewer, checklistRefs, assessmentChecklist });
+    // Оценочный лист к подцели больше не привязывается — он живёт в маршруте отдельным
+    // шагом; при необходимости его можно выбрать здесь как материал (checklistRefs).
+    onCreate({ title, description, dueDate, reviewer, checklistRefs, assessmentChecklist: null });
   }
 
   return (
@@ -1606,11 +1578,6 @@ function SubgoalCreateModal({ plan, initial, onClose, onCreate }) {
           <Select label="Проверяющий" value={reviewer} options={REVIEWER_OPTIONS} onChange={setReviewer} style={{ flex: 1 }} />
         </div>
         <StepMaterialsPicker plan={plan} selected={checklistRefs} onToggle={toggleMaterial} />
-        <Divider />
-        <div className="sk-col sk-gap-3">
-          <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>Проверка выполнения шага</span>
-          <StepAssessmentPicker templateId={templateId} setTemplateId={setTemplateId} />
-        </div>
       </div>
     </Modal>
   );
@@ -2079,7 +2046,9 @@ function ManagerStageBlock({ stage, index, onOpenItem, onAdd }) {
       </div>
       {open && (
         <div className="sk-col sk-gap-1" style={{ padding: "4px 8px 8px" }}>
-          {stage.items.filter(item => item.kind !== "checkpoint").map(item => (
+          {stage.items.filter(item => item.kind !== "checkpoint").map(item => item.kind === "assessment" ? (
+            <RouteAssessment.Row key={item.id} item={item} canEvaluate={canEvaluateItem(item)} onOpen={() => onOpenItem(item)} onEvaluate={() => onOpenItem(item, true)} />
+          ) : (
             <div key={item.id} className="sk-check-row" onClick={() => onOpenItem(item)}>
               <div style={{ paddingTop: 2 }}><Checkbox checked={!!item.done} disabled /></div>
               <div className="sk-col" style={{ flex: 1, gap: item.done ? 0 : 2 }}>

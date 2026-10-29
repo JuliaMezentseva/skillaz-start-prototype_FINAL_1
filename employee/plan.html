@@ -19,7 +19,7 @@ const {
   Card, ProgressCircle, ProgressBar, Tag, Avatar, Divider, Tabs, SegmentedControl, Modal, Drawer, Checkbox,
   Textarea, Input, Button, Snackbar, Alert, Tooltip,
 } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, StatusTag, Icons, personPhoto } = window.Site;
+const { AppShell, StatusTag, Icons, personPhoto, RouteAssessment } = window.Site;
 const {
   IconArrowLeft, IconCheck, IconClock, IconFileText, IconLink2, IconMessageCircle,
   IconHelpCircle, IconInfo, IconTarget, IconMapPin, IconPhone, IconSend,
@@ -48,8 +48,19 @@ function planIdFromUrl() {
   return D.plans[id] ? id : "onboarding";
 }
 
-const ELEMENT_ICON = { article: IconFileText, task: IconCheck, course: IconFileText, survey: IconHelpCircle, file: IconFileText, link: IconLink2, checkpoint: IconTarget };
-const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", survey: "Опрос", file: "Файл", link: "Ссылка", checkpoint: "Контрольная точка" };
+const ELEMENT_ICON = { article: IconFileText, task: IconCheck, course: IconFileText, survey: IconHelpCircle, file: IconFileText, link: IconLink2, checkpoint: IconTarget, assessment: Icons.IconClipboardCheck };
+const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", survey: "Опрос", file: "Файл", link: "Ссылка", checkpoint: "Контрольная точка", assessment: "Оценочный лист" };
+
+// План может принадлежать другому демо-сотруднику (?plan=electrician / foreman): тогда
+// подменяем «вошедшего» сотрудника и должности участников до первого рендера шапки,
+// чтобы имя, контакты и адрес объекта совпадали с планом.
+(function applyPlanPersona() {
+  const p = D.plans[planIdFromUrl()];
+  if (p.employee) Object.assign(D.person, p.employee);
+  if (p.participants && p.participants.manager) Object.assign(D.manager, p.participants.manager);
+  if (p.participants && p.participants.assistants) D.assistants = p.participants.assistants;
+  if (p.info) Object.assign(D.info, p.info);
+})();
 const SUBGOAL_STATUS_LABEL = {
   done: "Выполнено", not_done: "Не выполнено", pending_review: "На проверке",
   in_progress: "В работе", returned: "Возвращена в работу", not_started: "Не начата",
@@ -167,7 +178,9 @@ function StageBlock({ stage, index, onOpenItem, onOpenCheckpoint }) {
       </div>
       {open && (
         <div className="sk-col sk-gap-1" style={{ padding: "4px 8px 8px" }}>
-          {stage.items.map((item) => item.kind === "checkpoint" ? (
+          {stage.items.map((item) => item.kind === "assessment" ? (
+            <RouteAssessment.Row key={item.id} item={item} locked={locked} onOpen={() => onOpenItem(item)} />
+          ) : item.kind === "checkpoint" ? (
             <div key={item.id} className={"sk-check-row" + (locked ? " is-static" : "")}
               onClick={locked ? undefined : () => onOpenCheckpoint(item.checkpointId)}>
               <span style={{ paddingTop: 2, color: "var(--sk-icon-accent)" }}><IconTarget size={16} /></span>
@@ -370,7 +383,9 @@ function GoalDrawer({ goal, plan, onClose, onOpenSubgoal, onTakeSubgoal, onToggl
                       const Icon = ELEMENT_ICON[item.kind] || IconFileText;
                       return (
                         <div key={item.id} className="sk-row sk-gap-2 sk-clickable" onClick={() => onToggleMaterial(item.id)} style={{ alignItems: "center", padding: "6px 8px" }}>
-                          <Checkbox checked={!!item.done} onChange={() => onToggleMaterial(item.id)} />
+                          {item.kind === "assessment"
+                            ? <StatusTag status={"as_" + RouteAssessment.status(item)} />
+                            : <Checkbox checked={!!item.done} onChange={() => onToggleMaterial(item.id)} />}
                           <Icon size={14} color="var(--sk-icon-secondary)" style={{ flexShrink: 0 }} />
                           <span className="sk-label-4-regular" style={{ color: item.done ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{item.title}</span>
                         </div>
@@ -553,9 +568,11 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onSubmit, onAddComment, o
                 return (
                   <div key={item.id} className="sk-row sk-gap-3 sk-clickable" onClick={() => onToggleMaterial(item.id)}
                     style={{ alignItems: "flex-start", padding: 10, background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-2)" }}>
-                    <div style={{ paddingTop: 2 }} onClick={(e) => e.stopPropagation()}>
-                      <Checkbox checked={!!item.done} onChange={() => onToggleMaterial(item.id)} />
-                    </div>
+                    {item.kind !== "assessment" && (
+                      <div style={{ paddingTop: 2 }} onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={!!item.done} onChange={() => onToggleMaterial(item.id)} />
+                      </div>
+                    )}
                     <div className="sk-col sk-gap-1" style={{ flex: 1, minWidth: 0 }}>
                       <div className="sk-label-4" style={{ color: item.done ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{item.title}</div>
                       <div className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
@@ -563,6 +580,7 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onSubmit, onAddComment, o
                         <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]}</span>
                       </div>
                     </div>
+                    {item.kind === "assessment" && <StatusTag status={"as_" + RouteAssessment.status(item)} />}
                   </div>
                 );
               })}
@@ -907,6 +925,9 @@ function Page() {
   }
 
   function toggleItemDone(itemId) {
+    // Оценочный лист отмечает только оценивающий — по клику открываем карточку листа.
+    const found = findChecklistItem(plan, itemId);
+    if (found && found.item.kind === "assessment") { setItemModal(found.item); return; }
     setPlan((prev) => ({
       ...prev,
       stages: prev.stages.map((s) => ({ ...s, items: s.items.map((i) => i.id !== itemId ? i : { ...i, done: !i.done }) })),
@@ -1006,7 +1027,9 @@ function Page() {
         </div>
       </div>
 
-      {itemModal && <ElementModal item={itemModal} onClose={() => setItemModal(null)} onToggleDone={toggleItemDone} />}
+      {itemModal && (itemModal.kind === "assessment"
+        ? <RouteAssessment.Modal item={itemModal} canEvaluate={false} onClose={() => setItemModal(null)} />
+        : <ElementModal item={itemModal} onClose={() => setItemModal(null)} onToggleDone={toggleItemDone} />)}
 
       {activeGoal && (
         <GoalDrawer goal={activeGoal} plan={plan} onClose={() => setGoalDrawer(null)}

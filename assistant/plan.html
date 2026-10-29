@@ -19,7 +19,7 @@ const {
   Card, ProgressCircle, ProgressBar, Tag, Avatar, Divider, Tabs, SegmentedControl, Modal, Drawer, Checkbox,
   Textarea, Input, Select, DatePicker, Button, Snackbar, Alert,
 } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, StatusTag, Icons, personPhoto } = window.Site;
+const { AppShell, StatusTag, Icons, personPhoto, RouteAssessment } = window.Site;
 const {
   IconArrowLeft, IconCheck, IconClock, IconFileText, IconLink2, IconMessageCircle,
   IconHelpCircle, IconInfo, IconTarget, IconMapPin, IconPhone, IconMail, IconSend,
@@ -43,8 +43,11 @@ function employeeIdFromUrl() {
 const MONTHS = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 function fmtDate(date) { return date.getDate() + " " + MONTHS[date.getMonth()] + " " + date.getFullYear(); }
 
-const ELEMENT_ICON = { article: IconFileText, task: IconCheck, course: IconFileText, survey: IconHelpCircle, file: IconFileText, link: IconLink2, checkpoint: IconTarget };
-const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", survey: "Опрос", file: "Файл", link: "Ссылка", checkpoint: "Контрольная точка" };
+const ELEMENT_ICON = { article: IconFileText, task: IconCheck, course: IconFileText, survey: IconHelpCircle, file: IconFileText, link: IconLink2, checkpoint: IconTarget, assessment: Icons.IconClipboardCheck };
+const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", survey: "Опрос", file: "Файл", link: "Ссылка", checkpoint: "Контрольная точка", assessment: "Оценочный лист" };
+// Оценочный лист в маршруте оценивает только тот, кто указан в шаге оценивающим.
+const VIEWER_NAME = D.assistantMe.name;
+const canEvaluateItem = (item) => item.kind === "assessment" && item.assessment && item.assessment.reviewer === VIEWER_NAME;
 const SUBGOAL_ICON = {
   done: { icon: IconCheck, bg: "var(--sk-positive)", fg: "var(--sk-text-contrast)" },
   not_done: { icon: IconX, bg: "var(--sk-negative)", fg: "var(--sk-text-contrast)" },
@@ -98,6 +101,15 @@ function planValidForPublish(goals) {
     g.subgoals.every(sg => sg.title && sg.description && sg.dueLabel && sg.reviewer));
 }
 const REVIEWER_OPTIONS = [D.manager, ...D.assistants].map(p => ({ value: p.name, label: p.name === D.assistantMe.name ? "Я (" + p.name + ")" : p.name }));
+
+// Должности участников берём из плана, если он их задаёт (демо-планы стройки).
+(function applyPlanParticipants() {
+  const m = D.team.find(t => t.id === employeeIdFromUrl());
+  const p = m && D.plans[m.planId];
+  if (p && p.participants && p.participants.manager) Object.assign(D.manager, p.participants.manager);
+  if (p && p.participants && p.participants.assistants) D.assistants = p.participants.assistants;
+  if (p && p.info) Object.assign(D.info, p.info);
+})();
 
 function Page() {
   const employeeId = employeeIdFromUrl();
@@ -251,7 +263,7 @@ function Page() {
               <div className="sk-col sk-gap-4">
                 {plan.stages.map((s, i) => (
                   <ManagerStageBlock key={s.id} stage={s} index={i + 1}
-                    onOpenItem={(item) => setTaskModal(item)}
+                    onOpenItem={(item, evaluate) => setTaskModal(evaluate ? { ...item, startEvaluating: true } : item)}
                     onAdd={() => showToast("Добавление элементов чек-листа доступно в редакторе адаптации")} />
                 ))}
               </div>
@@ -402,7 +414,14 @@ function Page() {
         </Modal>
       )}
 
-      {taskModal && <ElementModal item={taskModal} onClose={() => setTaskModal(null)} />}
+      {taskModal && (taskModal.kind === "assessment" ? (
+        <RouteAssessment.Modal item={taskModal} canEvaluate={canEvaluateItem(taskModal)} startEvaluating={taskModal.startEvaluating} onClose={() => setTaskModal(null)}
+          onDecision={(decision, answers) => {
+            setPlan((prev) => RouteAssessment.apply(prev, taskModal.id, decision, answers, VIEWER_NAME));
+            setTaskModal(null);
+            showToast(decision === "passed" ? "Оценочный лист зачтён" : "Оценочный лист возвращён сотруднику на доработку");
+          }} />
+      ) : <ElementModal item={taskModal} onClose={() => setTaskModal(null)} />)}
       {cpModal && (
         <ManagerCheckpointDrawer checkpoint={plan.checkpoints[cpModal]} viewerName={D.assistantMe.name} employee={member}
           canEdit={plan.checkpoints[cpModal].reviewer === D.assistantMe.name}
@@ -806,7 +825,9 @@ function ManagerStageBlock({ stage, index, onOpenItem, onAdd }) {
       </div>
       {open && (
         <div className="sk-col sk-gap-1" style={{ padding: "4px 8px 8px" }}>
-          {stage.items.filter(item => item.kind !== "checkpoint").map(item => (
+          {stage.items.filter(item => item.kind !== "checkpoint").map(item => item.kind === "assessment" ? (
+            <RouteAssessment.Row key={item.id} item={item} canEvaluate={canEvaluateItem(item)} onOpen={() => onOpenItem(item)} onEvaluate={() => onOpenItem(item, true)} />
+          ) : (
             <div key={item.id} className="sk-check-row" onClick={() => onOpenItem(item)}>
               <div style={{ paddingTop: 2 }}><Checkbox checked={!!item.done} disabled /></div>
               <div className="sk-col" style={{ flex: 1, gap: item.done ? 0 : 2 }}>

@@ -489,52 +489,17 @@ function CatalogGoalRow({ goal, onClick }) {
   );
 }
 
-// ---------------- Проверка выполнения шага — идентично StepAssessmentPicker из manager/plan.html:
-// HR может привязать готовый оценочный лист из общего справочника D.assessmentTemplates либо
-// оставить шаг без него, тогда итог выставляется на усмотрение проверяющего. ----------------
-function StepAssessmentPicker({ templateId, setTemplateId }) {
-  const D = window.SITE_DATA;
-  const templates = D.assessmentTemplates || [];
-  const checked = !!templateId;
-
-  function toggle() {
-    setTemplateId(checked ? null : (templates[0] && templates[0].id));
-  }
-
-  return (
-    <div className="sk-col sk-gap-1">
-      <div className="sk-row sk-gap-3 sk-clickable" style={{ alignItems: "flex-start" }} onClick={toggle}>
-        <div style={{ paddingTop: 1 }}><Checkbox checked={checked} onChange={toggle} /></div>
-        <span className="sk-label-4">Добавить оценочный лист</span>
-      </div>
-      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", marginLeft: 32 }}>Готовые критерии помогут оценить выполнение шага</span>
-      <div style={{ marginLeft: 32, marginTop: 8 }}>
-        {checked ? (
-          <React.Fragment>
-            <Select value={templateId} options={templates.map((t) => ({ value: t.id, label: t.title }))} onChange={setTemplateId} />
-            <div style={{ height: 220 }} />
-          </React.Fragment>
-        ) : (
-          <div style={{ padding: "12px 14px", background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-2)" }}>
-            <span className="sk-label-3-regular">
-              Без оценочного листа итог выставляется на усмотрение проверяющего: «Шаг выполнен», «Не выполнен» или «Требует доработки».
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ---------------- Полезные материалы шага — тот же UI, что и у руководителя в
 // manager/plan.html (StepMaterialsPicker): пилюли выбранных материалов + модалка с поиском
 // и чекбоксами. Источник списка — общий каталог материалов шаблона (у шаблона нет чек-листа
 // назначенного плана с конкретными задачами, поэтому список берётся из отдельного каталога,
 // а не из plan.stages, как у руководителя). ----------------
-const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", file: "Файл", link: "Ссылка", survey: "Опрос" };
-const ELEMENT_ICON = { article: IconFileText, task: IconClipboard, course: IconGraduationCap, file: IconFileText, link: IconLink2, survey: IconMessageCircle };
+const ELEMENT_LABEL = { article: "Статья", task: "Задача", course: "Курс", file: "Файл", link: "Ссылка", survey: "Опрос", assessment: "Оценочный лист" };
+const ELEMENT_ICON = { article: IconFileText, task: IconClipboard, course: IconGraduationCap, file: IconFileText, link: IconLink2, survey: IconMessageCircle, assessment: Icons.IconClipboardCheck };
 // Порядок типов элемента чек-листа в селекте создания — "Задача" первой, т.к. только у неё есть поле "Исполнитель" (см. ТЗ "Доработки прототипа_Задачи и Роли").
-const CHECKLIST_ITEM_TYPES = ["task", "survey", "article", "course", "file", "link"];
+// "Оценочный лист" — элемент маршрута: наблюдение за практикой по критериям, отмечает оценивающий (роль из участников плана).
+const CHECKLIST_ITEM_TYPES = ["task", "survey", "article", "course", "assessment", "file", "link"];
 
 function TemplateMaterialsPicker({ materials, onAdd, onRemove }) {
   const D = window.SITE_DATA;
@@ -596,7 +561,7 @@ function TemplateMaterialsPicker({ materials, onAdd, onRemove }) {
   );
 }
 
-const emptySubgoalForm = { title: "", description: "", dueDays: 14, reviewer: "Руководитель", materials: [], templateId: null };
+const emptySubgoalForm = { title: "", description: "", dueDays: 14, reviewer: "Руководитель", materials: [] };
 
 function SubgoalFormModal({ initial, onClose, onCreate }) {
   const [form, setForm] = React.useState(initial || emptySubgoalForm);
@@ -621,11 +586,6 @@ function SubgoalFormModal({ initial, onClose, onCreate }) {
         <TemplateMaterialsPicker materials={form.materials}
           onAdd={(item) => set("materials")([...form.materials, item])}
           onRemove={(id) => set("materials")(form.materials.filter((m) => m.id !== id))} />
-        <Divider />
-        <div className="sk-col sk-gap-3">
-          <span className="sk-label-3" style={{ color: "var(--sk-text-primary)" }}>Проверка выполнения шага</span>
-          <StepAssessmentPicker templateId={form.templateId} setTemplateId={set("templateId")} />
-        </div>
       </div>
     </Modal>
   );
@@ -1340,6 +1300,13 @@ function ChecklistItemFormModal({ participants, onClose, onCreate }) {
   const [assignee, setAssignee] = React.useState("employee");
   const [required, setRequired] = React.useState(true);
   const [dueDays, setDueDays] = React.useState(7);
+  const assessmentTemplates = window.SITE_DATA.assessmentTemplates || [];
+  const [assessmentId, setAssessmentId] = React.useState(assessmentTemplates[0] ? assessmentTemplates[0].id : "");
+  const [evaluator, setEvaluator] = React.useState("manager");
+  const evaluatorOptions = [
+    { value: "manager", label: "Прямой руководитель" },
+    ...participants.map((p) => ({ value: p.id, label: roleLabel(p) })),
+  ];
 
   const assigneeOptions = [
     { value: "employee", label: "Адаптируемый сотрудник" },
@@ -1347,20 +1314,32 @@ function ChecklistItemFormModal({ participants, onClose, onCreate }) {
   ];
 
   function submit() {
+    const tpl = assessmentTemplates.find((t) => t.id === assessmentId);
     onCreate({
-      type, title, required, dueDays,
+      type, title: type === "assessment" && !title.trim() && tpl ? tpl.title : title, required, dueDays,
       assigneeParticipantId: type === "task" && assignee !== "employee" ? assignee : null,
+      assessmentTemplateId: type === "assessment" ? assessmentId : null,
+      evaluatorLabel: type === "assessment" ? (evaluatorOptions.find((o) => o.value === evaluator) || {}).label : null,
     });
   }
 
   return (
     <Modal open title="Новый элемент чек-листа" onClose={onClose} size="s"
       secondary={<Button mode="secondary" onClick={onClose}>Отменить</Button>}
-      primary={<Button variant="accent" disabled={!title.trim()} onClick={submit}>Добавить</Button>}>
+      primary={<Button variant="accent" disabled={!title.trim() && !(type === "assessment" && assessmentId)} onClick={submit}>Добавить</Button>}>
       <div className="sk-col sk-gap-3">
         <Select label="Тип элемента" value={type}
           options={CHECKLIST_ITEM_TYPES.map((id) => ({ value: id, label: ELEMENT_LABEL[id] }))} onChange={setType} />
-        <Input label="Название" required value={title} onChange={(e) => setTitle(e.target.value || "")} />
+        {type === "assessment" ? (
+          <React.Fragment>
+            <Select label="Оценочный лист" required value={assessmentId}
+              options={assessmentTemplates.map((t) => ({ value: t.id, label: t.title }))} onChange={setAssessmentId} />
+            <Select label="Оценивает" value={evaluator} options={evaluatorOptions} onChange={setEvaluator}
+              helper="Отметить лист сможет только оценивающий — после наблюдения за работой сотрудника" />
+          </React.Fragment>
+        ) : (
+          <Input label="Название" required value={title} onChange={(e) => setTitle(e.target.value || "")} />
+        )}
         {type === "task" && (
           <Select label="Исполнитель" value={assignee} options={assigneeOptions} onChange={setAssignee}
             helper={participants.length ? "Можно выбрать только роль, добавленную в «Участники плана»" : "В шаблоне пока нет ролей — можно назначить только на сотрудника"} />
@@ -1391,6 +1370,7 @@ function ChecklistItemRow({ t, participants, onDelete }) {
       {t.type === "task" && (
         <Tag size="s" hue={assignee ? "accent" : "special"}>{assignee ? roleLabel(assignee) : "Сотрудник"}</Tag>
       )}
+      {t.type === "assessment" && <Tag size="s" hue="accent">Оценивает: {t.evaluatorLabel}</Tag>}
       {t.required && <Tag size="s" hue="neutral">Обязательный</Tag>}
       <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)", whiteSpace: "nowrap" }}>{dueDayLabel(t.dueDays)}</span>
       <Tag size="s" hue="positive">Связана с этапом</Tag>
