@@ -33,6 +33,13 @@ const STATUS_META = {
   failed: { label: "Неуспешно завершён", hue: "negative" },
   cancelled: { label: "Отменён", hue: "gray" },
 };
+// «Сегодня» в демо — 15.03.26 (как в «Моей команде» руководителя). Счётчик «Осталось» после
+// окончания срока уходит в минус и пишется красным (журнал обновлений, сентябрь 2026).
+const DEMO_TODAY = new Date(2026, 2, 15);
+function daysLeft(ddmmyy) {
+  const [d, m, y] = ddmmyy.split(".").map(Number);
+  return Math.round((new Date(2000 + y, m - 1, d) - DEMO_TODAY) / 86400000);
+}
 const HIDDEN_BY_DEFAULT = ["completed", "failed", "cancelled"];
 
 const QUICK_INDICATORS = [
@@ -106,6 +113,7 @@ const ASSIGNED_COLUMNS_META = [
   { key: "progress", title: "Прогресс" },
   { key: "manager", title: "Руководитель" },
   { key: "dates", title: "Сроки" },
+  { key: "left", title: "Осталось" },
   { key: "assignMethod", title: "Способ назначения" },
   { key: "lastActivity", title: "Активность" },
 ];
@@ -552,6 +560,13 @@ function AssignedTable() {
         {p.actualEndDate && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Факт: {p.actualEndDate}</span>}
       </div>
     ),
+    left: (p) => {
+      if (["completed", "failed", "cancelled"].includes(p.status)) return <span className="sk-muted">—</span>;
+      const days = daysLeft(p.plannedEndDate);
+      return days < 0
+        ? <span className="sk-label-4" style={{ color: "var(--sk-text-negative)" }}>просрочено на {-days} дн.</span>
+        : <span className="sk-label-4-regular">{days} дн.</span>;
+    },
     assignMethod: (p) => p.assignMethod,
     lastActivity: (p) => p.lastActivity,
   };
@@ -564,7 +579,7 @@ function AssignedTable() {
     ) },
     ...ASSIGNED_COLUMNS_META.filter((c) => visibleCols.includes(c.key)).map((c) => ({
       key: c.key, title: c.title, width: c.key === "plan" ? 280 : c.key === "status" ? 150 : c.key === "progress" ? 220
-        : c.key === "manager" ? 180 : c.key === "dates" ? 180 : c.key === "assignMethod" ? 190 : c.key === "lastActivity" ? 140 : 260,
+        : c.key === "manager" ? 180 : c.key === "dates" ? 180 : c.key === "left" ? 170 : c.key === "assignMethod" ? 190 : c.key === "lastActivity" ? 140 : 260,
       render: columnRenderers[c.key],
     })),
     { key: "actions", title: "", width: 110, render: (p) => (
@@ -579,7 +594,7 @@ function AssignedTable() {
   function renderTable(rows) {
     return (
       <div className="sk-scroll" style={{ overflowX: "auto" }}>
-        <Table columns={columns} rows={rows} style={{ minWidth: 1720 }} />
+        <Table columns={columns} rows={rows} style={{ minWidth: 1890 }} />
       </div>
     );
   }

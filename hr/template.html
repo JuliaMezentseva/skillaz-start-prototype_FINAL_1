@@ -940,6 +940,44 @@ function CheckpointsSection({ checkpoints, onAddCheckpoint, onEditCheckpoint, on
   );
 }
 
+// ---------------- Завершение плана (журнал обновлений, октябрь 2026): для плана с целями
+// финальное согласование руководителем всегда включено, а автозавершение выключено и
+// заблокировано — итог подводит руководитель на финальном ревью. Без целей всё настраивается. ----------------
+function CompletionSettings({ goalsEnabled }) {
+  const [approval, setApproval] = React.useState(false);
+  const [autoSuccess, setAutoSuccess] = React.useState(true);
+  const [autoFail, setAutoFail] = React.useState(false);
+  const rows = [
+    { label: "Финальное согласование руководителем", hint: "Перед завершением руководитель проверяет план и подтверждает итог адаптации или возвращает план в работу.",
+      checked: goalsEnabled || approval, onChange: setApproval },
+    { label: "Автозавершение успешных планов", hint: "По окончании срока план завершится сам, если выполнены условия успешного прохождения.",
+      checked: !goalsEnabled && autoSuccess, onChange: setAutoSuccess },
+    { label: "Автозавершение неуспешных планов", hint: "По окончании срока план завершится сам с результатом «не пройден», если условия не выполнены.",
+      checked: !goalsEnabled && autoFail, onChange: setAutoFail },
+  ];
+  return (
+    <div className="sk-col sk-gap-3" style={{ padding: "16px 24px" }}>
+      <div className="sk-label-2">Завершение плана</div>
+      {goalsEnabled && (
+        <Alert hue="neutral" style={{ background: "var(--sk-surface-page)", boxShadow: "inset 0 0 0 1px var(--sk-stroke)" }}>
+          В плане есть цели, поэтому итог подводит руководитель на финальном согласовании. Автозавершение для таких планов недоступно.
+        </Alert>
+      )}
+      {rows.map((r) => (
+        <div key={r.label} className="sk-row" style={{ justifyContent: "space-between" }}>
+          <div className="sk-row sk-gap-1">
+            <span className="sk-label-3" style={goalsEnabled ? { color: "var(--sk-text-secondary)" } : undefined}>{r.label}</span>
+            <Tooltip content={<div style={{ maxWidth: 260, whiteSpace: "normal" }}>{r.hint}</div>}>
+              <IconHelpCircle size={16} color="var(--sk-icon-secondary)" />
+            </Tooltip>
+          </div>
+          <Switch checked={r.checked} onChange={r.onChange} disabled={goalsEnabled} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ---------------- Настройка плана адаптации — тумблер в одной карточке; когда план включён,
 // ниже появляется ОТДЕЛЬНАЯ карточка со своей обводкой, где табы "Цели" / "Контрольные точки"
 // переключают видимую секцию — так Админ сразу видит обе настройки и переключается без скролла. ----------------
@@ -967,6 +1005,8 @@ function GoalsSettingsCard({ template, enabled, owner, deadlineDays, reviewRequi
             </div>
             <Switch checked={enabled} onChange={onToggle} />
           </div>
+          <Divider />
+          <CompletionSettings goalsEnabled={enabled} />
         </div>
       </Card>
 

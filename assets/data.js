@@ -2539,4 +2539,34 @@ window.SITE_DATA = {
       action: null, helper: "Дмитрий Волков",
       risks: ["Просрочено 14% обязательных элементов маршрута: курс «Охрана труда для руководителей и специалистов»"] },
   );
+
+  // Реестр планов HR: те же Павел и Олег, чтобы на демо HR видел стройку, а не только офис.
+  const hrBase = { planType: "Адаптация", templateId: null, assignMethod: "Автособытие: приём на работу",
+    author: "Юлия Степанова", responsible: "Юлия Степанова", manager: "Анна Козлова", helper: "Дмитрий Волков",
+    assignedDate: "02.03.26", actualEndDate: null, goalsPublished: true, overdueCheckpoint: false,
+    finalReview: "not_started", tasksDeadline: "06.03.26" };
+  D.hrAssignedPlans.unshift(
+    { ...hrBase, id: "ap_pavel", employeeId: "pavel", name: "Павел Никитин",
+      department: "Объект «БЦ Северный» · участок электромонтажных работ", position: "Электромонтажник",
+      planId: "electrician", planTitle: "Адаптация: электромонтажник", status: "in_progress",
+      plannedEndDate: "31.03.26", lastActivity: "14 мар 26", checklistProgress: 64, goalsProgress: 0,
+      overdueChecklist: true, endingSoon: true,
+      hrTasks: [
+        { id: "t1", title: "Выдать СИЗ и спецодежду по нормам", date: "02.03.26", required: true, done: true },
+        { id: "t2", title: "Записать на проверку знаний по электробезопасности в комиссии", date: "06.03.26", required: true, done: true },
+        { id: "t3", title: "Оформить пропуск на объект «БЦ Северный»", date: "03.03.26", required: true, done: true },
+      ],
+      risks: ["Просрочено 11% обязательных элементов маршрута: проверка знаний по электробезопасности"] },
+    { ...hrBase, id: "ap_oleg", employeeId: "oleg", name: "Олег Миронов",
+      department: "Объект «БЦ Северный» · строительный участок", position: "Производитель работ (прораб)",
+      planId: "foreman", planTitle: "Адаптация: производитель работ (прораб)", status: "in_progress",
+      plannedEndDate: "29.05.26", lastActivity: "13 мар 26", checklistProgress: 44, goalsProgress: 10,
+      overdueChecklist: true, endingSoon: false,
+      hrTasks: [
+        { id: "t1", title: "Подготовить приказ о назначении ответственным за производство работ", date: "03.03.26", required: true, done: true },
+        { id: "t2", title: "Записать на обучение по охране труда для руководителей", date: "06.03.26", required: true, done: false },
+        { id: "t3", title: "Выдать доступ к исполнительной документации объекта", date: "04.03.26", required: false, done: true },
+      ],
+      risks: ["Просрочено 14% обязательных элементов маршрута: курс «Охрана труда для руководителей и специалистов»"] },
+  );
 })();

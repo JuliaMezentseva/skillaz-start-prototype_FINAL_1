@@ -778,7 +778,7 @@ function PersonCard({ p }) {
 // Сотрудник видит только ту контрольную точку, которую нужно пройти прямо сейчас —
 // без ростера всех прошлых/будущих КТ и без порядковых номеров (сколько их всего и на
 // каком месте текущая — не важно для того, что нужно сделать сегодня).
-function RightPanel({ plan, overallPct, checkpoints, onOpenCheckpoint, showCheckpoints }) {
+function RightPanel({ plan, overallPct, checkpoints, onOpenCheckpoint, showCheckpoints, earlySubmit, onEarlySubmit }) {
   const cpOrder = Object.keys(checkpoints);
   const cps = cpOrder.filter((id) => checkpoints[id]).map((id) => checkpoints[id]);
   const firstPendingIndex = cps.findIndex((c) => c.status !== "done");
@@ -814,9 +814,18 @@ function RightPanel({ plan, overallPct, checkpoints, onOpenCheckpoint, showCheck
       <Card bordered>
         <div className="sk-col sk-gap-3">
           <div className="sk-label-3">Статус адаптации</div>
-          <StatusTag status={plan.status === "completed" ? "completed" : "in_progress_plan"} style={{ alignSelf: "flex-start" }} />
+          <StatusTag status={plan.status === "completed" ? "completed" : earlySubmit && earlySubmit.sent ? "on_review" : "in_progress_plan"} style={{ alignSelf: "flex-start" }} />
           <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}><ProgressBar value={overallPct} style={{ flex: 1 }} hue="accent" /><span className="sk-title-5">{overallPct}%</span></div>
           <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{plan.dateStart} – {plan.dateEnd}</div>
+          {/* Досрочная отправка плана с целями на финальное согласование (журнал, октябрь 2026):
+              доступна при прогрессе целей от порога и выполненных обязательных элементах маршрута. */}
+          {earlySubmit && !earlySubmit.sent && (
+            earlySubmit.allowed
+              ? <Button variant="accent" size="s" onClick={onEarlySubmit} style={{ alignSelf: "flex-start" }}>Отправить на согласование</Button>
+              : <Tooltip placement="bottom" content={<div style={{ maxWidth: 260, whiteSpace: "normal" }}>{earlySubmit.reason}</div>}>
+                  <span style={{ alignSelf: "flex-start" }}><Button mode="secondary" size="s" disabled>Отправить на согласование</Button></span>
+                </Tooltip>
+          )}
         </div>
       </Card>
 
@@ -910,6 +919,7 @@ function Page() {
     return () => { delete window.__skAiOpenSubgoal; delete window.__skAiOpenCheckpoint; delete window.__skAiOpenItem; };
   });
 
+  const [earlySent, setEarlySent] = React.useState(false);
   function showToast(msg) {
     setToast(msg);
     window.clearTimeout(showToast._t);
@@ -963,6 +973,14 @@ function Page() {
   const goalsDoneCount = plan.goals.filter((g) => g.subgoals.length && g.subgoals.every((s) => s.status === "done")).length;
   const goalsPct = plan.goals.length ? Math.round((goalsDoneCount / plan.goals.length) * 100) : 0;
   const overallPct = plan.hasGoals && plan.goals.length ? goalsPct : checklistPct;
+  const EARLY_SUBMIT_THRESHOLD = 80;
+  const requiredLeft = totalChecklist.filter((i) => i.required !== false && !i.done).length;
+  const earlySubmit = plan.hasGoals && plan.goals.length && plan.status !== "completed" ? {
+    sent: earlySent,
+    allowed: goalsPct >= EARLY_SUBMIT_THRESHOLD && requiredLeft === 0,
+    reason: "Отправить план раньше срока можно, когда прогресс по целям достигнет " + EARLY_SUBMIT_THRESHOLD
+      + "% и будут выполнены все обязательные элементы маршрута. Сейчас: цели — " + goalsPct + "%, осталось обязательных элементов — " + requiredLeft + ".",
+  } : null;
 
   const activeSubgoalGoal = subgoalDrawer && plan.goals.find((g) => g.id === subgoalDrawer.goalId);
   const activeSubgoal = activeSubgoalGoal && activeSubgoalGoal.subgoals.find((s) => s.id === subgoalDrawer.subgoalId);
@@ -1015,7 +1033,8 @@ function Page() {
         </div>
 
         <div style={{ width: 320, flexShrink: 0 }}>
-          <RightPanel plan={plan} overallPct={overallPct} checkpoints={plan.checkpoints} onOpenCheckpoint={setCpModal} showCheckpoints={tab === "max"} />
+          <RightPanel plan={plan} overallPct={overallPct} checkpoints={plan.checkpoints} onOpenCheckpoint={setCpModal} showCheckpoints={tab === "max"}
+            earlySubmit={earlySubmit} onEarlySubmit={() => { setEarlySent(true); showToast("План отправлен руководителю на финальное согласование"); }} />
         </div>
       </div>
 
