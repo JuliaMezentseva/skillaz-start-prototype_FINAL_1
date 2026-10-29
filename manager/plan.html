@@ -416,10 +416,12 @@ function Page() {
 
           {tab === "max" && plan.hasGoals && (
             <React.Fragment>
-              <Alert hue={plan.status === "on_review" ? "accent" : "neutral"}
-                actions={plan.status === "on_review" ? <Button size="s" variant="accent" onClick={() => setReviewModal(true)}>Провести итоговую проверку</Button> : undefined}>
-                {plan.status === "on_review" ? REVIEW_MAX_NOTE : MAX_TAB_NOTE}
-              </Alert>
+              {(plan.status === "on_review" || !pendingReviewCount) && (
+                <Alert hue={plan.status === "on_review" ? "accent" : "neutral"}
+                  actions={plan.status === "on_review" ? <Button size="s" variant="accent" onClick={() => setReviewModal(true)}>Провести итоговую проверку</Button> : undefined}>
+                  {plan.status === "on_review" ? REVIEW_MAX_NOTE : MAX_TAB_NOTE}
+                </Alert>
+              )}
 
               {plan.goals.length === 0 && (
                 <Card>
