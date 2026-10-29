@@ -1558,6 +1558,56 @@ function routeAssessmentStatus(item) {
   return h.length ? h[h.length - 1].decision : "pending"; // pending | passed | returned
 }
 
+// ---------------- Шаг цели в списке — по макетам журнала обновлений (сентябрь–октябрь 2026):
+// карточки шагов собраны в столбик с акцентной линией слева, без порядковых номеров.
+// В карточке — название, срок, справа иконка статуса и комментарии, ниже — действие
+// (у сотрудника «Взять в работу» / «Отправить на подтверждение», у проверяющего — решение).
+const GOAL_STEP_STATUS = {
+  done: { icon: IconCheck, color: "var(--sk-positive)", filled: true, label: "Выполнено" },
+  not_done: { icon: IconX, color: "var(--sk-negative)", filled: true, label: "Не выполнено" },
+  pending_review: { icon: IconEye, color: "var(--sk-warning)", label: "На подтверждении" },
+  in_progress: { icon: IconClock, color: "var(--sk-accent)", label: "В работе" },
+  returned: { icon: IconAlertCircle, color: "var(--sk-warning)", label: "Возвращён на доработку" },
+};
+function GoalStepList({ children }) {
+  return (
+    <div className="sk-col sk-gap-2" style={{ marginTop: 4, paddingLeft: 12, borderLeft: "3px solid var(--sk-accent)" }}
+      onClick={(e) => e.stopPropagation()}>
+      {children}
+    </div>
+  );
+}
+function GoalStepCard({ subgoal, onOpen, actions }) {
+  const st = GOAL_STEP_STATUS[subgoal.status];
+  const closed = subgoal.status === "done" || subgoal.status === "not_done";
+  const due = (subgoal.dueLabel || "").replace(/^до\s+/i, "");
+  const comments = (subgoal.comments || []).length;
+  return (
+    <div className="sk-col sk-gap-2" onClick={onOpen} style={{
+      cursor: "pointer", padding: "12px 14px", border: "1px solid var(--sk-stroke)",
+      borderRadius: "var(--sk-radius-3)", background: "var(--sk-surface-page)",
+    }}>
+      <div className="sk-row sk-gap-3" style={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+        <div className="sk-col" style={{ gap: 2, minWidth: 0 }}>
+          <span className="sk-label-3-regular" style={{ color: closed ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{subgoal.title || "Без названия"}</span>
+          {due && <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{closed ? due : "до " + due}</span>}
+        </div>
+        <div className="sk-row sk-gap-2" style={{ flexShrink: 0, alignItems: "center" }}>
+          {st && (st.filled ? (
+            <span title={st.label} style={{ width: 18, height: 18, borderRadius: "50%", background: st.color, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <st.icon size={11} color="var(--sk-text-contrast)" />
+            </span>
+          ) : <span title={st.label} style={{ display: "flex" }}><st.icon size={18} color={st.color} /></span>)}
+          <span className="sk-row" title="Комментарии" style={{ gap: 2, alignItems: "center", color: "var(--sk-icon-secondary)", font: "var(--sk-label-4-regular)" }}>
+            <IconMessageCircle size={16} />{comments > 0 ? comments : null}
+          </span>
+        </div>
+      </div>
+      {actions && <div className="sk-row sk-gap-2" onClick={(e) => e.stopPropagation()}>{actions}</div>}
+    </div>
+  );
+}
+
 function RouteAssessmentRow({ item, locked, canEvaluate, onOpen, onEvaluate }) {
   const status = routeAssessmentStatus(item);
   const passed = status === "passed";
@@ -1752,6 +1802,7 @@ window.Site = {
   Icons: window.SiteIcons,
   personPhoto,
   PlanCover, PLAN_COVER_HUE,
+  GoalStepList, GoalStepCard,
   RouteAssessment: { Row: RouteAssessmentRow, Modal: RouteAssessmentModal, status: routeAssessmentStatus, apply: applyRouteAssessmentDecision },
   employeeDemoPlanId, applyEmployeePersona,
   AI: { vacancyApplyGuard: aiVacancyApplyGuard, vacancyLetterDraft: aiVacancyLetterDraft },

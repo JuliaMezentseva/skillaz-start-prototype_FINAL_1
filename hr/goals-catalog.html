@@ -148,9 +148,6 @@ function SubgoalFormModal({ initial, onClose, onCreate }) {
             options={[{ value: "Руководитель", label: "Руководитель" }, { value: "Наставник", label: "Наставник" }]}
             onChange={set("reviewer")} style={{ flex: 1 }} />
         </div>
-        <MaterialsPicker materials={form.materials}
-          onAdd={(item) => set("materials")([...form.materials, item])}
-          onRemove={(id) => set("materials")(form.materials.filter((m) => m.id !== id))} />
       </div>
     </Modal>
   );
@@ -227,7 +224,7 @@ function GoalCatalogFormDrawer({ initial, onClose, onSave }) {
           <div className="sk-col sk-gap-2">
             <div className="sk-label-3">Шаги для достижения{form.subgoals.length ? " " + form.subgoals.length : ""}</div>
             <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-              Разбейте цель на подцели — с материалами и проверкой выполнения, если нужно. Можно добавить сейчас или позже.
+              Разбейте цель на подцели с проверкой выполнения, если нужно. Можно добавить сейчас или позже.
             </div>
             {form.subgoals.map((sg, i) => (
               <div key={sg.id} className="sk-row sk-gap-2" style={{
@@ -247,7 +244,7 @@ function GoalCatalogFormDrawer({ initial, onClose, onSave }) {
                   <div className="sk-col sk-gap-1" style={{ flex: 1, minWidth: 0 }}>
                     <span className="sk-label-3-regular">{sg.title || "Без названия"}</span>
                     <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-                      День {sg.dueDays}{(sg.materials || []).length ? " · Материалов: " + sg.materials.length : ""}
+                      День {sg.dueDays}
                     </span>
                   </div>
                 </div>
@@ -627,7 +624,7 @@ function Page() {
           <div className="sk-col sk-gap-3" style={{ alignItems: "center", textAlign: "center", padding: "24px 16px" }}>
             <div className="sk-title-5">Добавьте первую цель в каталог</div>
             <div className="sk-muted" style={{ maxWidth: 440 }}>
-              Готовая цель с шагами и материалами — чтобы потом не собирать её заново, а выбрать из каталога при создании шаблона
+              Готовая цель с шагами — чтобы потом не собирать её заново, а выбрать из каталога при создании шаблона
             </div>
             <Button variant="accent" onClick={() => setFormDrawer("create")}>+ Добавить цель</Button>
           </div>

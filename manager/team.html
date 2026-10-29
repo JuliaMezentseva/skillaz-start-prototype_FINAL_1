@@ -400,7 +400,7 @@ function RiskBadge({ risks }) {
       <span style={{
         display: "inline-flex", alignItems: "center", height: 22, padding: "0 8px", borderRadius: "var(--sk-radius-full)",
         background: "var(--sk-negative)", color: "var(--sk-text-contrast)", font: "var(--sk-label-4)", cursor: "default",
-      }}>{risks.length} риска</span>
+      }}>{risks.length} {risks.length % 10 === 1 && risks.length % 100 !== 11 ? "риск" : risks.length % 10 >= 2 && risks.length % 10 <= 4 && (risks.length % 100 < 12 || risks.length % 100 > 14) ? "риска" : "рисков"}</span>
     </Tooltip>
   );
 }

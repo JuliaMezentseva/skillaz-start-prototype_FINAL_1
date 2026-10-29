@@ -40,6 +40,18 @@ function daysLeft(ddmmyy) {
   const [d, m, y] = ddmmyy.split(".").map(Number);
   return Math.round((new Date(2000 + y, m - 1, d) - DEMO_TODAY) / 86400000);
 }
+// Бейдж рисков рядом с именем — как в «Моей команде» руководителя и на макете журнала.
+function riskWord(n) {
+  const m10 = n % 10, m100 = n % 100;
+  return m10 === 1 && m100 !== 11 ? "риск" : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "риска" : "рисков";
+}
+function RiskCountBadge({ n }) {
+  return (
+    <span style={{ padding: "1px 8px", borderRadius: "var(--sk-radius-full)", background: "var(--sk-negative)", color: "var(--sk-text-contrast)", font: "var(--sk-label-4)", whiteSpace: "nowrap" }}>
+      {n} {riskWord(n)}
+    </span>
+  );
+}
 const HIDDEN_BY_DEFAULT = ["completed", "failed", "cancelled"];
 
 const QUICK_INDICATORS = [
@@ -528,7 +540,10 @@ function AssignedTable() {
     name: (p) => (
       <a href={"plan-detail.html?id=" + p.id} style={{ textDecoration: "none" }}>
         <div className="sk-col" style={{ gap: 2 }}>
-          <span className="sk-label-3" style={{ color: "var(--sk-text-accent)" }}>{p.name}</span>
+          <span className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+            <span className="sk-label-3" style={{ color: "var(--sk-text-accent)" }}>{p.name}</span>
+            {p.risks.length > 0 && <RiskCountBadge n={p.risks.length} />}
+          </span>
           <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{p.position} · {p.department}</span>
         </div>
       </a>
@@ -542,7 +557,6 @@ function AssignedTable() {
     status: (p) => (
       <div className="sk-col sk-gap-1" style={{ alignItems: "flex-start" }}>
         <Tag size="s" hue={STATUS_META[p.status].hue}>{STATUS_META[p.status].label}</Tag>
-        {p.risks.length > 0 && <Tag size="s" hue="negative" icon={<IconAlertCircle size={11} />}>Риск</Tag>}
       </div>
     ),
     progress: (p) => (

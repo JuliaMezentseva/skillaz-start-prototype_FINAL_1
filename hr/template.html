@@ -61,6 +61,7 @@ function IconGoalRing({ size = 16, color = "currentColor" }) {
 const TEMPLATE_SECTIONS = [
   { id: "description", label: "Описание", icon: IconInfo },
   { id: "goals", label: "Цели адаптации", icon: IconTarget },
+  { id: "checkpoints", label: "Контрольные точки", icon: IconFlag, isNew: true },
   { id: "checklist", label: "Маршрут", icon: IconCheck },
   { id: "tasks", label: "Задачи", icon: IconClipboard },
   { id: "faq", label: "FAQ", icon: IconMessageCircle },
@@ -69,7 +70,7 @@ const TEMPLATE_SECTIONS = [
 
 // Кликабельны только разделы, отрисованные в этой итерации — остальные пункты навигации
 // показывают заглушку NotBuiltSection (см. Флоу_HRАдмина_настройка_шаблона).
-const BUILT_SECTIONS = ["description", "goals", "checklist", "tasks"];
+const BUILT_SECTIONS = ["description", "goals", "checkpoints", "checklist", "tasks", "settings"];
 
 const TEMPLATE_STATUS = {
   active: { label: "Активный", hue: "positive" },
@@ -98,6 +99,7 @@ function SectionNavItem({ item, active, disabled, onClick }) {
     }}>
       <Icon size={18} color={disabled ? "var(--sk-icon-tertiary)" : "var(--sk-icon-secondary)"} style={{ flexShrink: 0, marginTop: 1 }} />
       <span style={{ flex: 1, lineHeight: 1.35 }}>{item.label}</span>
+      {item.isNew && <Tag size="s" hue="positive">Новое</Tag>}
     </div>
   );
 }
@@ -583,9 +585,6 @@ function SubgoalFormModal({ initial, onClose, onCreate }) {
             options={[{ value: "Руководитель", label: "Руководитель" }, { value: "Наставник", label: "Наставник" }]}
             onChange={set("reviewer")} style={{ flex: 1 }} />
         </div>
-        <TemplateMaterialsPicker materials={form.materials}
-          onAdd={(item) => set("materials")([...form.materials, item])}
-          onRemove={(id) => set("materials")(form.materials.filter((m) => m.id !== id))} />
       </div>
     </Modal>
   );
@@ -656,7 +655,6 @@ function TemplateGoalCreateDrawer({ draft, setDraft, onClose, onCreate, onAddSub
 // drag-and-drop'ом (см. TemplateGoalDrawer, который передаёт dragHandleProps и index/dragging).
 // Без статус-иконки: до назначения плана сотруднику у шага ещё нет статуса выполнения. ----------------
 function TemplateSubgoalRow({ index, subgoal, onOpen, dragHandleProps, dragging }) {
-  const hasMaterials = (subgoal.materials || []).length > 0;
   return (
     <div className="sk-row sk-gap-2" style={{ alignItems: "center", padding: "10px 4px", borderBottom: "1px solid var(--sk-stroke)", opacity: dragging ? 0.5 : 1 }}>
       <span {...dragHandleProps} style={{ display: "flex", flexShrink: 0, cursor: "grab" }}>
@@ -673,13 +671,6 @@ function TemplateSubgoalRow({ index, subgoal, onOpen, dragHandleProps, dragging 
             <IconCalendar size={13} color="var(--sk-icon-secondary)" />{dueDayLabel(subgoal.dueDays)}
           </span>
         </div>
-        {hasMaterials ? (
-          <span className="sk-row sk-gap-1" style={{ color: "var(--sk-text-secondary)", font: "var(--sk-label-4)", whiteSpace: "nowrap" }}>
-            <IconBookOpen size={15} />Полезные материалы: {subgoal.materials.length}</span>
-        ) : (
-          <span className="sk-row sk-gap-1 sk-clickable" onClick={(e) => { e.stopPropagation(); onOpen(); }} style={{ color: "var(--sk-text-accent)", font: "var(--sk-label-4)", whiteSpace: "nowrap" }}>
-            <IconBookOpen size={15} />Добавить материалы</span>
-        )}
       </div>
     </div>
   );
@@ -940,55 +931,104 @@ function CheckpointsSection({ checkpoints, onAddCheckpoint, onEditCheckpoint, on
   );
 }
 
-// ---------------- Завершение плана (журнал обновлений, октябрь 2026): для плана с целями
-// финальное согласование руководителем всегда включено, а автозавершение выключено и
-// заблокировано — итог подводит руководитель на финальном ревью. Без целей всё настраивается. ----------------
-function CompletionSettings({ goalsEnabled }) {
-  const [approval, setApproval] = React.useState(false);
+// ---------------- Раздел «Настройки» — по макетам журнала обновлений (октябрь 2026).
+// Строка: иконка, название и пояснение слева, управление справа. Для плана с целями
+// согласование включено и заблокировано, а автозавершение недоступно — итог подводит
+// руководитель на финальном ревью. Порог завершения считается по прогрессу целей. ----------------
+const COMPLETION_THRESHOLDS = [80, 85, 90, 95, 100];
+function SettingsRow({ icon: Icon, title, hint, info, children, last }) {
+  return (
+    <div className="sk-row" style={{ alignItems: "flex-start", gap: 24, padding: "20px 0", borderBottom: last ? "none" : "1px solid var(--sk-stroke)" }}>
+      <div className="sk-col sk-gap-1" style={{ width: 340, flexShrink: 0 }}>
+        <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
+          <Icon size={20} color="var(--sk-icon-secondary)" />
+          <span className="sk-label-2">{title}</span>
+          {info && (
+            <Tooltip content={<div style={{ maxWidth: 260, whiteSpace: "normal" }}>{info}</div>}>
+              <IconInfo size={15} color="var(--sk-warning)" />
+            </Tooltip>
+          )}
+        </div>
+        <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)", paddingLeft: 28 }}>{hint}</div>
+      </div>
+      <div className="sk-col sk-gap-3" style={{ flex: 1, minWidth: 0 }}>{children}</div>
+    </div>
+  );
+}
+function SettingsSwitch({ label, checked, onChange, disabled }) {
+  return (
+    <div className="sk-row sk-gap-3" style={{ alignItems: "center" }}>
+      <Switch checked={checked} onChange={onChange} disabled={disabled} />
+      <span className="sk-label-3-regular" style={disabled ? { color: "var(--sk-text-tertiary)" } : undefined}>{label}</span>
+    </div>
+  );
+}
+function SettingsSection({ goalsEnabled }) {
   const [autoSuccess, setAutoSuccess] = React.useState(true);
   const [autoFail, setAutoFail] = React.useState(false);
-  const rows = [
-    { label: "Финальное согласование руководителем", hint: "Перед завершением руководитель проверяет план и подтверждает итог адаптации или возвращает план в работу.",
-      checked: goalsEnabled || approval, onChange: setApproval },
-    { label: "Автозавершение успешных планов", hint: "По окончании срока план завершится сам, если выполнены условия успешного прохождения.",
-      checked: !goalsEnabled && autoSuccess, onChange: setAutoSuccess },
-    { label: "Автозавершение неуспешных планов", hint: "По окончании срока план завершится сам с результатом «не пройден», если условия не выполнены.",
-      checked: !goalsEnabled && autoFail, onChange: setAutoFail },
-  ];
+  const [managerTasks, setManagerTasks] = React.useState(true);
+  const [chat, setChat] = React.useState(true);
+  const [faq, setFaq] = React.useState(true);
+  const [approval, setApproval] = React.useState(false);
+  const [threshold, setThreshold] = React.useState(80);
+  const note = { background: "var(--sk-surface-secondary)", boxShadow: "none" };
   return (
-    <div className="sk-col sk-gap-3" style={{ padding: "16px 24px" }}>
-      <div className="sk-label-2">Завершение плана</div>
-      {goalsEnabled && (
-        <Alert hue="neutral" style={{ background: "var(--sk-surface-page)", boxShadow: "inset 0 0 0 1px var(--sk-stroke)" }}>
-          В плане есть цели, поэтому итог подводит руководитель на финальном согласовании. Автозавершение для таких планов недоступно.
-        </Alert>
-      )}
-      {rows.map((r) => (
-        <div key={r.label} className="sk-row" style={{ justifyContent: "space-between" }}>
-          <div className="sk-row sk-gap-1">
-            <span className="sk-label-3" style={goalsEnabled ? { color: "var(--sk-text-secondary)" } : undefined}>{r.label}</span>
-            <Tooltip content={<div style={{ maxWidth: 260, whiteSpace: "normal" }}>{r.hint}</div>}>
-              <IconHelpCircle size={16} color="var(--sk-icon-secondary)" />
-            </Tooltip>
-          </div>
-          <Switch checked={r.checked} onChange={r.onChange} disabled={goalsEnabled} />
+    <Card bordered style={{ padding: "4px 24px" }}>
+      <SettingsRow icon={IconCheck} title="Автоматическое завершение" hint="Система автоматически завершит план адаптации в указанный срок">
+        {goalsEnabled && (
+          <Alert hue="warning" title="Автоматическое завершение недоступно" style={note}>
+            В плане включены цели. План завершается руководителем по итогам финального ревью.
+          </Alert>
+        )}
+        <SettingsSwitch label="Завершать успешно пройденные планы" checked={!goalsEnabled && autoSuccess} onChange={setAutoSuccess} disabled={goalsEnabled} />
+        <SettingsSwitch label="Завершать неуспешно пройденные планы" checked={!goalsEnabled && autoFail} onChange={setAutoFail} disabled={goalsEnabled} />
+      </SettingsRow>
+      <SettingsRow icon={IconClipboard} title="Внесение задач руководителем" hint="Настройка процесса добавления задач, которые руководитель ставит сотруднику">
+        <SettingsSwitch label="Включить внесение задач руководителем" checked={managerTasks} onChange={setManagerTasks} />
+      </SettingsRow>
+      <SettingsRow icon={IconMessageCircle} title="Чат" hint="Общение с руководителем и помощниками">
+        <SettingsSwitch label="Включить раздел «Чат»" checked={chat} onChange={setChat} />
+      </SettingsRow>
+      <SettingsRow icon={IconHelpCircle} title="FAQ" hint="Часто задаваемые вопросы и ответы на них">
+        <SettingsSwitch label="Включить раздел «FAQ»" checked={faq} onChange={setFaq} />
+      </SettingsRow>
+      <SettingsRow icon={IconUsers} title="Согласование плана" hint="Завершение плана согласует руководитель"
+        info={goalsEnabled ? "Согласование включено автоматически, потому что в плане используются цели адаптации" : null}>
+        <SettingsSwitch label="Включить согласование плана" checked={goalsEnabled || approval} onChange={setApproval} disabled={goalsEnabled} />
+      </SettingsRow>
+      <SettingsRow icon={IconFlag} title="Условия завершения плана" hint="Настройка условий успешного окончания плана">
+        <div className="sk-label-3">Порог для завершения плана (%)</div>
+        <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap" }}>
+          {COMPLETION_THRESHOLDS.map((v) => (
+            <Button key={v} size="s" mode={threshold === v ? "primary" : "secondary"} variant={threshold === v ? "accent" : "gray"} onClick={() => setThreshold(v)}>{v}</Button>
+          ))}
         </div>
-      ))}
-    </div>
+        <Alert hue="warning" style={note}>
+          {goalsEnabled
+            ? "Порог рассчитывается по прогрессу выполнения целей. Для завершения плана также должны быть выполнены все обязательные элементы маршрута."
+            : "Порог рассчитывается по прогрессу выполнения маршрута."}
+        </Alert>
+      </SettingsRow>
+      <SettingsRow icon={IconFileText} title="Назначить сотруднику опросы" hint="При завершении плана сотруднику будет назначен опрос о руководителе и/или помощнике" last>
+        <div className="sk-col sk-gap-1">
+          <span className="sk-label-3">Опрос про руководителя</span>
+          <button className="sk-link-btn sk-label-3-regular" style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)" }}>Выбрать +</button>
+        </div>
+        <div className="sk-col sk-gap-1">
+          <span className="sk-label-3">Опрос про наставника</span>
+          <button className="sk-link-btn sk-label-3-regular" style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)" }}>Выбрать +</button>
+        </div>
+      </SettingsRow>
+    </Card>
   );
 }
 
 // ---------------- Настройка плана адаптации — тумблер в одной карточке; когда план включён,
-// ниже появляется ОТДЕЛЬНАЯ карточка со своей обводкой, где табы "Цели" / "Контрольные точки"
-// переключают видимую секцию — так Админ сразу видит обе настройки и переключается без скролла. ----------------
+// ниже появляется ОТДЕЛЬНАЯ карточка с целями. Контрольные точки — отдельный раздел плана
+// (как в журнале обновлений), а не вкладка этой карточки. ----------------
 function GoalsSettingsCard({ template, enabled, owner, deadlineDays, reviewRequired, reviewDeadlineDays, goals, checkpoints,
   onToggle, onOwnerChange, onDeadlineChange, onReviewRequiredChange, onReviewDeadlineChange, onAddGoal, onUpdateGoal, onDeleteGoal,
   onAddCheckpoint, onEditCheckpoint, onDeleteCheckpoint }) {
-  const [tab, setTab] = React.useState("goals");
-  const tabs = [
-    { id: "goals", label: "Цели", count: goals.length || undefined },
-    { id: "checkpoints", label: "Контрольные точки", count: checkpoints.length || undefined },
-  ];
   return (
     <div className="sk-col sk-gap-4">
       <Card bordered style={{ padding: 0, overflow: "hidden" }}>
@@ -999,34 +1039,24 @@ function GoalsSettingsCard({ template, enabled, owner, deadlineDays, reviewRequi
           <div className="sk-row" style={{ justifyContent: "space-between", padding: "16px 24px" }}>
             <div className="sk-row sk-gap-1">
               <span className="sk-label-3">Включить план адаптации с целями</span>
-              <Tooltip content={<div style={{ maxWidth: 260, whiteSpace: "normal" }}>В этом плане сотруднику можно поставить цели, шаги к ним и полезные материалы. С этим планом сотрудник не просто проходит чек-лист, а приближается к тому, чтобы перформить в своей роли.</div>}>
+              <Tooltip content={<div style={{ maxWidth: 260, whiteSpace: "normal" }}>В этом плане сотруднику можно поставить цели и шаги к ним. С этим планом сотрудник не просто проходит чек-лист, а приближается к тому, чтобы перформить в своей роли.</div>}>
                 <IconHelpCircle size={16} color="var(--sk-icon-secondary)" />
               </Tooltip>
             </div>
             <Switch checked={enabled} onChange={onToggle} />
           </div>
-          <Divider />
-          <CompletionSettings goalsEnabled={enabled} />
         </div>
       </Card>
 
       {enabled && (
         <Card bordered style={{ padding: 0, overflow: "hidden" }}>
           <div className="sk-col">
-            <div style={{ padding: "12px 24px 0", "--sk-accent": "var(--sk-text-primary)" }}>
-              <Tabs items={tabs} active={tab} onChange={setTab} />
-            </div>
             <div style={{ minHeight: 360 }}>
-              {tab === "goals" ? (
-                <GoalsSection owner={owner} deadlineDays={deadlineDays}
+              <GoalsSection owner={owner} deadlineDays={deadlineDays}
                   reviewRequired={reviewRequired} reviewDeadlineDays={reviewDeadlineDays} goals={goals}
                   onOwnerChange={onOwnerChange} onDeadlineChange={onDeadlineChange}
                   onReviewRequiredChange={onReviewRequiredChange} onReviewDeadlineChange={onReviewDeadlineChange}
                   onAddGoal={onAddGoal} onUpdateGoal={onUpdateGoal} onDeleteGoal={onDeleteGoal} />
-              ) : (
-                <CheckpointsSection checkpoints={checkpoints}
-                  onAddCheckpoint={onAddCheckpoint} onEditCheckpoint={onEditCheckpoint} onDeleteCheckpoint={onDeleteCheckpoint} />
-              )}
             </div>
           </div>
         </Card>
@@ -1680,12 +1710,19 @@ function Page() {
               onReviewDeadlineChange={setReviewDeadlineDays}
               onAddGoal={addGoal} onUpdateGoal={updateGoal} onDeleteGoal={deleteGoal}
               onAddCheckpoint={addCheckpoint} onEditCheckpoint={editCheckpoint} onDeleteCheckpoint={deleteCheckpoint} />
+          ) : section === "checkpoints" ? (
+            <Card bordered style={{ padding: 0, overflow: "hidden" }}>
+              <CheckpointsSection checkpoints={checkpoints}
+                onAddCheckpoint={addCheckpoint} onEditCheckpoint={editCheckpoint} onDeleteCheckpoint={deleteCheckpoint} />
+            </Card>
           ) : section === "checklist" ? (
             <ChecklistSectionReal stages={checklistStages} tasks={tasks} participants={participants}
               onAddStage={addStage} onAddTask={addTask} onDeleteTask={deleteTask} />
           ) : section === "tasks" ? (
             <TasksSectionReal tasks={tasks} participants={participants} stages={checklistStages}
               onAddTask={addTask} onDeleteTask={deleteTask} />
+          ) : section === "settings" ? (
+            <SettingsSection goalsEnabled={enabled} />
           ) : (
             <NotBuiltSection label={TEMPLATE_SECTIONS.find((s) => s.id === section).label} />
           )}

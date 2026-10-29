@@ -19,7 +19,7 @@ const {
   Card, ProgressCircle, ProgressBar, Tag, Avatar, Divider, Tabs, SegmentedControl, Modal, Drawer, Checkbox, Radio,
   Textarea, Input, Select, DatePicker, Button, Snackbar, Alert, Tooltip, Loader,
 } = window.SkillazCoreDesignSystem_bf9566;
-const { AppShell, StatusTag, Icons, personPhoto, RouteAssessment } = window.Site;
+const { AppShell, StatusTag, Icons, personPhoto, RouteAssessment, GoalStepList, GoalStepCard } = window.Site;
 const {
   IconArrowLeft, IconCheck, IconClock, IconFileText, IconLink2, IconMessageCircle,
   IconHelpCircle, IconTarget, IconMapPin, IconPhone, IconMail, IconSend,
@@ -193,6 +193,7 @@ function Page() {
   const [checklistPicker, setChecklistPicker] = React.useState(null); // { goalId, subgoalId }
   const [publishConfirm, setPublishConfirm] = React.useState(false);
   const [returnModal, setReturnModal] = React.useState(null); // { goalId, subgoalId }
+  const [listDecision, setListDecision] = React.useState(null); // { goalId, subgoalId, action } — решение из списка шагов
   const [deleteGoal, setDeleteGoal] = React.useState(null);
   const [deleteSubgoal, setDeleteSubgoal] = React.useState(null);
   const [taskModal, setTaskModal] = React.useState(null);
@@ -289,7 +290,7 @@ function Page() {
   // ---------------- Подтверждение / возврат / not_done ----------------
   function confirmSubgoal(goalId, subgoalId) {
     updateSubgoal(goalId, subgoalId, { status: "done" });
-    showToast("Подцель подтверждена");
+    showToast("Шаг подтверждён как выполненный");
     setSubgoalDrawer(null);
   }
   function returnSubgoal(goalId, subgoalId, comment) {
@@ -366,6 +367,8 @@ function Page() {
   const checklistPct = totalChecklist.length ? Math.round((doneChecklist / totalChecklist.length) * 100) : 0;
   const goalsDoneCount = plan.goals.filter(g => g.subgoals.length && g.subgoals.every(s => s.status === "done")).length;
   const goalsPct = plan.goals.length ? Math.round((goalsDoneCount / plan.goals.length) * 100) : 0;
+  const goalsTotal = plan.goals.length;
+  const pendingReviewCount = plan.goals.reduce((n, g) => n + g.subgoals.filter(sg => sg.status === "pending_review").length, 0);
   const overallPct = goalsPct;
   const canPublish = planValidForPublish(plan.goals) && !plan.goalsPublished;
   const cpList = Object.keys(plan.checkpoints).filter(id => plan.checkpoints[id]).map(id => plan.checkpoints[id]);
@@ -430,21 +433,35 @@ function Page() {
 
               {plan.goals.length > 0 && (
                 <React.Fragment>
-                  {!plan.goalsPublished && (
-                    <div className="sk-row sk-gap-2" style={{ justifyContent: "flex-end" }}>
-                      <Button size="s" mode="secondary" disabled={plan.employeeStarted}
-                        onClick={() => setGoalMethodModal(true)}>+ Создать цель</Button>
-                      <Button size="s" variant="positive" disabled={!canPublish} onClick={() => setPublishConfirm(true)}>
-                        Опубликовать
-                      </Button>
-                    </div>
+                  {pendingReviewCount > 0 && plan.status !== "on_review" && (
+                    <Alert hue="accent" title="Есть шаги на подтверждении">
+                      Сотрудник отправил их на проверку. Подтвердите результат, верните на доработку или отметьте невыполненным.
+                    </Alert>
                   )}
+                  {/* Шапка блока целей — как в журнале: «Цели · N из M» и действия справа. */}
+                  <div className="sk-row sk-gap-3" style={{ alignItems: "center", padding: "14px 20px", background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-3)" }}>
+                    <span className="sk-label-2">Цели</span>
+                    <ProgressCircle value={goalsTotal ? Math.round(goalsDoneCount / goalsTotal * 100) : 0} size={22} thickness={3} hue="accent" />
+                    <span className="sk-label-3-regular">{goalsDoneCount} из {goalsTotal}</span>
+                    <div style={{ flex: 1 }} />
+                    {!plan.goalsPublished && (
+                      <React.Fragment>
+                        <Button size="s" mode="secondary" disabled={plan.employeeStarted}
+                          onClick={() => setGoalMethodModal(true)}>Создать</Button>
+                        <Button size="s" variant="positive" disabled={!canPublish} onClick={() => setPublishConfirm(true)}>
+                          Опубликовать
+                        </Button>
+                      </React.Fragment>
+                    )}
+                  </div>
                   <div className="sk-col sk-gap-4">
                     {plan.goals.map(g => (
                       <ManagerGoalRow key={g.id} goal={g} plan={plan} highlighted={g.id === highlightGoalId}
                         onOpenGoal={() => setGoalDrawer({ mode: "edit", goalId: g.id })}
                         onOpenSubgoal={(sgId) => setSubgoalDrawer({ goalId: g.id, subgoalId: sgId })}
-                        onOpenMaterials={(sgId) => setChecklistPicker({ goalId: g.id, subgoalId: sgId })}
+                        onReview={(sgId, action) => action === "return"
+                          ? setReturnModal({ goalId: g.id, subgoalId: sgId })
+                          : setListDecision({ goalId: g.id, subgoalId: sgId, action })}
                         onDeleteGoal={() => setDeleteGoal(g.id)} />
                     ))}
                   </div>
@@ -578,6 +595,15 @@ function Page() {
         </Modal>
       )}
 
+      {listDecision && (
+        <FinalDecisionConfirm action={listDecision.action} onBack={() => setListDecision(null)}
+          onConfirm={(comment) => {
+            const d = listDecision; setListDecision(null);
+            if (comment) addComment(d.goalId, d.subgoalId, comment);
+            d.action === "done" ? confirmSubgoal(d.goalId, d.subgoalId) : markNotDone(d.goalId, d.subgoalId);
+          }} />
+      )}
+
       {returnModal && (
         <ReturnCommentModal onClose={() => setReturnModal(null)}
           onSubmit={(comment) => returnSubgoal(returnModal.goalId, returnModal.subgoalId, comment)} />
@@ -640,10 +666,10 @@ function Page() {
 // ---------------- Строка цели в основном списке ----------------
 // Карточки целей изначально свёрнуты — виден только заголовок, статус и прогресс, без
 // списка шагов; шаги открываются по клику на шеврон (тот же паттерн, что у сотрудника).
-function ManagerGoalRow({ goal, plan, highlighted, onOpenGoal, onOpenSubgoal, onOpenMaterials, onDeleteGoal }) {
+function ManagerGoalRow({ goal, plan, highlighted, onOpenGoal, onOpenSubgoal, onReview, onDeleteGoal }) {
   const { pct } = goalProgress(goal);
   const statusVal = deriveGoalStatus(goal);
-  const [stepsOpen, setStepsOpen] = React.useState(false);
+  const [stepsOpen, setStepsOpen] = React.useState(() => goal.subgoals.some(sg => sg.status === "pending_review"));
   return (
     <div className="sk-col sk-gap-3" onClick={onOpenGoal} style={{
       cursor: "pointer", padding: "14px 16px", borderRadius: "var(--sk-radius-3)", background: "var(--sk-surface-page)",
@@ -671,10 +697,10 @@ function ManagerGoalRow({ goal, plan, highlighted, onOpenGoal, onOpenSubgoal, on
         </div>
       </div>
       {stepsOpen && (
-        <div className="sk-col sk-gap-3" style={{ marginTop: 4 }} onClick={(e) => e.stopPropagation()}>
-          {goal.subgoals.map((sg, i) => <ManagerSubgoalRow key={sg.id} subgoal={sg} index={i} goalDueLabel={goal.dueLabel} plan={plan} onOpen={() => onOpenSubgoal(sg.id)} onOpenMaterials={() => onOpenMaterials(sg.id)} />)}
-          {!goal.subgoals.length && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Подцели ещё не добавлены</div>}
-        </div>
+        <GoalStepList>
+          {goal.subgoals.map((sg) => <ManagerSubgoalRow key={sg.id} subgoal={sg} plan={plan} onOpen={() => onOpenSubgoal(sg.id)} onReview={(action) => onReview(sg.id, action)} />)}
+          {!goal.subgoals.length && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Шаги ещё не добавлены</div>}
+        </GoalStepList>
       )}
     </div>
   );
@@ -700,39 +726,19 @@ function MaterialsBadge({ count, published, onClick }) {
   );
 }
 
-function ManagerSubgoalRow({ subgoal, index, goalDueLabel, plan, onOpen, onOpenMaterials }) {
-  const isDone = subgoal.status === "done";
-  const badge = NUMBER_BADGE.not_started;
-  const statusIcon = STATUS_ICON[subgoal.status];
-  const matCount = (subgoal.checklistRefs || []).length;
-  const ownDue = stripDuePrefix(subgoal.dueLabel);
-  const showOwnDue = !isDone && ownDue && ownDue !== stripDuePrefix(goalDueLabel);
+function ManagerSubgoalRow({ subgoal, plan, onOpen, onReview }) {
+  // Как в журнале обновлений: шаг на проверке сразу показывает решения проверяющего
+  // в списке, не нужно открывать дровер. Шаг с оценочным листом решается только в дровере.
+  const canReview = plan.employeeStarted && plan.status !== "on_review" && subgoal.status === "pending_review"
+    && (!subgoal.reviewer || subgoal.reviewer === D.manager.name) && !subgoal.assessmentChecklist;
   return (
-    <div className="sk-row sk-gap-3" onClick={onOpen} style={{ cursor: "pointer", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-3)", background: "var(--sk-surface-page)" }}>
-      <div className="sk-row sk-gap-2" style={{ flex: 1, minWidth: 0, alignItems: "center" }}>
-        <span style={{
-          width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: badge.bg, color: badge.fg,
-          border: badge.border, display: "flex", alignItems: "center", justifyContent: "center", font: "var(--sk-label-4)",
-        }}>
-          {index + 1}
-        </span>
-        <div className="sk-col sk-gap-1" style={{ minWidth: 0 }}>
-          <div className="sk-label-3-regular" style={{ color: isDone ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{subgoal.title || "Без названия"}</div>
-          {showOwnDue && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ownDue}</div>}
-        </div>
-      </div>
-      <div className="sk-row sk-gap-2" style={{ flexShrink: 0, alignItems: "center" }}>
-        {statusIcon && (
-          <span title={SUBGOAL_STATUS_LABEL[subgoal.status]} style={{
-            width: 20, height: 20, borderRadius: "50%", flexShrink: 0, background: statusIcon.color,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <statusIcon.icon size={11} color="var(--sk-text-contrast)" />
-          </span>
-        )}
-        <MaterialsBadge count={matCount} published={plan.goalsPublished} onClick={onOpenMaterials} />
-      </div>
-    </div>
+    <GoalStepCard subgoal={subgoal} onOpen={onOpen} actions={canReview ? (
+      <React.Fragment>
+        <Button size="s" variant="positive" mode="secondary" icon={<IconCheck size={14} />} onClick={() => onReview("done")}>Подтвердить</Button>
+        <Button size="s" variant="negative" mode="secondary" icon={<IconX size={14} />} onClick={() => onReview("not_done")}>Не выполнен</Button>
+        <Button size="s" variant="gray" mode="secondary" onClick={() => onReview("return")}>На доработку</Button>
+      </React.Fragment>
+    ) : null} />
   );
 }
 
@@ -1475,7 +1481,6 @@ function GoalDrawer({ goal, plan, editable, onClose, onChange, onAddSubgoal, onO
                       <statusIcon.icon size={11} color="var(--sk-text-contrast)" />
                     </span>
                   )}
-                  <MaterialsBadge count={(sg.checklistRefs || []).length} published={plan.goalsPublished} onClick={() => onOpenMaterials(sg.id)} />
                   {editable && <button className="sk-link-btn" onClick={() => onDeleteSubgoal(sg.id)}><IconTrash size={15} color="var(--sk-icon-secondary)" /></button>}
                 </div>
               </div>
@@ -1577,7 +1582,6 @@ function SubgoalCreateModal({ plan, initial, onClose, onCreate }) {
           <DatePicker label="Дата завершения" required value={dueDate} onChange={setDueDate} style={{ flex: 1 }} />
           <Select label="Проверяющий" value={reviewer} options={REVIEWER_OPTIONS} onChange={setReviewer} style={{ flex: 1 }} />
         </div>
-        <StepMaterialsPicker plan={plan} selected={checklistRefs} onToggle={toggleMaterial} />
       </div>
     </Modal>
   );
@@ -1751,6 +1755,17 @@ const FINAL_DECISION_COPY = {
 };
 function FinalDecisionConfirm({ action, onBack, onConfirm }) {
   const c = FINAL_DECISION_COPY[action];
+  const [text, setText] = React.useState("");
+  if (action === "done") return (
+    <Modal open title="Подтвердить выполнение шага" onClose={onBack} size="m"
+      secondary={<Button mode="secondary" onClick={onBack}>Отменить</Button>}
+      primary={<Button variant="accent" onClick={() => onConfirm(text.trim())}>Подтвердить</Button>}>
+      <div className="sk-col sk-gap-3">
+        <div className="sk-muted">Шаг будет отмечен как выполненный. Прогресс цели пересчитается.</div>
+        <Textarea rows={3} placeholder="Можно оставить комментарий для сотрудника" value={text} onChange={(e) => setText(e.target.value || "")} />
+      </div>
+    </Modal>
+  );
   return (
     <Modal open title={null} onClose={onBack} size="s"
       secondary={<Button mode="secondary" onClick={onBack}>Отменить</Button>}
@@ -1856,8 +1871,8 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
     : (needsAssessment && isReview) ? <Button size="s" onClick={() => setAssessmentOpen(true)} style={{ background: "var(--sk-warning)", color: "var(--sk-text-contrast)" }}>Оценить выполнение</Button>
     : (isReview && !needsAssessment) ? (
       <div className="sk-row sk-gap-1">
-        <Button size="s" variant="positive" onClick={() => setPendingAction("done")}>Шаг выполнен</Button>
-        <Button size="s" variant="negative" mode="secondary" onClick={() => setPendingAction("not_done")}>Шаг не выполнен</Button>
+        <Button size="s" variant="positive" mode="secondary" icon={<IconCheck size={14} />} onClick={() => setPendingAction("done")}>Подтвердить</Button>
+        <Button size="s" variant="negative" mode="secondary" icon={<IconX size={14} />} onClick={() => setPendingAction("not_done")}>Не выполнен</Button>
         <Button size="s" variant="gray" onClick={onReturn}>На доработку</Button>
       </div>
     )
@@ -1919,34 +1934,6 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
           </React.Fragment>
         )}
 
-        <CollapsibleSection title={<span>Полезные материалы{links.length ? <span style={{ color: "var(--sk-text-secondary)" }}>{" " + links.length}</span> : ""}</span>} defaultOpen={false}>
-          <div className="sk-col sk-gap-2" style={{ padding: 12, background: "var(--sk-surface-secondary)", borderRadius: "var(--sk-radius-3)" }}>
-            {!links.length && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Добавьте вспомогательные материалы для выполнения этого шага</div>}
-            {links.map(({ item, stage }) => {
-              const Icon = ELEMENT_ICON[item.kind] || IconFileText;
-              return (
-                <div key={item.id} className="sk-row sk-gap-3" style={{ alignItems: "flex-start", padding: 10, background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-2)" }}>
-                  <div style={{ paddingTop: 2 }}><Checkbox checked={!!item.done} disabled /></div>
-                  <div className="sk-col sk-gap-1" style={{ flex: 1, minWidth: 0 }}>
-                    <div className="sk-label-4" style={{ color: item.done ? "var(--sk-text-secondary)" : "var(--sk-text-primary)" }}>{item.title}</div>
-                    <div className="sk-row sk-gap-1" style={{ alignItems: "center" }}>
-                      <Icon size={13} color="var(--sk-icon-secondary)" style={{ flexShrink: 0 }} />
-                      <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]}</span>
-                    </div>
-                  </div>
-                  {editable && <button className="sk-link-btn" onClick={() => onUnlinkChecklist(item.id)}><IconX size={15} color="var(--sk-icon-secondary)" /></button>}
-                </div>
-              );
-            })}
-            {editable && (
-              <button className="sk-link-btn sk-label-3-regular" onClick={onOpenChecklistPicker}
-                style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)" }}>
-                <span className="sk-row sk-gap-1"><IconPlusSm size={16} />Добавить</span>
-              </button>
-            )}
-          </div>
-        </CollapsibleSection>
-
         <DrawerTabs items={drawerTabItems} active={drawerTab} onChange={setDrawerTab} />
         {drawerTab === "comments" && (
           <CommentsPanel comments={subgoal.comments} comment={comment} setComment={setComment} onAdd={onAddComment} disabled={false} />
@@ -1962,7 +1949,7 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
     )}
     {pendingAction && (
       <FinalDecisionConfirm action={pendingAction} onBack={() => setPendingAction(null)}
-        onConfirm={() => { const a = pendingAction; setPendingAction(null); a === "done" ? onConfirm() : onNotDone(); }} />
+        onConfirm={(text) => { const a = pendingAction; setPendingAction(null); if (text) onAddComment(text); a === "done" ? onConfirm() : onNotDone(); }} />
     )}
     </React.Fragment>
   );

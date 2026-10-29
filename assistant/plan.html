@@ -489,14 +489,6 @@ function ManagerSubgoalRow({ subgoal, goalDueLabel, onOpen }) {
           {showOwnDue && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ownDue}</div>}
         </div>
       </div>
-      <div className="sk-row sk-gap-2" style={{ flexShrink: 0, alignItems: "center" }}>
-        <span className="sk-row sk-gap-1" style={{
-          height: 26, padding: "0 10px 0 6px", borderRadius: "var(--sk-radius-full)",
-          background: "var(--sk-accent-secondary)", color: "var(--sk-text-accent)", font: "var(--sk-label-4)", whiteSpace: "nowrap",
-        }}>
-          <IconPlusSm size={16} />{"Полезные материалы" + (matCount > 0 ? " " + matCount : "")}
-        </span>
-      </div>
     </div>
   );
 }
@@ -586,12 +578,6 @@ function GoalDrawer({ goal, plan, editable, onClose, onChange, onAddSubgoal, onO
                   </div>
                 </div>
                 <div className="sk-row sk-gap-2" style={{ alignItems: "center" }}>
-                  <span className="sk-row sk-gap-1 sk-clickable" onClick={() => onOpenSubgoal(sg.id)} style={{
-                    height: 26, padding: "0 10px 0 6px", borderRadius: "var(--sk-radius-full)",
-                    background: "var(--sk-accent-secondary)", color: "var(--sk-text-accent)", font: "var(--sk-label-4)", whiteSpace: "nowrap",
-                  }}>
-                    <IconPlusSm size={16} />{"Полезные материалы" + ((sg.checklistRefs || []).length > 0 ? " " + sg.checklistRefs.length : "")}
-                  </span>
                   {editable && <button className="sk-link-btn" onClick={() => onDeleteSubgoal(sg.id)}><IconTrash size={15} color="var(--sk-icon-secondary)" /></button>}
                 </div>
               </div>
@@ -707,27 +693,6 @@ function SubgoalDrawer({ plan, goal, subgoal, onClose, onChange, onOpenChecklist
             </CollapsibleSection>
           </React.Fragment>
         )}
-
-        <CollapsibleSection title={"Полезные материалы" + (links.length ? " " + links.length : "")}>
-          <div className="sk-col sk-gap-2" style={{ padding: 12, background: "var(--sk-accent-secondary)", borderRadius: "var(--sk-radius-3)" }}>
-            {!links.length && <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>Добавьте вспомогательные материалы для выполнения этого шага</div>}
-            {links.map(({ item, stage }) => (
-              <div key={item.id} className="sk-row" style={{ justifyContent: "space-between", padding: 10, background: "var(--sk-surface-page)", border: "1px solid var(--sk-stroke)", borderRadius: "var(--sk-radius-2)" }}>
-                <div className="sk-col sk-gap-1">
-                  <div className="sk-label-4">{item.title}</div>
-                  <div className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{ELEMENT_LABEL[item.kind]} · Этап «{stage.title}»</div>
-                </div>
-                {editable && <button className="sk-link-btn" onClick={() => onUnlinkChecklist(item.id)}><IconX size={15} color="var(--sk-icon-secondary)" /></button>}
-              </div>
-            ))}
-            {editable && (
-              <button className="sk-link-btn sk-label-3-regular" onClick={onOpenChecklistPicker}
-                style={{ alignSelf: "flex-start", color: "var(--sk-text-accent)" }}>
-                <span className="sk-row sk-gap-1"><IconPlusSm size={16} />Добавить</span>
-              </button>
-            )}
-          </div>
-        </CollapsibleSection>
 
         <CommentsPanel comments={subgoal.comments} comment={comment} setComment={setComment}
           onAdd={onAddComment} disabled={false} />

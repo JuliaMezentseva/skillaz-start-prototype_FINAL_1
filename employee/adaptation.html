@@ -82,19 +82,27 @@ function RoleGroup({ title, period, children }) {
   );
 }
 
+// На демо у сотрудника две роли Pridex: электромонтажник и прораб. Первой идёт роль того,
+// чей план открывали последним (он же в шапке); пребординг — у неё же.
 function Page() {
-  const plan = D.plans[window.Site.employeeDemoPlanId()];
-  const plans = [plan, D.plans.preboarding]
-    .sort((a, b) => (a.status === "completed") - (b.status === "completed"));
+  const current = window.Site.employeeDemoPlanId();
+  const ids = [current].concat(["electrician", "foreman"].filter(id => id !== current));
   return (
     <AppShell role="employee" active="my-adaptation" base="..">
       <div className="sk-col sk-gap-2">
         <div className="sk-title-4">Моя адаптация</div>
       </div>
 
-      <RoleGroup title={plan.employee.position}>
-        {plans.map(p => <PlanCard key={p.id} plan={p} />)}
-      </RoleGroup>
+      {ids.map((id, i) => {
+        const plan = D.plans[id];
+        const plans = (i === 0 ? [plan, D.plans.preboarding] : [plan])
+          .sort((a, b) => (a.status === "completed") - (b.status === "completed"));
+        return (
+          <RoleGroup key={id} title={plan.employee.position}>
+            {plans.map(p => <PlanCard key={p.id} plan={p} />)}
+          </RoleGroup>
+        );
+      })}
     </AppShell>
   );
 }
