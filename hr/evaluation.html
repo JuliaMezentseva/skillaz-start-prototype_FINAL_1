@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Оценочные листы — Skillaz Start</title>
+<link rel="stylesheet" href="../assets/styles.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="../assets/ds_bundle.js"></script>
+<script src="../assets/data.js"></script>
+<script type="text/babel" src="../assets/shell.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { AppShell } = window.Site;
+
+// Модуль «Оценочные листы» — самостоятельный прототип (evaluation/index.html, собирается
+// скриптом из эталона). Здесь он встроен в каркас Start: своё меню и шапку модуль прячет
+// (?embed=1), раздел выбирается пунктом меню Start через #hash, а переходы внутри модуля
+// возвращаются сюда через postMessage, чтобы подсвечивался нужный пункт меню.
+const SECTIONS = ["templates", "scales", "sessions", "rules", "analytics"];
+// Внутренние экраны модуля относятся к своим разделам меню.
+const ROUTE_TO_SECTION = { builder: "templates", session: "sessions", fill: "sessions" };
+function sectionFromHash() {
+  const h = window.location.hash.slice(1);
+  return SECTIONS.includes(h) ? h : "templates";
+}
+
+function Page() {
+  const [section, setSection] = React.useState(sectionFromHash);
+  const frameRef = React.useRef(null);
+  const [src] = React.useState(() => "../evaluation/index.html?embed=1#" + sectionFromHash());
+
+  React.useEffect(() => {
+    function onHash() {
+      const next = sectionFromHash();
+      setSection(next);
+      const w = frameRef.current && frameRef.current.contentWindow;
+      if (w) w.location.hash = next;
+    }
+    function onMessage(e) {
+      const route = e.data && e.data.olRoute;
+      if (!route) return;
+      const next = SECTIONS.includes(route) ? route : ROUTE_TO_SECTION[route];
+      if (!next) return;
+      setSection(next);
+      window.history.replaceState(null, "", "#" + next);
+    }
+    window.addEventListener("hashchange", onHash);
+    window.addEventListener("message", onMessage);
+    return () => { window.removeEventListener("hashchange", onHash); window.removeEventListener("message", onMessage); };
+  }, []);
+
+  return (
+    <AppShell role="hr" active={"ol-" + section} base="..">
+      <iframe ref={frameRef} src={src} title="Оценочные листы"
+        style={{ width: "100%", height: "calc(100vh - 150px)", border: "none", display: "block", borderRadius: "var(--sk-radius-4)", background: "var(--sk-surface-page)" }} />
+    </AppShell>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Page />);
+</script>
+</body>
+</html>

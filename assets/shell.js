@@ -203,6 +203,17 @@ function buildNavGroups(role, base) {
         { id: "hr-analytics", label: "Аналитика", href: base + "/stub.html?role=hr&section=analytics" },
       ],
     });
+    // Модуль «Оценочные листы» — отдельный прототип (evaluation/index.html), встроенный
+    // страницей-обёрткой hr/evaluation.html: разделы модуля открываются по #hash.
+    groups.push({
+      kind: "group", label: "Оценочные листы", icon: <IconClipboardCheck />, children: [
+        { id: "ol-templates", label: "Шаблоны", href: base + "/hr/evaluation.html#templates" },
+        { id: "ol-scales", label: "Шкалы", href: base + "/hr/evaluation.html#scales" },
+        { id: "ol-sessions", label: "Сессии", href: base + "/hr/evaluation.html#sessions" },
+        { id: "ol-rules", label: "Правила автозапуска", href: base + "/hr/evaluation.html#rules" },
+        { id: "ol-analytics", label: "Аналитика", href: base + "/hr/evaluation.html#analytics" },
+      ],
+    });
     groups.push({
       kind: "group", label: "Контент", icon: <IconEdit />, children: [
         { id: "hr-content", label: "Редактор материалов", href: base + "/stub.html?role=hr&section=content" },
