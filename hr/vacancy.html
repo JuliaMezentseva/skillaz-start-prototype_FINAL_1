@@ -560,17 +560,12 @@ function ApplyModal({ vacancy, initialLetter, onClose, onSubmitted }) {
 }
 
 function RecommendModal({ vacancy, onClose, onSubmitted }) {
-  const p = D.person;
-  const [lastName, setLastName] = React.useState("");
-  const [firstName, setFirstName] = React.useState("");
-  const [patronymic, setPatronymic] = React.useState("");
-  const [city, setCity] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [relation, setRelation] = React.useState(null);
   const [reason, setReason] = React.useState("");
   const [resume, setResume] = React.useState(null);
-  const canSubmit = lastName.trim() && firstName.trim() && phone.trim() && email.trim() && relation && reason.trim();
+  const canSubmit = phone.trim() && email.trim() && relation && reason.trim();
 
   return (
     <Modal open title={"Рекомендация: " + vacancy.title} onClose={onClose} size="m"
@@ -579,12 +574,6 @@ function RecommendModal({ vacancy, onClose, onSubmitted }) {
       <div className="sk-col sk-gap-3 sk-modal-scroll">
         <Alert hue="accent">Порекомендуйте внешнего кандидата на вакансию. Ваше имя и почта прикрепятся к рекомендации автоматически.</Alert>
 
-        <div className="sk-row sk-gap-3" style={{ alignItems: "flex-end", flexWrap: "wrap" }}>
-          <Input label="Фамилия кандидата" required placeholder="Северов" value={lastName} onChange={(e) => setLastName(e.target.value || "")} style={{ flex: "1 1 180px", minWidth: 0 }} />
-          <Input label="Имя кандидата" required placeholder="Никита" value={firstName} onChange={(e) => setFirstName(e.target.value || "")} style={{ flex: "1 1 180px", minWidth: 0 }} />
-        </div>
-        <Input label="Отчество кандидата" placeholder="Андреевич" value={patronymic} onChange={(e) => setPatronymic(e.target.value || "")} />
-        <Input label="Город, в котором проживает кандидат" value={city} onChange={(e) => setCity(e.target.value || "")} />
         <div className="sk-row sk-gap-3" style={{ alignItems: "flex-end", flexWrap: "wrap" }}>
           <Input label="Мобильный телефон кандидата" required placeholder="+7 900 000 00 00" value={phone} onChange={(e) => setPhone(e.target.value || "")} style={{ flex: "1 1 200px", minWidth: 0 }} />
           <Input label="Почта кандидата" required placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value || "")} style={{ flex: "1 1 200px", minWidth: 0 }} />
