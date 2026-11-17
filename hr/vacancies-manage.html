@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Управление вакансиями — Skillaz Start</title>
 <link rel="stylesheet" href="../assets/styles.css" />
+<link rel="stylesheet" href="../assets/vacancy-recommendations.css" />
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
@@ -178,7 +179,7 @@ function ColumnsPicker({ visible, onApply }) {
         }}>
           <div className="sk-col sk-gap-3">
             <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>
-              Выберите до {MAX_OPTIONAL_COLUMNS} доп. столбцов. Название, Направление, Статус найма, Дата, Отклики и Видимость в витрине показаны всегда.
+              Выберите до {MAX_OPTIONAL_COLUMNS} доп. столбцов. Название, Направление, Статус найма, Дата, Отклики, Рекомендации и Видимость в витрине показаны всегда.
             </span>
             <div className="sk-col sk-gap-2">
               {OPTIONAL_COLUMNS.map((c) => (
@@ -247,13 +248,16 @@ function VacancyFormModal({ initial, onClose, onSave }) {
 function Page() {
   const [vacancies, setVacancies] = React.useState(D.vacancies);
   const [q, setQ] = React.useState("");
-  const [formModal, setFormModal] = React.useState(null); // null | { mode: "create" } | { mode: "edit", vacancy }
+  const [formModal, setFormModal] = React.useState(() => {
+    const vacancy = D.vacancies.find(v => v.id === new URLSearchParams(window.location.search).get("edit"));
+    return vacancy ? { mode: "edit", vacancy } : null;
+  });
   const [toast, setToast] = React.useState(null);
   const [showClosed, setShowClosed] = React.useState(false);
   const [sortBy, setSortBy] = React.useState(null); // null | { key, dir: "asc" | "desc" }
-  const [filtersOpen, setFiltersOpen] = React.useState(false);
+  const [filtersOpen, setFiltersOpen] = React.useState(true);
   const [filters, setFilters] = React.useState(emptyFilters);
-  const [visibleOptionalCols, setVisibleOptionalCols] = React.useState(["source"]);
+  const [visibleOptionalCols, setVisibleOptionalCols] = React.useState([]);
   const [pendingToggle, setPendingToggle] = React.useState(null); // вакансия, для которой открыт диалог подтверждения смены видимости
 
   function showToast(msg) { setToast(msg); window.setTimeout(() => setToast(null), 2600); }
@@ -361,21 +365,12 @@ function Page() {
   };
 
   const columns = [
-    { key: "title", title: <SortableHeader label="Вакансия" sortKey="title" />, width: "34%", render: (v) => (
+    { key: "title", title: <SortableHeader label="Вакансия" sortKey="title" />, width: "24%", render: (v) => (
       <span className="sk-label-3">{v.title}</span>
-    ) },
-    { key: "visible", title: "Видимость в витрине", render: (v) => (
-      <div className="sk-row sk-gap-2" onClick={(e) => e.stopPropagation()}>
-        <Switch checked={!!v.visibleToEmployees} onChange={() => setPendingToggle(v)} />
-        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{v.visibleToEmployees ? "Видна" : "Скрыта"}</span>
-      </div>
     ) },
     ...OPTIONAL_COLUMNS.filter((c) => visibleOptionalCols.includes(c.key)).map((c) => optionalColumnDefs[c.key]),
     { key: "direction", title: "Направление", render: (v) => <span style={{ font: "var(--sk-label-3-regular)" }}>{v.direction}</span> },
     { key: "status", title: "Статус найма", render: (v) => <Tag size="s" hue={v.status === "open" ? "positive" : "neutral"}>{v.status === "open" ? "Идёт поиск" : "Закрыта"}</Tag> },
-    { key: "date", title: <SortableHeader label="Дата публикации" sortKey="date" />, render: (v) => (
-      <span className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>{v.createdAt === "сегодня" ? "Сегодня" : (v.postedDate || "—")}</span>
-    ) },
     { key: "responses", title: <SortableHeader label="Отклики" sortKey="responses" />, render: (v) => (
       v.responsesCount > 0 ? (
         <a href={"vacancy-responses.html?id=" + v.id} onClick={(e) => e.stopPropagation()} style={{ textDecoration: "none" }}>
@@ -384,6 +379,23 @@ function Page() {
       ) : (
         <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>0</span>
       )
+    ) },
+    { key: "recommendations", title: "Рекомендации", render: (v) => {
+      const count = v.id === "v1" ? 7 : (v.matchingEmployees || []).length;
+      return v.id === "v1" ? (
+        <a className="ai-count-tag" href="vacancy.html?id=v1&tab=recommendations" onClick={(e) => e.stopPropagation()} aria-label="Открыть 7 рекомендаций для вакансии Специалист поддержки клиентов">
+          <Icons.IconSparkles size={14} />{count}<Icons.IconChevronRight size={12} />
+        </a>
+      ) : <span className={"ai-count-tag" + (count ? "" : " is-empty")}><Icons.IconSparkles size={14} />{count || "—"}</span>;
+    } },
+    { key: "date", title: <SortableHeader label="Опубликовано" sortKey="date" />, render: (v) => (
+      <span className="sk-muted" style={{ font: "var(--sk-label-3-regular)" }}>{v.createdAt === "сегодня" ? "Сегодня" : (v.postedDate || "—")}</span>
+    ) },
+    { key: "visible", title: "Видимость", render: (v) => (
+      <div className="sk-row sk-gap-2" onClick={(e) => e.stopPropagation()}>
+        <Switch checked={!!v.visibleToEmployees} onChange={() => setPendingToggle(v)} />
+        <span className="sk-muted" style={{ font: "var(--sk-label-4-regular)" }}>{v.visibleToEmployees ? "Видна" : "Скрыта"}</span>
+      </div>
     ) },
     { key: "actions", title: "", width: 56, render: (v) => (
       v.source === "manual" && (
@@ -446,8 +458,8 @@ function Page() {
         </div>
       )}
 
-      <div className="sk-scroll" style={{ overflowX: "auto" }}>
-        <Table columns={columns} rows={filtered} onRowClick={(v) => { window.location.href = "vacancy.html?id=" + v.id; }} />
+      <div className="sk-scroll ai-management-table" style={{ overflowX: "auto" }}>
+        <Table density="small" columns={columns} rows={filtered} onRowClick={(v) => { window.location.href = "vacancy.html?id=" + v.id; }} />
       </div>
       {filtered.length === 0 && (
         <Card><div className="sk-muted" style={{ textAlign: "center", padding: "16px 0" }}>Ничего не нашлось по заданным условиям.</div></Card>

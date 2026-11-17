@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Вакансия — Skillaz Start</title>
 <link rel="stylesheet" href="../assets/styles.css" />
+<link rel="stylesheet" href="../assets/vacancy-recommendations.css" />
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <script src="../assets/ds_bundle.js"></script>
 <script src="../assets/data.js"></script>
 <script type="text/babel" src="../assets/shell.js"></script>
+<script type="text/babel" src="../assets/vacancy-recommendations.js"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -238,7 +240,11 @@ function MatchingCandidatesCard({ employees, onOpenOne }) {
 function Page() {
   const vacancy = D.vacancies.find(v => v.id === vacancyIdFromUrl());
   const closed = vacancy.status === "closed";
+  const hasRecommendations = vacancy.id === "v1";
   const matches = vacancy.matchingEmployees || [];
+  const { RecommendationCard, RecommendationTab, RecommendationModal, useRecommendations } = window.VacancyRecommendations;
+  const recommendations = useRecommendations();
+  const [activeTab, setActiveTab] = React.useState(new URLSearchParams(window.location.search).get("tab") === "recommendations" ? "recommendations" : "main");
   const [openCandidate, setOpenCandidate] = React.useState(null);
   const [responses, setResponses] = React.useState(D.myResponses);
   const [modalOpen, setModalOpen] = React.useState(false);
@@ -284,12 +290,22 @@ function Page() {
     showToast("Рекомендация отправлена рекрутёру " + vacancy.recruiter.name + ".");
   }
 
-  // Рекрутёр сам создаёт отклик по подходящему кандидату (из AI-подбора или кадрового
-  // резерва) — источник в ATS фиксируется как "Внутренний кандидат", без обращения к
-  // самому сотруднику, в отличие от обычного отклика через "Откликнуться".
   function handleCreateResponseFromCandidate(candidate) {
     setOpenCandidate(null);
     showToast("Отклик по кандидату " + candidate.name + " создан в ATS с источником «Внутренний кандидат».");
+  }
+
+  function selectTab(tab) {
+    setActiveTab(tab);
+    const url = new URL(window.location.href);
+    if (tab === "main") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", tab);
+    window.history.replaceState(null, "", url);
+    document.querySelector(".sk-app-content").scrollTop = 0;
+  }
+  function openRecommendation(employee) {
+    recommendations.markViewed(employee.id);
+    setOpenCandidate(employee);
   }
 
   const ApplyCta = () => {
@@ -319,7 +335,7 @@ function Page() {
         <div className="sk-col sk-gap-2" style={{ flex: 1 }}>
           <div className="sk-row sk-gap-2" style={{ flexWrap: "wrap", alignItems: "center" }}>
             <div className="sk-title-4">{vacancy.title}</div>
-            <Tag size="s" hue="gray">{vacancy.transitionType}</Tag>
+            {!hasRecommendations && <Tag size="s" hue="gray">{vacancy.transitionType}</Tag>}
             {closed
               ? <Tag size="s" hue="neutral">Закрыта</Tag>
               : <Tag size="s" hue="positive" icon={<IconCheck size={12} />}>Идёт поиск</Tag>}
@@ -329,7 +345,8 @@ function Page() {
           </div>
         </div>
         <div className="sk-row sk-gap-2">
-          {!closed && <Button variant="accent" mode="secondary" icon={<IconUser size={16} />} onClick={() => setRecommendOpen(true)}>Рекомендовать</Button>}
+          {hasRecommendations && <IconButton size="m" variant="gray" mode="secondary" title="Редактировать вакансию" onClick={() => { window.location.href = "vacancies-manage.html?edit=" + vacancy.id; }}><Icons.IconEdit size={18} /></IconButton>}
+          {!closed && !hasRecommendations && <Button variant="accent" mode="secondary" icon={<IconUser size={16} />} onClick={() => setRecommendOpen(true)}>Рекомендовать</Button>}
           <ApplyCta />
         </div>
       </div>
@@ -338,7 +355,20 @@ function Page() {
         <Alert hue="neutral" title="Эта вакансия закрыта">Отбор по ней завершён, отклик недоступен.</Alert>
       )}
 
-      <div className="sk-row" style={{ alignItems: "flex-start", gap: 24 }}>
+      {hasRecommendations && (
+        <div className="ai-vacancy-tabs" role="tablist" aria-label="Разделы вакансии">
+          <button type="button" role="tab" id="vacancy-main-tab" aria-controls="vacancy-main-panel" aria-selected={activeTab === "main"} className={activeTab === "main" ? "is-active" : ""} onClick={() => selectTab("main")}>Основное</button>
+          <a href={"vacancy-responses.html?id=" + vacancy.id}>Отклики <span>{vacancy.responsesCount || 0}</span></a>
+          <button type="button" role="tab" id="vacancy-recommendations-tab" aria-controls="vacancy-recommendations-panel" aria-selected={activeTab === "recommendations"} className={activeTab === "recommendations" ? "is-active" : ""} onClick={() => selectTab("recommendations")}>
+            <Icons.IconSparkles size={18} />Рекомендации <span>{recommendations.employees.length}</span>{recommendations.hasNew && <i className="ai-new-dot" />}
+          </button>
+        </div>
+      )}
+      {hasRecommendations && activeTab === "recommendations" ? (
+        <div id="vacancy-recommendations-panel" role="tabpanel" aria-labelledby="vacancy-recommendations-tab"><RecommendationTab {...recommendations} onOpen={openRecommendation} /></div>
+      ) : (
+      <div id="vacancy-main-panel" role={hasRecommendations ? "tabpanel" : undefined} aria-labelledby={hasRecommendations ? "vacancy-main-tab" : undefined} className={hasRecommendations ? "ai-vacancy-layout" : "sk-row"} style={{ alignItems: "flex-start", gap: 24 }}>
+
         <div className="sk-col sk-gap-5" style={{ flex: 1, minWidth: 0 }}>
           <Card bordered>
             <div className="sk-col sk-gap-3">
@@ -368,10 +398,8 @@ function Page() {
           </Card>
         </div>
 
-        <div className="sk-col sk-gap-5" style={{ width: 300, flexShrink: 0 }}>
-          {matches.length > 0 && (
-            <MatchingCandidatesCard employees={matches} onOpenOne={setOpenCandidate} />
-          )}
+        <div className="sk-col sk-gap-4" style={{ width: hasRecommendations ? "100%" : 300, flexShrink: 0 }}>
+          {!hasRecommendations && matches.length > 0 && <MatchingCandidatesCard employees={matches} onOpenOne={setOpenCandidate} />}
 
           <Card bordered>
             <div className="sk-col sk-gap-4">
@@ -405,13 +433,16 @@ function Page() {
               </div>
             </div>
           </Card>
+          {hasRecommendations && <RecommendationCard {...recommendations} onOpen={openRecommendation} onShowAll={() => selectTab("recommendations")} />}
         </div>
       </div>
+      )}
 
       {modalOpen && <ApplyModal vacancy={vacancy} initialLetter={aiDraftLetter} onClose={() => setModalOpen(false)} onSubmitted={handleSubmitted} />}
       {recommendOpen && <RecommendModal vacancy={vacancy} onClose={() => setRecommendOpen(false)} onSubmitted={handleRecommendSubmitted} />}
 
-      {openCandidate != null && (
+      {hasRecommendations && openCandidate && <RecommendationModal employee={openCandidate} vacancy={vacancy} onClose={() => setOpenCandidate(null)} />}
+      {!hasRecommendations && openCandidate != null && (
         <Modal open title={`Подходящий кандидат на «${vacancy.title}»`} onClose={() => setOpenCandidate(null)} size="l"
           primary={<Button variant="accent" onClick={() => handleCreateResponseFromCandidate(matches[openCandidate])}>Создать отклик с данными кандидата</Button>}>
           <CandidateDetail e={matches[openCandidate]} vacancy={vacancy} />
